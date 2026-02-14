@@ -1,0 +1,32 @@
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "fantas"
+version = "3.0.0"
+description = "A 2D graphics program framework based on pygame-ce"
+authors = ["Fantastair <Fantastair@qq.com>"]
+readme = "README.md"
+packages = [{include = "fantas"}]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.group.dev.dependencies]
+# pylint = "^3.3.9"
+# mypy = "^1.18.2"
+black = "^24.8.0"
+
+[tool.black]
+line-length = 88
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | dist
+  | tmp
+  | pygame-ce-fantas
+)/
+'''

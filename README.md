@@ -1,30 +1,12 @@
-# fantas V3
-> 第二代 fantas 框架的升级主要集中在优化开发体验上，虽说是一个全新的逻辑架构，但从最终呈现的效果来看，基本上用 V1 也是可以实现的，只是写起代码来很痛苦。而 V2 解决了很多开发过程中的痛点，因此，我用它写了不少的程序，也借由它们完成了 V2 的很多小版本迭代。不过正是因为图形方面没有太多内容的更新，V2 的上限其实并不高，我能用很大程度上是因为我清楚的知道每一个函数的实现细节，但即便如此，实现一个更高层次的图形程序也是十分吃力。换句话说，对 V2 的常规迭代更新已经不能满足我对开发更高质量图形程序的需求了，尤其是伴随着我的代码水平进步，新的想法不断在脑海中涌现，我需要一个更加强力的框架。
->
-> 于是，在通读 pygame 的官方文档之后，我决定正式开始 fantas V3 的开发了，目前仅计划开发 python 端框架，等我吃透 SDL3 之后，再来处理 C++ 端。另外，pygame 官方版已经超过 1 年没有更新了，经过了解，官方版的网站、仓库、社交媒体账号等权限高度集中在一个人的手里，而这个人在 pygame 的开发方向上与其他大部分核心开发者有着较大的分歧，并且他还一度关停网站服务器以达到某些政治目的，这使得官方版的开发收到了极大的阻力。因此，从 V3 开始，我将依赖更换到更加活跃的社区版 pygame-ce。
+# Fantas
 
-V3 的更新内容不仅将会包含图形内容的更新，扩展框架的图形表现力，也会优化开发体验，V3 的第一个程序将是一个图形编辑器，用于辅助图形内容的布局、样式等设计开发。以下是 V3 的更新内容：
+[![Docs](https://img.shields.io/badge/docs-online-green)]() [![License](https://img.shields.io/badge/License-MIT-lightgray)](https://mit-license.org/) [![Python](https://img.shields.io/badge/python-3-blue?logo=python)](https://www.python.org/) [![pygame](https://img.shields.io/badge/pygame_ce-2.5.7_for_fantas-blue)]() [![Code style: black](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
 
-- 带有抗锯齿效果的圆角矩形
+## 许可证（License）
 
-  在 V2 的 2.3 版本，矩形 UI 的绘制新增了圆角属性，不过只能绘制带有锯齿边缘的圆形。V3 将支持抗锯齿效果，使得边缘更加柔和。
+fantas 是基于 MIT 许可证分发的开源项目。您可以自由使用、修改和分发该软件，但必须保留原作者的版权声明和许可声明。请参阅 [LICENSE](LICENSE) 文件以获取更多详细信息。
+fantas is an open-source project distributed under the MIT License. You are free to use, modify, and distribute this software, but you must retain the original copyright notice and license statement. Please refer to the [LICENSE](LICENSE) file for more details.
 
-- svg 格式的矢量图形加载
+### 依赖许可（Dependency Licensing）
 
-  V2 中，绘制矢量图依赖于将图标制作进字体文件，借助字体渲染来绘制矢量图形，仅支持单色绘制。svg 格式是可以存储多色矢量图形的，这会显著提升图标观感。
-
-- gif、webp格式的动态图像加载
-
-  动图的支持将以较低的代价获取较高质量的动画，不需要在代码中手动k帧。
-
-- 模糊、阴影特效的支持
-
-  这是提升画面层次感的关键因素，在 V2 中很难实现。
-
-- 更加丰富灵活的非线性动画支持
-
-  V2 的动画已经可以实现非线性控制了，不过非常依赖公式的计算，并且实现比较粗糙，V3 将消除这一困难。
-
-- 更加自由的窗口管理，以及多窗口支持
-
-  V2 中程序仅支持一个窗口，而且除了控制窗口大小之外，几乎没有其他窗口管理能力，另外DPI缩放的问题十分棘手。V3 将支持窗口大小、位置、状态的精确控制，提供单一进程内多窗口的支持，并且完美处理DPI感知的问题。
+fantas 的核心依赖是 pygame-ce，这是一个基于 LGPL-2.1 许可证分发的库。我们对 pygame-ce 进行了特殊修改以修复一些问题并添加新功能。请参阅 [DEPENDENCIES.md](DEPENDENCIES.md) 文件以获取详细的依赖声明和许可说明。
