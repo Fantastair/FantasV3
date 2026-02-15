@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from collections.abc import Callable
 from abc import ABC, abstractmethod
+from typing import Any
 
 import fantas
 
@@ -24,10 +25,10 @@ clamp = fantas.math.clamp
 lerp = fantas.math.lerp
 
 # 时钟对象引用
-clock: fantas.time.Clock = None
+clock: fantas.time.Clock
 
 
-def set_framefunc_clock(new_clock: fantas.time.Clock):
+def set_framefunc_clock(new_clock: fantas.time.Clock) -> None:
     """
     设置全局时钟对象。
 
@@ -42,7 +43,7 @@ def set_framefunc_clock(new_clock: fantas.time.Clock):
 framefunc_dict: dict[int, FrameFuncBase] = {}
 
 
-def run_framefuncs():
+def run_framefuncs() -> None:
     """
     运行所有已启动的帧函数。
     """
@@ -61,13 +62,13 @@ class FrameFuncBase(ABC):
         default_factory=fantas.generate_unique_id, init=False
     )  # 唯一标识 ID
 
-    def start(self):
+    def start(self) -> None:
         """
         启动帧函数。
         """
         framefunc_dict[self.ID] = self
 
-    def stop(self):
+    def stop(self) -> None:
         """
         停止帧函数。
         """
@@ -101,7 +102,7 @@ class FramerBase(FrameFuncBase):
     duration_frames: int = field(default=0, init=False)  # 持续帧数
     current_frame: int = field(init=False)  # 当前帧数
 
-    def start(self):
+    def start(self) -> None:
         """
         启动定帧器。
         """
@@ -120,7 +121,7 @@ class FramerBase(FrameFuncBase):
             return True
         return False
 
-    def set_duration_frames(self, duration_frames: int):
+    def set_duration_frames(self, duration_frames: int) -> None:
         """
         设置持续帧数。
 
@@ -139,14 +140,14 @@ class TimerBase(FrameFuncBase):
     duration_ns: int | float = field(default=0, init=False)  # 持续时间（纳秒）
     start_time: int = field(init=False)  # 开始时间（纳秒）
 
-    def start(self):
+    def start(self) -> None:
         """
         启动定时器。
         """
         FrameFuncBase.start(self)
         self.start_time = fantas.get_time_ns()
 
-    def call(self):
+    def call(self) -> bool:
         """
         定时器的帧函数调用接口。
 
@@ -157,7 +158,7 @@ class TimerBase(FrameFuncBase):
             return True
         return False
 
-    def set_duration_ns(self, duration: int | float):
+    def set_duration_ns(self, duration: int | float) -> None:
         """
         设置持续时间。
 
@@ -166,7 +167,7 @@ class TimerBase(FrameFuncBase):
         """
         self.duration_ns = duration
 
-    def set_duration_us(self, duration: int | float):
+    def set_duration_us(self, duration: int | float) -> None:
         """
         设置持续时间。
 
@@ -175,7 +176,7 @@ class TimerBase(FrameFuncBase):
         """
         self.duration_ns = duration * 1000
 
-    def set_duration_ms(self, duration: int | float):
+    def set_duration_ms(self, duration: int | float) -> None:
         """
         设置持续时间。
 
@@ -184,7 +185,7 @@ class TimerBase(FrameFuncBase):
         """
         self.duration_ns = duration * 1_000_000
 
-    def set_duration_s(self, duration: int | float):
+    def set_duration_s(self, duration: int | float) -> None:
         """
         设置持续时间。
 
@@ -200,11 +201,11 @@ class FrameTrigger(FramerBase):
     帧触发器类，用于在指定的帧数后触发一个函数。
     """
 
-    func: Callable = field(init=False)  # 触发函数
-    args: tuple = field(init=False)  # 触发函数的位置参数
-    kwargs: dict = field(init=False)  # 触发函数的关键字参数
+    func: Callable[..., Any] = field(init=False)  # 触发函数
+    args: tuple[Any, ...] = field(init=False)  # 触发函数的位置参数
+    kwargs: dict[str, Any] = field(init=False)  # 触发函数的关键字参数
 
-    def bind(self, func: Callable, /, *args, **kwargs):
+    def bind(self, func: Callable[..., Any], /, *args: Any, **kwargs: Any) -> None:
         """
         绑定触发函数及其参数。
 
@@ -236,11 +237,11 @@ class TimeTrigger(TimerBase):
     时间触发器类，用于在指定的时间后触发一个函数。
     """
 
-    func: Callable = field(init=False)  # 触发函数
-    args: tuple = field(init=False)  # 触发函数的位置参数
-    kwargs: dict = field(init=False)  # 触发函数的关键字参数
+    func: Callable[..., Any] = field(init=False)  # 触发函数
+    args: tuple[Any, ...] = field(init=False)  # 触发函数的位置参数
+    kwargs: dict[str, Any] = field(init=False)  # 触发函数的关键字参数
 
-    def bind(self, func: Callable, /, *args, **kwargs):
+    def bind(self, func: Callable[..., Any], /, *args: Any, **kwargs: Any) -> None:
         """
         绑定触发函数及其参数。
 
@@ -278,7 +279,7 @@ class KeyFrameBase(TimerBase, ABC):
         return TimerBase.call(self)
 
     @abstractmethod
-    def tick(self, ratio: float):
+    def tick(self, ratio: float) -> None:
         """
         关键帧的时间点调用接口。
 
@@ -302,15 +303,17 @@ class AttrKeyFrame(KeyFrameBase):
     obj: object = field(compare=False)
     attr: str = field(compare=False)
     end_value: float = field(compare=False)
-    map_curve: fantas.CurveBase = field(compare=False, default=fantas.CURVE_LINEAR)
+    map_curve: Callable[[float], float] = field(
+        compare=False, default=fantas.CURVE_LINEAR
+    )
 
     start_value: float = field(init=False, compare=False)  # 起始值，在启动时设置
 
     def start(
         self,
-        start_value: float = None,
+        start_value: Any = None,
         restart: bool = False,
-    ):
+    ) -> None:
         """
         启动属性关键帧。
 
@@ -328,7 +331,7 @@ class AttrKeyFrame(KeyFrameBase):
             fps = clock.get_fps()
             self.start_time -= round(1_000_000_000 / fps) if fps > 0 else 0
 
-    def tick(self, ratio: float):
+    def tick(self, ratio: float) -> None:
         """
         在指定的时间点修改对象的属性。
 
@@ -348,7 +351,14 @@ class ColorKeyframe(AttrKeyFrame):
     颜色关键帧类，用于修改对象的颜色属性。
     """
 
-    def start(self, start_value=None, restart: bool = False):
+    end_value: fantas.Color = field(compare=False)  # type: ignore [assignment]
+    start_value: fantas.Color = field(
+        init=False, compare=False
+    )  # type: ignore [assignment]  # 起始值，在启动时设置
+
+    def start(
+        self, start_value: fantas.Color | None = None, restart: bool = False
+    ) -> None:
         """
         启动颜色关键帧。
 
@@ -360,7 +370,7 @@ class ColorKeyframe(AttrKeyFrame):
         if not isinstance(self.start_value, fantas.Color):
             self.start_value = fantas.Color(self.start_value)
 
-    def tick(self, ratio: float):
+    def tick(self, ratio: float) -> None:
         """
         在指定的时间点修改对象的颜色属性。
 
@@ -380,7 +390,12 @@ class PointKeyFrame(AttrKeyFrame):
     点关键帧类，用于修改对象的点属性。
     """
 
-    def start(self, start_value=None, restart: bool = False):
+    end_value: fantas.Vector2 = field(compare=False)  # type: ignore [assignment]
+    start_value: fantas.Vector2 = field(
+        init=False, compare=False
+    )  # type: ignore [assignment]  # 起始值，在启动时设置
+
+    def start(self, start_value: Any = None, restart: bool = False) -> None:
         """
         启动点关键帧。
 
@@ -389,10 +404,10 @@ class PointKeyFrame(AttrKeyFrame):
             restart (bool): 重复启动关键帧时是否重新开始，如果为 True，则使用上次的 start_value，否则重新获取当前属性值作为起始值。
         """
         AttrKeyFrame.start(self, start_value, restart)
-        if not isinstance(self.start_value, fantas.math.Vector2):
-            self.start_value = fantas.math.Vector2(self.start_value)
+        if not isinstance(self.start_value, fantas.Vector2):
+            self.start_value = fantas.Vector2(self.start_value)
 
-    def tick(self, ratio: float):
+    def tick(self, ratio: float) -> None:
         """
         在指定的时间点修改对象的点属性。
 

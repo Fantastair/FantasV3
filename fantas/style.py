@@ -26,7 +26,7 @@ class TextStyle:
     size: float = 16.0
     fgcolor: fantas.ColorLike = "black"
     style_flag: fantas.TextStyleFlag = fantas.TEXTSTYLEFLAG_DEFAULT
-    line_spacing: float = 4.0
+    line_spacing: int = 4
 
     def copy(self) -> TextStyle:
         """创建并返回当前 TextStyle 实例的副本"""
@@ -36,7 +36,7 @@ class TextStyle:
         """获取文本行高（包含行间距）"""
         return self.font.get_sized_height(self.size) + self.line_spacing
 
-    def set_lineheight(self, lineheight: float) -> None:
+    def set_lineheight(self, lineheight: int) -> None:
         """设置文本行高（包含行间距）"""
         self.line_spacing = lineheight - self.font.get_sized_height(self.size)
 
@@ -63,12 +63,12 @@ class LabelStyle:
 
     bgcolor: fantas.ColorLike | None = "white"
     fgcolor: fantas.ColorLike = "black"
-    border_width: int | float = 0
-    border_radius: int | float = 0
-    border_radius_top_left: int | float = -1
-    border_radius_top_right: int | float = -1
-    border_radius_bottom_left: int | float = -1
-    border_radius_bottom_right: int | float = -1
+    border_width: int = 0
+    border_radius: int = 0
+    border_radius_top_left: int = -1
+    border_radius_top_right: int = -1
+    border_radius_bottom_left: int = -1
+    border_radius_bottom_right: int = -1
 
     def copy(self) -> LabelStyle:
         """创建并返回当前 LabelStyle 实例的副本"""

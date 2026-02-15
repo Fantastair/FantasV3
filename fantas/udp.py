@@ -9,7 +9,7 @@ __all__ = (
 
 
 def create_UDP_socket(
-    host: str = "127.0.0.1", port: int = 0, timeout: float = None
+    host: str = "127.0.0.1", port: int = 0, timeout: float | None = None
 ) -> socket.socket:
     """
     创建并返回一个 UDP 套接字。
@@ -32,10 +32,12 @@ def get_socket_port(socket: socket.socket) -> int:
     Returns:
         int: 绑定的端口号。
     """
-    return socket.getsockname()[1]
+    return socket.getsockname()[1]  # type: ignore[no-any-return]
 
 
-def udp_send_data(udp_socket: socket.socket, data: bytes, addr: tuple[str, int]):
+def udp_send_data(
+    udp_socket: socket.socket, data: bytes, addr: tuple[str, int]
+) -> None:
     """
     通过 UDP 套接字发送数据。
     Args:
@@ -48,7 +50,7 @@ def udp_send_data(udp_socket: socket.socket, data: bytes, addr: tuple[str, int])
 
 def udp_receive_data(
     udp_socket: socket.socket, buffer_size: int = 65535
-) -> tuple[bytes, tuple[str, int]]:
+) -> tuple[bytes | None, tuple[str, int] | None]:
     """
     通过 UDP 套接字接收数据。
     Args:

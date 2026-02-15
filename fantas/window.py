@@ -1,7 +1,7 @@
 from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Protocol, cast
 
 import fantas
 from pygame.window import Window as PygameWindow
@@ -56,7 +56,7 @@ class Window(PygameWindow):
     窗口类，每一个实例就是一个窗口。
     """
 
-    def __init__(self, window_config: WindowConfig):
+    def __init__(self, window_config: WindowConfig) -> None:
         """
         初始化 Window 实例。
         Args:
@@ -85,18 +85,20 @@ class Window(PygameWindow):
         self.event_handler: fantas.EventHandler = fantas.EventHandler(
             window=self
         )  # 窗口的事件处理器对象
+        self.debug_timer: DebugTimer | None = None
+        self.mouse_magnify_ratio: int = 0
 
         # 方便访问根 UI 元素的方法
-        self.append: Callable = self.root_ui.append
-        self.insert: Callable = self.root_ui.insert
-        self.remove: Callable = self.root_ui.remove
-        self.pop: Callable = self.root_ui.pop
-        self.clear: Callable = self.root_ui.clear
+        self.append: Callable[[fantas.UI], None] = self.root_ui.append
+        self.insert: Callable[[int, fantas.UI], None] = self.root_ui.insert
+        self.remove: Callable[[fantas.UI], None] = self.root_ui.remove
+        self.pop: Callable[[int], fantas.UI] = self.root_ui.pop
+        self.clear: Callable[[], None] = self.root_ui.clear
         # 方便访问事件处理器的管理监听器方法
         self.add_event_listener = self.event_handler.add_event_listener
         self.remove_event_listener = self.event_handler.remove_event_listener
 
-    def mainloop(self):
+    def mainloop(self) -> None:
         """
         进入窗口的主事件循环，直到窗口关闭。
         """
@@ -133,7 +135,7 @@ class Window(PygameWindow):
             flip()
         self.destroy()
 
-    def mainloop_debug(self):
+    def mainloop_debug(self) -> None:
         """
         以调试模式进入窗口的主事件循环，直到窗口关闭。
         """
@@ -230,13 +232,14 @@ class Window(PygameWindow):
 
         self.destroy()
 
-    def handle_debug_received_event(self, event: fantas.Event):
+    def handle_debug_received_event(self, event: fantas.Event) -> None:
         """
         处理从调试窗口接收到输出信息的事件。
         Args:
             event (fantas.Event): 触发此事件的 fantas.Event 实例。
         """
-        self.debug_timer.record("Event")
+        debug_timer = cast(DebugTimer, self.debug_timer)
+        debug_timer.record("Event")
         while not fantas.Debug.queue.empty():
             data = fantas.Debug.queue.get()
             if data[0] == "CloseDebugWindow":
@@ -249,16 +252,17 @@ class Window(PygameWindow):
                 for d in data[1:]:
                     print(f" {d}", end="")
                 print()
-        self.debug_timer.record("Debug")
+        debug_timer.record("Debug")
 
-    def debug_send_mouse_surface(self, event: fantas.Event):
+    def debug_send_mouse_surface(self, event: fantas.Event) -> None:
         """
         发送当前鼠标所在位置的 Surface 截图到调试窗口。
         Args:
             event (fantas.Event): 触发此事件的 fantas.Event 实例。
         """
         # 获取鼠标位置附近的 Surface 截图
-        self.debug_timer.record("Event")
+        debug_timer = cast(DebugTimer, self.debug_timer)
+        debug_timer.record("Event")
         size = 256 // self.mouse_magnify_ratio
         pos = list(event.pos)
         pos[0] = fantas.math.clamp(pos[0], 0, self.size[0] - 1)
@@ -281,7 +285,7 @@ class Window(PygameWindow):
             self.screen.subsurface(rect).convert_alpha().get_buffer().raw,
             prompt="MouseMagnify",
         )
-        self.debug_timer.record("Debug")
+        debug_timer.record("Debug")
 
 
 class MultiWindow:
@@ -289,7 +293,7 @@ class MultiWindow:
     多窗口管理类，用于管理多个窗口实例。
     """
 
-    def __init__(self, *windows: Window, fps: int = 60):
+    def __init__(self, *windows: Window, fps: int = 60) -> None:
         """
         初始化 MultiWindow 实例。
         Args:
@@ -302,7 +306,7 @@ class MultiWindow:
         }  # 管理的窗口字典，键为窗口 ID，值为 Window 实例
         self.running: bool = True  # 多窗口运行状态标志
 
-    def append(self, window: Window):
+    def append(self, window: Window) -> None:
         """
         添加一个窗口到管理列表中。
         Args:
@@ -330,18 +334,19 @@ class MultiWindow:
         """
         return self.windows.get(window_id, None)
 
-    def handle_window_close_event(self, event: fantas.Event):
+    def handle_window_close_event(self, event: fantas.Event) -> None:
         """
         处理窗口关闭事件，将对应的窗口从管理列表中移除。
         Args:
             event (fantas.Event): 触发此事件的 fantas.Event 实例。
         """
-        window = event.window
-        self.pop(window).destroy()
+        window = self.pop(event.window)
+        if window is not None:
+            window.destroy()
         if not self.windows:
             self.running = False
 
-    def auto_place_windows(self, padding=0):
+    def auto_place_windows(self, padding: int = 0) -> None:
         """
         自动布局所有管理的窗口，尽量减少重叠面积。
         Args:
@@ -361,7 +366,7 @@ class MultiWindow:
             left += window.size[0] + padding
             bottom = max(bottom, top + window.size[1] + padding)
 
-    def mainloops(self):
+    def mainloops(self) -> None:
         """
         进入所有管理窗口的主事件循环，直到所有窗口关闭。
         """
@@ -374,6 +379,7 @@ class MultiWindow:
         fantas.set_framefunc_clock(self.clock)
         # 清空事件队列
         fantas.event.clear()
+        window: Window | None
         for window in windows.values():
             # 预生成传递路径缓存
             window.root_ui.build_pass_path_cache()
@@ -409,7 +415,7 @@ class MultiWindow:
                 # 更新窗口显示
                 window.flip()
 
-    def mainloops_debug(self):
+    def mainloops_debug(self) -> None:
         """
         以调试模式进入所有管理窗口的主事件循环，直到所有窗口关闭。
         """
@@ -432,6 +438,7 @@ class MultiWindow:
         fantas.set_framefunc_clock(self.clock)
         # 清空事件队列
         fantas.event.clear()
+        window: Window | None
         for window in windows.values():
             # 预生成传递路径缓存
             window.root_ui.build_pass_path_cache()
@@ -445,7 +452,10 @@ class MultiWindow:
             window.debug_timer = debug_timer
             # 监听调试输出事件
             window.add_event_listener(
-                fantas.DEBUGRECEIVED, window.root_ui, True, window.read_debug_output
+                fantas.DEBUGRECEIVED,
+                window.root_ui,
+                True,
+                window.handle_debug_received_event,
             )
             # 监听鼠标移动事件
             if fantas.DebugFlag.MOUSEMAGNIFY in fantas.Debug.debug_flag:
@@ -543,7 +553,7 @@ class DebugTimer:
         default_factory=dict, init=False
     )  # 记录的时间数据字典
 
-    def record(self, label: str):
+    def record(self, label: str) -> None:
         """
         记录从上一次调用 record 方法到当前的时间差，并累计到指定标签的时间记录中。
         Args:
@@ -555,14 +565,14 @@ class DebugTimer:
         )
         self.last_time = current_time
 
-    def reset(self):
+    def reset(self) -> None:
         """
         重置计时器，清空所有时间记录并更新上一次记录的时间点为当前时间。
         """
         self.time_records.clear()
         self.last_time = fantas.get_time_ns()
 
-    def clear(self):
+    def clear(self) -> None:
         """
         清空所有时间记录，但不更新上一次记录的时间点。
         """

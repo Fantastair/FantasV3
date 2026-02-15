@@ -1,5 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
+from collections.abc import Iterator
+from typing import cast
 
 import fantas
 
@@ -18,18 +20,16 @@ __all__ = (
 
 
 @dataclass(slots=True)
-class UI(fantas.NodeBase):
+class UI(fantas.NodeBase["UI"]):
     """显示元素基类。"""
 
-    father: UI | None = field(default=None, init=False, repr=False)  # 指向父显示元素
-    children: list[UI] = field(
-        default_factory=list, init=False, repr=False
-    )  # 子显示元素列表
     ui_id: fantas.UIID = field(
         default_factory=fantas.generate_unique_id, init=False
     )  # 唯一标识 ID
 
-    def create_render_commands(self, offset: fantas.Point = (0, 0)):
+    def create_render_commands(
+        self, offset: fantas.Point = (0, 0)
+    ) -> Iterator[fantas.RenderCommand]:
         """
         创建渲染命令列表，由子类实现，本方法会遍历子节点并生成渲染命令。
         Args:
@@ -45,9 +45,11 @@ class UI(fantas.NodeBase):
 class BlankUI(UI):
     """空显示元素类。"""
 
-    rect: fantas.RectLike
+    rect: fantas.Rect | fantas.IntRect
 
-    def create_render_commands(self, offset: fantas.Point = (0, 0)):
+    def create_render_commands(
+        self, offset: fantas.Point = (0, 0)
+    ) -> Iterator[fantas.RenderCommand]:
         """
         创建渲染命令列表，由子类实现，本方法会遍历子节点并生成渲染命令。
         Args:
@@ -67,12 +69,12 @@ class WindowRoot(UI):
     """
 
     window: fantas.Window
-    rect: fantas.RectLike = field(init=False)  # 窗口矩形区域
+    rect: fantas.IntRect = field(init=False)  # 窗口矩形区域
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.rect = fantas.IntRect((0, 0), self.window.size)
 
-    def update_rect(self):
+    def update_rect(self) -> None:
         """更新窗口矩形区域。"""
         self.rect.size = self.window.size
 
@@ -91,11 +93,13 @@ class ColorBackground(UI):
         init=False, repr=False
     )  # 颜色填充命令
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化 ColorBackground 实例"""
         self.command = fantas.ColorBackgroundFillCommand(creator=self)
 
-    def create_render_commands(self, offset: fantas.Point = (0, 0)):
+    def create_render_commands(
+        self, offset: fantas.Point = (0, 0)
+    ) -> Iterator[fantas.RenderCommand]:
         """
         创建渲染命令列表
         Args:
@@ -121,7 +125,7 @@ class Label(UI):
         box_mode   : 盒子模式。
     """
 
-    rect: fantas.RectLike
+    rect: fantas.Rect | fantas.IntRect
     label_style: fantas.LabelStyle = field(
         default_factory=fantas.DEFAULTLABELSTYLE.copy
     )
@@ -129,11 +133,13 @@ class Label(UI):
 
     command: fantas.LabelRenderCommand = field(init=False, repr=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化 Label 实例"""
         self.command = fantas.LabelRenderCommand(creator=self)
 
-    def create_render_commands(self, offset: fantas.Point = (0, 0)):
+    def create_render_commands(
+        self, offset: fantas.Point = (0, 0)
+    ) -> Iterator[fantas.RenderCommand]:
         """
         创建渲染命令列表
         Args:
@@ -173,18 +179,20 @@ class Image(UI):
     """
 
     surface: fantas.Surface
-    rect: fantas.RectLike = None
+    rect: fantas.Rect | fantas.IntRect = None  # type: ignore[assignment]
     fill_mode: fantas.FillMode = fantas.FillMode.IGNORE
 
     command: fantas.SurfaceRenderCommand = field(init=False, repr=False)  # 渲染命令对象
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化 Image 实例"""
         self.command = fantas.SurfaceRenderCommand(creator=self)
         if self.rect is None:
             self.rect = fantas.Rect((0, 0), self.surface.get_size())
 
-    def create_render_commands(self, offset: fantas.Point = (0, 0)):
+    def create_render_commands(
+        self, offset: fantas.Point = (0, 0)
+    ) -> Iterator[fantas.RenderCommand]:
         """
         创建渲染命令列表
         Args:
@@ -192,17 +200,18 @@ class Image(UI):
         Yields:
             RenderCommand: 渲染命令对象。
         """
-        # 调整矩形区域
-        rect = self.rect.move(offset)
-        offset = rect.topleft
         # 生成 Surface 渲染命令
         c = self.command
         c.surface = self.surface
         c.fill_mode = self.fill_mode
-        c.dest_rect = rect
+        # 调整矩形区域
+        if isinstance(self.rect, fantas.Rect):
+            c.dest_rect = fantas.IntRect(self.rect).move(offset)
+        else:
+            c.dest_rect = self.rect.move(offset)
         yield c
         # 生成子元素的渲染命令
-        yield from UI.create_render_commands(self, offset)
+        yield from UI.create_render_commands(self, c.dest_rect.topleft)
 
 
 @dataclass(slots=True)
@@ -217,9 +226,11 @@ class Text(UI):
         offset    : 文本偏移位置。
     """
 
-    children: None = field(default=None, init=False, repr=False)  # 纯色文本不包含子元素
+    children: None = field(
+        default=None, init=False, repr=False
+    )  # type: ignore[assignment]  # 纯色文本不包含子元素
 
-    rect: fantas.RectLike
+    rect: fantas.Rect
     text: str = "text"
     text_style: fantas.TextStyle = field(default_factory=fantas.DEFAULTTEXTSTYLE.copy)
     align_mode: fantas.AlignMode = fantas.AlignMode.LEFT
@@ -227,11 +238,13 @@ class Text(UI):
 
     command: fantas.TextRenderCommand = field(init=False, repr=False)  # 渲染命令
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化 ColorText 实例"""
         self.command = fantas.TextRenderCommand(creator=self)
 
-    def create_render_commands(self, offset: fantas.Point = (0, 0)):
+    def create_render_commands(
+        self, offset: fantas.Point = (0, 0)
+    ) -> Iterator[fantas.RenderCommand]:
         """
         创建渲染命令列表。
         Args:
@@ -260,14 +273,14 @@ class Text(UI):
         # 生成渲染命令
         yield rc
 
-    def _get_lineheight(self) -> float:
+    def _get_lineheight(self) -> int:
         """获取文本行高（包含行间距）"""
         return (
             self.text_style.font.get_sized_height(self.text_style.size)
             + self.text_style.line_spacing
         )
 
-    def _set_lineheight(self, lineheight: float) -> None:
+    def _set_lineheight(self, lineheight: int) -> None:
         """设置文本行高（包含行间距）"""
         self.text_style.line_spacing = (
             lineheight - self.text_style.font.get_sized_height(self.text_style.size)
@@ -290,7 +303,7 @@ class TextLabel(UI):
         offset     : 文本偏移位置。
     """
 
-    rect: fantas.RectLike
+    rect: fantas.Rect | fantas.IntRect
 
     text: str = "text"
     text_style: fantas.TextStyle = field(default_factory=fantas.DEFAULTTEXTSTYLE.copy)
@@ -308,12 +321,14 @@ class TextLabel(UI):
         init=False, repr=False
     )  # 文本渲染命令
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化 TextLabel 实例"""
         self.text_command = fantas.TextRenderCommand(creator=self)
         self.label_command = fantas.LabelRenderCommand(creator=self)
 
-    def create_render_commands(self, offset: fantas.Point = (0, 0)):
+    def create_render_commands(
+        self, offset: fantas.Point = (0, 0)
+    ) -> Iterator[fantas.RenderCommand]:
         # 简化引用
         lrc = self.label_command
         trc = self.text_command
@@ -367,7 +382,7 @@ class LinearGradientLabel(UI):
         end_pos    : 结束位置。
     """
 
-    rect: fantas.RectLike
+    rect: fantas.Rect | fantas.IntRect
     start_color: fantas.ColorLike
     end_color: fantas.ColorLike
     start_pos: fantas.Point
@@ -377,11 +392,13 @@ class LinearGradientLabel(UI):
         init=False, repr=False
     )  # 渲染命令对象
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化 LinearGradientLabel 实例"""
         self.command = fantas.LinearGradientRenderCommand(creator=self)
 
-    def create_render_commands(self, offset: fantas.Point = (0, 0)):
+    def create_render_commands(
+        self, offset: fantas.Point = (0, 0)
+    ) -> Iterator[fantas.RenderCommand]:
         """
         创建渲染命令列表
         Args:
@@ -400,14 +417,14 @@ class LinearGradientLabel(UI):
         c.rect = rect
         c.start_color = self.start_color
         c.end_color = self.end_color
-        c.start_pos = (self.start_pos[0] + offset[0], self.start_pos[1] + offset[1])
-        c.end_pos = (self.end_pos[0] + offset[0], self.end_pos[1] + offset[1])
+        c.start_pos = fantas.Vector2(self.start_pos[0] + offset[0], self.start_pos[1] + offset[1])
+        c.end_pos = fantas.Vector2(self.end_pos[0] + offset[0], self.end_pos[1] + offset[1])
         # 生成渲染命令
         yield c
         # 生成子元素的渲染命令
         yield from UI.create_render_commands(self, offset)
 
-    def mark_dirty(self):
+    def mark_dirty(self) -> None:
         """标记渲染缓存为脏"""
         self.command.cache_dirty = True
         self.command.last_pix = 0
@@ -425,23 +442,25 @@ class Animation(UI):
     """
 
     animation_helper: fantas.AnimationHelper
-    rect: fantas.RectLike
+    rect: fantas.Rect | fantas.IntRect
     fill_mode: fantas.FillMode = fantas.FillMode.IGNORE
     loops: int = 1
 
     started: bool = field(default=False, init=False, repr=False)  # 动画是否已开始
     last_time: int = field(init=False, repr=False)  # 上次更新时间（单位：ns）
-    cumulative_time: int = field(
+    cumulative_time: int | float = field(
         default=0, init=False, repr=False
     )  # 累积播放时间（单位：ns）
     current_frame_index: int = field(default=0, init=False, repr=False)  # 当前帧索引
     command: fantas.SurfaceRenderCommand = field(init=False, repr=False)  # 渲染命令对象
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化 Animation 实例"""
         self.command = fantas.SurfaceRenderCommand(creator=self)
 
-    def create_render_commands(self, offset: fantas.Point = (0, 0)):
+    def create_render_commands(
+        self, offset: fantas.Point = (0, 0)
+    ) -> Iterator[fantas.RenderCommand]:
         """
         创建渲染命令列表
         Args:
@@ -499,17 +518,17 @@ class Animation(UI):
         # 生成子元素的渲染命令
         yield from UI.create_render_commands(self, offset)
 
-    def play(self):
+    def play(self) -> None:
         """开始播放动画"""
         self.started = True
         self.last_time = fantas.get_time_ns()
 
-    def pause(self):
+    def pause(self) -> None:
         """暂停动画播放"""
         self.started = False
         self.cumulative_time += fantas.get_time_ns() - self.last_time
 
-    def set_frame(self, frame_index: int):
+    def set_frame(self, frame_index: int) -> None:
         """
         设置当前帧索引。
         Args:

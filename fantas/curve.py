@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Callable, cast
 import math
 
 import fantas
@@ -34,7 +35,7 @@ class CurveBase(ABC):
         pass
 
 
-formula_globals = {
+formula_globals: dict[str, object] = {
     "math": math,
     "pi": math.pi,
     "sin": math.sin,
@@ -66,15 +67,15 @@ class FormulaCurve(CurveBase):
         Returns:
             float: 对应的 y 值。
         """
-        return eval(self.formula, formula_globals, {"x": x})
+        return cast(float, eval(self.formula, formula_globals, {"x": x}))
 
 
 # 预定义曲线
 # 线性曲线，y = x
-CURVE_LINEAR = lambda x: x
+CURVE_LINEAR: Callable[[float], float] = lambda x: x
 # 渐快曲线，y = x^2
-CURVE_FASTER = lambda x: x * x
+CURVE_FASTER: Callable[[float], float] = lambda x: x * x
 # 渐慢曲线，y = 2x - x^2
-CURVE_SLOWER = lambda x: 2 * x - x * x
+CURVE_SLOWER: Callable[[float], float] = lambda x: 2 * x - x * x
 # 平滑曲线，y = (1 - cos(pi * x)) / 2
-CURVE_SMOOTH = FormulaCurve("(1-cos(pi*x))/2")
+CURVE_SMOOTH: FormulaCurve = FormulaCurve("(1-cos(pi*x))/2")

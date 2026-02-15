@@ -1,8 +1,8 @@
 import platform
 from pathlib import Path
-from typing import Callable
+from typing import Callable, ParamSpec, TypeVar, cast
 from itertools import count
-from importlib import resources
+# from importlib import resources
 from functools import lru_cache, wraps
 from dataclasses import dataclass, field
 from time import perf_counter_ns as get_time_ns
@@ -12,7 +12,7 @@ import fantas
 __all__ = (
     "platform",
     "get_time_ns",
-    "package_path",
+    # "package_path",
     "generate_unique_id",
     "lru_cache_typed",
     "set_cursor",
@@ -23,13 +23,13 @@ __all__ = (
 
 
 # 提供 fantas 包的路径获取函数
-def package_path():
-    """
-    获取 fantas 包的目录路径。
-    Returns:
-        path (Path): 模块所在的文件系统路径。
-    """
-    return Path(resources.files(__name__))
+# def package_path() -> Path:
+#     """
+#     获取 fantas 包的目录路径。
+#     Returns:
+#         path (Path): 模块所在的文件系统路径。
+#     """
+#     return Path(resources.files(__name__))
 
 
 # 全局唯一 ID 生成器
@@ -45,8 +45,12 @@ def generate_unique_id() -> int:
     return next(id_counter)
 
 
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
 # 类型装饰器以支持类型注解的 lru_cache
-def lru_cache_typed(maxsize=128, typed=False):
+def lru_cache_typed(maxsize: int = 128, typed: bool = False) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     生成一个保留原函数类型签名的 LRU 缓存装饰器。
     Args:
@@ -56,13 +60,13 @@ def lru_cache_typed(maxsize=128, typed=False):
         Callable: 装饰器函数。
     """
 
-    def decorator(func):
-        @wraps(func)  # 用typing.wraps保留类型签名
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        @wraps(func)
         @lru_cache(maxsize=maxsize, typed=typed)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             return func(*args, **kwargs)
 
-        return wrapper
+        return cast(Callable[P, R], wrapper)
 
     return decorator
 
@@ -129,7 +133,7 @@ class AnimationHelper:
         self,
         path: Path,
         hook: Callable[[fantas.Surface], fantas.Surface] = image_convert_hook,
-    ):
+    ) -> None:
         """
         初始化动画资源辅助类。
         Args:

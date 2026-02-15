@@ -2,6 +2,8 @@ from __future__ import annotations
 import copy
 from bisect import bisect_right
 from dataclasses import dataclass
+from collections.abc import Sequence
+from typing import Any, Callable
 
 import pygame.freetype
 from pygame.sysfont import SysFont as _SysFont
@@ -24,8 +26,8 @@ class Font(pygame.freetype.Font):
         size: float = 0,
         font_index: int = 0,
         resolution: int = 0,
-        ucs4: int = False,
-    ):
+        ucs4: bool = False,
+    ) -> None:
         """
         初始化 Font 实例。
         Args:
@@ -39,17 +41,19 @@ class Font(pygame.freetype.Font):
         self.FANTASID: int = fantas.generate_unique_id()
         font_dict[self.FANTASID] = self
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self.FANTASID in font_dict:
             del font_dict[self.FANTASID]
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.FANTASID)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, Font) and self.FANTASID == other.FANTASID
 
-    get_rect = fantas.lru_cache_typed(maxsize=65536)(pygame.freetype.Font.get_rect)
+    get_rect: Callable[..., fantas.IntRect] = fantas.lru_cache_typed(maxsize=65536)(
+        pygame.freetype.Font.get_rect
+    )
 
     @fantas.lru_cache_typed(maxsize=65536)
     def _get_width_char_kerning(
@@ -64,7 +68,7 @@ class Font(pygame.freetype.Font):
         Returns:
             int: 字符宽度（像素）。
         """
-        return (
+        return round(
             self.get_rect(char_pair, style_flag, size=size).width
             - self.get_rect(char_pair[0], style_flag, size=size).width
         )
@@ -72,7 +76,7 @@ class Font(pygame.freetype.Font):
     @fantas.lru_cache_typed(maxsize=65536)
     def get_widthes(
         self, style_flag: fantas.TextStyleFlag, size: float, text: str
-    ) -> tuple[int]:
+    ) -> tuple[int, ...]:
         """
         获取指定样式文本的宽度度量信息。
         Args:
@@ -83,7 +87,7 @@ class Font(pygame.freetype.Font):
             tuple[int]: 字体度量信息列表，每一个元素对应文本中字符的右侧坐标（从 0 开始）。
         """
         # 初始化度量信息列表
-        widthes = [self.get_rect(text[0], style_flag, size=size).width]
+        widthes: list[int] = [self.get_rect(text[0], style_flag, size=size).width]
         # 简化引用
         append = widthes.append
         # 逐字计算度量信息
@@ -98,7 +102,7 @@ class Font(pygame.freetype.Font):
     @fantas.lru_cache_typed(maxsize=65536)
     def auto_wrap(
         self, style_flag: fantas.TextStyleFlag, size: float, text: str, width: int
-    ) -> tuple[tuple[str, int]]:
+    ) -> tuple[tuple[str, int], ...]:
         """
         自动换行文本。
         Args:
@@ -109,10 +113,12 @@ class Font(pygame.freetype.Font):
         Returns:
             换行后的文本行列表，每行包含文本内容和宽度。
         """
-        results = []
+        results: list[tuple[str, int]] = []
         append = results.append
         for text in text.splitlines():
-            line_width = self.get_widthes(style_flag, size, text) if text else [0]
+            line_width: Sequence[int] = (
+                self.get_widthes(style_flag, size, text) if text else [0]
+            )
             # 如果整行宽度小于等于区域宽度则直接添加
             if line_width[-1] <= width:
                 append((text, line_width[-1]))
@@ -136,10 +142,10 @@ class Font(pygame.freetype.Font):
         return tuple(results)
 
 
-pygame.freetype.Font = Font
+pygame.freetype.Font = Font  # type: ignore[assignment, misc]
 
 
-def SysFont(name, size: float = 16.0) -> Font:
+def SysFont(name: Any, size: float = 16.0) -> Font | Any:
     """
     创建并返回一个系统字体的 Font 实例。
     Args:
@@ -148,10 +154,12 @@ def SysFont(name, size: float = 16.0) -> Font:
     Returns:
         Font: 创建的字体实例。
     """
-    return _SysFont(name, size, constructor=constructor)
+    return _SysFont(name, size, constructor=constructor)  # type: ignore[no-untyped-call]
 
 
-def constructor(fontpath, size, _, __):
+def constructor(
+    fontpath: fantas.FileLike | None, size: float, _: bool, __: bool
+) -> Font:
     """字体构造函数，用于 SysFont 创建 Font 实例。"""
     return Font(fontpath, size)
 

@@ -1,12 +1,12 @@
 """
-这个脚本旨在集成所有可能使用的项目开发指令。
+这个脚本旨在集成所有可能使用的项目开发指令
 
 本脚本很大程度上学习于 pygame-ce 的 dev.py。感谢 pygame-ce 团队的辛勤工作！
 """
 
 import os
-import re
 import sys
+import shutil
 import argparse
 import subprocess
 from enum import Enum
@@ -37,10 +37,11 @@ class PygameStatus(Enum):
     NOT_INSTALLED = 0
     INSTALLED_CORRECTLY = 1
     INSTALLED_INCORRECTLY = 2
+    INSTALLED_PYGAME = 3
 
 
 # 参考链接 https://docs.python.org/3.13/using/cmdline.html#controlling-color
-def has_color():
+def has_color() -> bool:
     # 最高优先级
     python_colors = os.environ.get("PYTHON_COLORS", "").strip()
     if python_colors == "1":
@@ -60,7 +61,7 @@ def has_color():
     return os.environ.get("TERM", "").strip().lower() != "dumb"
 
 
-def pprint(arg: str, col: Colors = Colors.YELLOW):
+def pprint(arg: str, col: Colors = Colors.YELLOW) -> None:
     do_col = has_color()
     start = Colors.BLUE.value if do_col else ""
     mid = col.value if do_col else ""
@@ -102,12 +103,20 @@ def cmd_run(
     return ret.stdout.strip() if capture_output else ""
 
 
-def show_diff_and_help_commit(command: str):
+def check_git_clean() -> None:
     try:
-        cmd_run(["git", "status", "--porcelain", "--no-pager"], error_on_output=True)
+        cmd_run(["git", "--no-pager", "status", "--porcelain"], error_on_output=True)
+    except subprocess.CalledProcessError:
+        pprint("当前 git 仓库存在未提交的更改，请先提交这些更改", Colors.RED)
+        sys.exit(1)
+
+
+def show_diff_and_help_commit(command: str) -> None:
+    try:
+        cmd_run(["git", "--no-pager", "status", "--porcelain"], error_on_output=True)
     except subprocess.CalledProcessError:
         try:
-            cmd_run(["git", "diff", "--no-pager"])
+            cmd_run(["git", "--no-pager", "diff"])
         finally:
             pprint(f"运行 {command} 命令时产生了上述更改", Colors.RED)
             pprint("是否需要自动添加这些修改并提交一次commit？ (y/n)", Colors.RED)
@@ -129,21 +138,26 @@ def show_diff_and_help_commit(command: str):
             sys.exit(1)
 
 
-def is_poetry_installed():
-    pprint("检查 Poetry 是否安装中")
+def get_poetry_executable() -> Path | None:
+    pprint("查找 Poetry 可执行文件中")
     try:
-        # 命令行检查
-        result = subprocess.run(
+        # 命令行查找
+        subprocess.run(
             ["poetry", "--version"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             check=True,
         )
-        return "Poetry (version" in result.stdout
+        if sys.platform == "win32":
+            poetry_path = cmd_run(["where", "poetry"], capture_output=True)
+        else:
+            poetry_path = cmd_run(["which", "poetry"], capture_output=True)
+        if poetry_path and Path(poetry_path).exists():
+            return Path(poetry_path)
 
     except (subprocess.CalledProcessError, FileNotFoundError):
-        # 如果命令行检查失败，尝试在常见路径中查找 Poetry 可执行文件
+        # 命令行查找失败，遍历常见路径
         poetry_paths = [
             Path.home() / ".local/bin/poetry",
             Path.home() / ".local/share/pypoetry/venv/bin/poetry",
@@ -156,12 +170,13 @@ def is_poetry_installed():
 
         for path in poetry_paths:
             if path.exists() and os.access(path, os.X_OK):
-                os.environ["PATH"] += os.pathsep + os.path.dirname(path)
-                return True
-        return False
+                pprint(f"找到 Poetry 可执行文件：{path}", Colors.GREEN)
+                return path
+    pprint("未找到 Poetry 可执行文件", Colors.RED)
+    return None
 
 
-def download_poetry_install_script(destination: Path):
+def download_poetry_install_script(destination: Path) -> None:
     if not destination.parent.exists():
         destination.parent.mkdir(parents=True, exist_ok=True)
 
@@ -172,10 +187,10 @@ def download_poetry_install_script(destination: Path):
         urllib.request.urlretrieve("https://install.python-poetry.org/", destination)
 
 
-def install_poetry():
+def install_poetry() -> Path:
     pprint("安装 Poetry 中")
 
-    install_poetry_script_path = CWD / "tmp" / "install_poetry.py"
+    install_poetry_script_path = CWD / "tools" / "install_poetry.py"
     download_poetry_install_script(install_poetry_script_path)
 
     error = False
@@ -184,16 +199,20 @@ def install_poetry():
     except subprocess.CalledProcessError:
         error = True
 
-    if error or not is_poetry_installed():
+    path = get_poetry_executable()
+
+    if error or path is None:
         pprint("Poetry 安装失败，请手动安装 Poetry 后重试", Colors.RED)
         sys.exit(1)
     pprint("Poetry 安装成功", Colors.GREEN)
 
+    return path
 
-def uninstall_poetry():
+
+def uninstall_poetry() -> None:
     pprint("卸载 Poetry 中")
 
-    install_poetry_script_path = CWD / "tmp" / "install_poetry.py"
+    install_poetry_script_path = CWD / "tools" / "install_poetry.py"
     download_poetry_install_script(install_poetry_script_path)
 
     error = False
@@ -202,17 +221,17 @@ def uninstall_poetry():
     except subprocess.CalledProcessError:
         error = True
 
-    if error or is_poetry_installed():
+    if error or get_poetry_executable() is not None:
         pprint("Poetry 卸载失败，请手动卸载 Poetry 后重试", Colors.RED)
         sys.exit(1)
     pprint("Poetry 卸载成功", Colors.GREEN)
 
 
-def poetry_install_dependencies():
+def poetry_install_dependencies(poetry_path: Path) -> None:
     pprint("安装项目依赖中 (使用 Poetry)")
 
     try:
-        cmd_run(["poetry", "install", "--no-root"])
+        cmd_run([poetry_path, "install", "--no-root"])
     except subprocess.CalledProcessError as e:
         pprint("项目依赖安装失败", Colors.RED)
         raise e
@@ -221,15 +240,14 @@ def poetry_install_dependencies():
 def get_pygame_ce_fantas_status(py: Path) -> PygameStatus:
     pprint("检查 pygame-ce (fantas 分支版本) 安装状态中")
 
-    check_script_path = CWD / "tmp" / "check_pygame_ce_fantas.py"
+    check_script_path = CWD / "tools" / "check_pygame_ce_fantas.py"
 
     if not check_script_path.parent.exists():
         check_script_path.parent.mkdir(parents=True, exist_ok=True)
 
     if not check_script_path.exists():
         check_script_path.write_text(
-            """
-import os
+            """import os
 import sys
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 try:
@@ -237,10 +255,13 @@ try:
 except ImportError:
     print('0')    # pygame 未安装
     sys.exit(0)
-if getattr(pygame, 'IS_FANTAS', False):
-    print('1')    # pygame 正确安装
+if getattr(pygame, 'IS_CE', False):
+    if getattr(pygame, 'IS_FANTAS', False):
+        print('1')    # pygame-ce 正确安装
+    else:
+        print('2')    # pygame-ce 版本不正确
 else:
-    print('2')    # pygame 版本不正确
+    print('3')    # 安装了非 pygame-ce
 """
         )
 
@@ -251,13 +272,15 @@ else:
         pprint("pygame 未安装")
     elif status == PygameStatus.INSTALLED_CORRECTLY:
         pprint("pygame-ce (fantas 分支版本) 已正确安装", Colors.GREEN)
-    else:
-        pprint("pygame 已安装但版本不正确", Colors.RED)
+    elif status == PygameStatus.INSTALLED_INCORRECTLY:
+        pprint("pygame-ce 已安装但版本不正确", Colors.RED)
+    elif status == PygameStatus.INSTALLED_PYGAME:
+        pprint("安装了非 pygame-ce 版本的 pygame", Colors.RED)
 
     return status
 
 
-def check_and_update_pygame_ce_fantas():
+def check_and_update_pygame_ce_fantas() -> None:
     pprint("检查 pygame-ce-fantas 仓库中 (使用 git)")
 
     if not PYGAME_CE_FANTAS_DIR.exists():
@@ -316,7 +339,8 @@ def check_and_update_pygame_ce_fantas():
         cmd_run(["git", "pull"], cwd=PYGAME_CE_FANTAS_DIR)
     except subprocess.CalledProcessError:
         pprint("- 请检查网络连接，是否能访问 GitHub", Colors.MAGENTA)
-        pprint(f"- 或者手动执行命令：git -C {PYGAME_CE_FANTAS_DIR} pull", Colors.CYAN)
+        pprint(f"- 或者手动执行命令：", Colors.MAGENTA)
+        pprint(f"  git -C {PYGAME_CE_FANTAS_DIR} pull", Colors.CYAN)
         pprint(
             "更新 pygame-ce-fantas 仓库失败，请执行上述检查后重新运行 dev.py",
             Colors.RED,
@@ -324,24 +348,35 @@ def check_and_update_pygame_ce_fantas():
         sys.exit(1)
 
 
-def build_and_install_pygame_ce_fantas(py: Path):
-    pprint("构建并安装 pygame-ce (fantas 分支版本) 中 (第一次构建可能会比较慢)")
-
+def build_and_install_pygame_ce_fantas(py: Path) -> None:
+    pprint("安装 pygame-ce (fantas 分支版本) 中")
     try:
-        cmd_run(
-            [py, "dev.py", "build", "--wheel", "--stripped"], cwd=PYGAME_CE_FANTAS_DIR
-        )
+        cmd_run([py, "-m", "pip", "install", "."], cwd=PYGAME_CE_FANTAS_DIR)
     except subprocess.CalledProcessError as e:
-        pprint("构建或安装 pygame-ce (fantas 分支版本) 失败", Colors.RED)
+        pprint("pygame-ce (fantas 分支版本) 安装失败", Colors.RED)
         raise e
 
 
-def uninstall_pygame_ce_fantas(py: Path):
-    pprint("卸载 pygame 中 (使用 pip)")
+def uninstall_pygame_ce_fantas(py: Path, status: PygameStatus) -> None:
+    pprint(
+        f"卸载 {'pygame' if status == PygameStatus.INSTALLED_PYGAME else 'pygame-ce'} 中 (使用 pip)"
+    )
     try:
-        cmd_run([py, "-m", "pip", "uninstall", "-y", "pygame"])
+        cmd_run(
+            [
+                py,
+                "-m",
+                "pip",
+                "uninstall",
+                "-y",
+                "pygame" if status == PygameStatus.INSTALLED_PYGAME else "pygame-ce",
+            ]
+        )
     except subprocess.CalledProcessError as e:
-        pprint("pygame 卸载失败", Colors.RED)
+        pprint(
+            f"{'pygame' if status == PygameStatus.INSTALLED_PYGAME else 'pygame-ce'} 卸载失败",
+            Colors.RED,
+        )
         raise e
 
 
@@ -374,21 +409,19 @@ class Dev:
 
     #     cmd_run([self.py, "-m", "pylint", "fantas", "docs"])
 
-    # def cmd_stubs(self):
-    #     pprint("生成并校验类型提示中 (使用 mypy)")
+    def cmd_stubs(self) -> None:
+        pprint("执行静态类型检查中 (使用 mypy)")
 
-    #     cmd_run([self.py, "buildconfig/stubs/gen_stubs.py"])
+        cmd_run(
+            [self.venv_py, "-m", "mypy", CWD, "--config-file", CWD / "pyproject.toml"]
+        )
 
-    #     show_diff_and_help_commit("stubs")
-
-    #     cmd_run([self.py, "buildconfig/stubs/stubcheck.py"])
-
-    def cmd_format(self):
+    def cmd_format(self) -> None:
         pprint("格式化代码中 (使用 black)")
 
         cmd_run([self.venv_py, "-m", "black", "."])
 
-        show_diff_and_help_commit("format")
+        # show_diff_and_help_commit("format")
 
     # def cmd_test(self):
     #     mod = self.args.get("mod", [])
@@ -401,18 +434,18 @@ class Dev:
     #         pprint("测试所有模块中")
     #         cmd_run([self.py, "-m", "fantas.tests"])
 
-    def cmd_auto(self):
+    def cmd_auto(self) -> None:
         self.cmd_format()
-        # self.cmd_docs(full=self.args.full_docs)
-        # self.cmd_stubs()
+        self.cmd_stubs()
         # self.cmd_lint()
+        # self.cmd_docs(full=self.args.full_docs)
         # self.cmd_test()
         # if self.args.install:
         #     self.cmd_install()
         # else:
         #     self.cmd_build()
 
-    def parse_args(self):
+    def parse_args(self) -> None:
         parser = argparse.ArgumentParser(
             description=(
                 "项目开发命令集成。"
@@ -484,40 +517,48 @@ class Dev:
 
         # 如果没有指定子命令，则默认为 auto
         if not self.args["command"]:
-            self.args["command"] = "auto"
+            self.args["command"] = "stubs"
 
-    def prep_venv(self):
+    def prep_venv(self) -> None:
         pprint("准备虚拟环境中 (使用 Poetry)")
 
-        cmd_run(["poetry", "env", "use", self.py])
-        venv_py = cmd_run(["poetry", "env", "info", "--path"], capture_output=True)
+        cmd_run([self.poetry_path, "env", "use", self.py])
+        venv_py = cmd_run(
+            [self.poetry_path, "env", "info", "--path"], capture_output=True
+        )
         if sys.platform == "win32":
             self.venv_py = Path(venv_py) / "Scripts" / "python.exe"
         else:
             self.venv_py = Path(venv_py) / "bin" / "python"
 
-    def run(self):
+    def run(self) -> None:
+        # check_git_clean()
+
         self.parse_args()
 
         pprint(f"运行子命令 '{self.args['command']}'")
 
         try:
-            if not is_poetry_installed():
-                install_poetry()
+            poetry_path = get_poetry_executable()
+            if poetry_path is None:
+                self.poetry_path = install_poetry()
+            else:
+                self.poetry_path = poetry_path
 
             self.prep_venv()
 
             pygame_status = get_pygame_ce_fantas_status(self.venv_py)
             if not pygame_status == PygameStatus.INSTALLED_CORRECTLY:
                 if pygame_status == PygameStatus.INSTALLED_INCORRECTLY:
-                    uninstall_pygame_ce_fantas(self.venv_py)
+                    uninstall_pygame_ce_fantas(self.venv_py, pygame_status)
                 check_and_update_pygame_ce_fantas()
                 build_and_install_pygame_ce_fantas(self.venv_py)
 
-            poetry_install_dependencies()
+            poetry_install_dependencies(self.poetry_path)
 
             func = getattr(self, f"cmd_{self.args['command']}")
             func()
+
         except subprocess.CalledProcessError as e:
             pprint(f"程序异常退出，错误代码 {e.returncode}", Colors.RED)
             sys.exit(e.returncode)

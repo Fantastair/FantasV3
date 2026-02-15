@@ -1,25 +1,27 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from collections import deque
+from typing import Any, Deque, Generic, TypeVar, cast
 
 __all__ = ("NodeBase",)
 
+T = TypeVar("T", bound="NodeBase[Any]")
 
 @dataclass(slots=True)
-class NodeBase:
+class NodeBase(Generic[T]):
     """树形节点基类，数据域由子类实现。"""
 
-    father: NodeBase | None = field(default=None, init=False)  # 指向父节点
-    children: list[NodeBase] = field(
+    father: T | None = field(default=None, init=False)  # 指向父节点
+    children: list[T] = field(
         default_factory=list, init=False
     )  # 存储孩子节点，有序
-    pass_path_cache: list[NodeBase] | None = field(
+    pass_path_cache: list[T] | None = field(
         default=None, init=False, repr=False
     )  # 传递路径缓存
 
     # === 结构操作方法 ===
 
-    def append(self, node: NodeBase):
+    def append(self, node: T) -> None:
         """
         添加 node 节点至最后子节点。
         如果 node 已有父节点，则会先将 node 从其父节点中移除。
@@ -31,7 +33,7 @@ class NodeBase:
         node.father = self
         self.children.append(node)
 
-    def insert(self, index: int, node: NodeBase):
+    def insert(self, index: int, node: T) -> None:
         """
         插入 node 至 index 位置。
         如果 node 已有父节点，则会先将 node 从其父节点中移除。
@@ -44,7 +46,7 @@ class NodeBase:
         node.father = self
         self.children.insert(index, node)
 
-    def remove(self, node: NodeBase):
+    def remove(self, node: T) -> None:
         """
         从自己的子节点中移除 node。
         Args:
@@ -59,7 +61,7 @@ class NodeBase:
         except ValueError:
             raise ValueError("要移除的节点不是当前节点的子节点。") from None
 
-    def pop(self, index: int) -> NodeBase:
+    def pop(self, index: int) -> T:
         """
         移除index位置的node。
         Args:
@@ -77,21 +79,21 @@ class NodeBase:
         except IndexError:
             raise IndexError("索引越界。") from None
 
-    def leave(self):
+    def leave(self) -> None:
         """从父节点中移除自己。"""
         if self.father is not None:
             self.father.remove(self)
 
-    def clear(self):
+    def clear(self) -> None:
         """移除所有子节点。"""
         for child in self.children:
             child.father = None
             child.clear_pass_path_cache()
         self.children.clear()
 
-    def build_pass_path_cache(self):
+    def build_pass_path_cache(self) -> None:
         """构建传递路径缓存，包括自己及所有子节点。"""
-        build_queue = deque()
+        build_queue: Deque[NodeBase[T]] = deque()
         build_queue.append(self)
         while build_queue:
             node = build_queue.popleft()
@@ -102,9 +104,9 @@ class NodeBase:
                 for child in node.children:
                     build_queue.append(child)
 
-    def clear_pass_path_cache(self):
+    def clear_pass_path_cache(self) -> None:
         """清除传递路径缓存，包括自己及所有子节点。"""
-        clear_queue = deque()
+        clear_queue: Deque[NodeBase[T]] = deque()
         clear_queue.append(self)
         while clear_queue:
             node = clear_queue.popleft()
@@ -127,9 +129,11 @@ class NodeBase:
 
     def get_index(self) -> int:
         """查询自己在父节点中的位置。"""
+        if self.father is None:
+            raise ValueError("根节点没有父节点，因此没有位置索引。")
         return self.father.children.index(self)
 
-    def get_pass_path(self) -> list[NodeBase]:
+    def get_pass_path(self) -> list[T]:
         """
         获取传递路径。
         传递路径是从自己到根节点的节点列表。
@@ -140,8 +144,8 @@ class NodeBase:
         if self.pass_path_cache is not None:
             return self.pass_path_cache
         # 如果是根节点，路径即为自己
-        elif self.is_root():
-            return [self]
+        elif self.father is None:
+            return [cast(T, self)]
         # 否则递归获取父节点的传递路径并添加自己
-        self.pass_path_cache = [self] + self.father.get_pass_path()
+        self.pass_path_cache = [cast(T, self)] + self.father.get_pass_path()
         return self.pass_path_cache

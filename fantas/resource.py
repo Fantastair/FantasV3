@@ -36,7 +36,7 @@ class ResourceLoader(Generic[T]):
             raise KeyError(f"资源 '{name}' 未加载。")
         return self._resources[name]
 
-    def set(self, name: str, resource: T):
+    def set(self, name: str, resource: T) -> None:
         """
         手动设置资源。
         Args:
@@ -52,10 +52,10 @@ class ImageLoader(ResourceLoader[fantas.Surface]):
 
     def load_bitmap(
         self,
-        path: Path,
-        alias: str = None,
+        path: Path | str,
+        alias: str | None = None,
         hook: Callable[[fantas.Surface], fantas.Surface] = fantas.image_convert_hook,
-    ):
+    ) -> None:
         """
         加载位图图像资源。
         Args:
@@ -69,11 +69,11 @@ class ImageLoader(ResourceLoader[fantas.Surface]):
 
     def load_svg(
         self,
-        path: Path,
-        alias: str = None,
+        path: Path | str,
+        alias: str | None = None,
         size: int = 64,
         hook: Callable[[fantas.Surface], fantas.Surface] = fantas.image_convert_hook,
-    ):
+    ) -> None:
         """
         加载 SVG 图像资源。
         Args:
@@ -85,7 +85,7 @@ class ImageLoader(ResourceLoader[fantas.Surface]):
         if not isinstance(path, Path):
             path = Path(path)
         self._resources[alias if alias else path.stem] = hook(
-            fantas.image.load_sized_svg(path, size)
+            fantas.image.load_sized_svg(path, (size, size))
         )
 
 
@@ -96,7 +96,7 @@ images = ImageLoader()
 class FontLoader(ResourceLoader[fantas.Font]):
     """字体资源加载器。"""
 
-    def load(self, path: Path, alias: str = None):
+    def load(self, path: Path | str, alias: str | None = None) -> None:
         """
         加载字体资源。
         Args:
@@ -122,7 +122,7 @@ class FontLoader(ResourceLoader[fantas.Font]):
             self._default_sysfont.kerning = True
         return self._default_sysfont
 
-    def set_default_sysfont(self, font: fantas.Font):
+    def set_default_sysfont(self, font: fantas.Font) -> None:
         """设置默认系统字体。"""
         self._default_sysfont = font
 
@@ -136,7 +136,7 @@ fonts = FontLoader()
 class ColorLoader(ResourceLoader[fantas.Color]):
     """颜色资源加载器。"""
 
-    def load(self, color: str, name: str = None):
+    def load(self, color: str, name: str | None = None) -> None:
         """
         加载颜色资源。
         Args:
@@ -145,7 +145,7 @@ class ColorLoader(ResourceLoader[fantas.Color]):
         """
         self._resources[name if name else color] = fantas.Color(color)
 
-    def load_preset_colors(self):
+    def load_preset_colors(self) -> None:
         """加载预设颜色。"""
         from pygame import colordict
 
@@ -161,10 +161,10 @@ class AnimationLoader(ResourceLoader[fantas.AnimationHelper]):
 
     def load(
         self,
-        path: Path,
-        alias: str = None,
+        path: Path | str,
+        alias: str | None = None,
         hook: Callable[[fantas.Surface], fantas.Surface] = fantas.image_convert_hook,
-    ):
+    ) -> None:
         if not isinstance(path, Path):
             path = Path(path)
         self._resources[alias if alias else path.stem] = fantas.AnimationHelper(

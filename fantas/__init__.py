@@ -1,3 +1,14 @@
+__all__ = (
+    'time',
+    'draw',
+    'math',
+    'event',
+    'mouse',
+    'image',
+    'display',
+    'transform',
+)
+
 # 设置 Pygame 环境变量以优化性能和兼容性
 import os
 
@@ -30,7 +41,7 @@ os.environ.update(
 # 初始化 Pygame
 import pygame
 
-if getattr(pygame, "IS_FANTAS", False):
+if not getattr(pygame, "IS_FANTAS", False):
     raise RuntimeError(
         "使用的 Pygame 版本不兼容 Fantas，请确保安装了 pygame-ce 的 fantas 分支版本。"
     )
@@ -68,10 +79,8 @@ from fantas.framefunc import *  # 帧函数支持
 from fantas.ui import *  # UI 基类
 from fantas.layout import *  # 布局支持
 
-# 如果在调试模式下，导入调试和 UDP 通信模块
-if os.environ.get("FANTAS_DEBUG_OFF", "0") != "1":
-    from fantas.udp import *  # UDP 通信
-    from fantas.debug import *  # 调试功能
+from fantas.udp import *  # UDP 通信
+from fantas.debug import *  # 调试功能
 
 # 先禁用所有事件，然后再根据需要启用特定事件
 event.set_blocked(None)

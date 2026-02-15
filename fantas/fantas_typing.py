@@ -21,6 +21,8 @@ __all__ = (
     "QuadrantMask",
     "TextStyleFlag",
     "BlendFlag",
+    "Vector2",
+    "Vector3",
 )
 
 from pygame import Surface  # 表面类
@@ -43,7 +45,7 @@ EventType: TypeAlias = int  # 事件类型
 
 UIID: TypeAlias = int  # UI 元素唯一标识类型
 ListenerKey: TypeAlias = tuple[EventType, UIID, bool]  # 监听器键类型
-ListenerFunc: TypeAlias = Callable[[Event], bool]  # 监听器函数类型
+ListenerFunc: TypeAlias = Callable[[Event], bool | None]  # 监听器函数类型
 ListenerDict: TypeAlias = dict[ListenerKey, list[ListenerFunc]]  # 监听器字典类型
 
 QuadrantMask: TypeAlias = int  # 象限掩码类型，是 fantas.Quadrant 通过或运算得到的值
@@ -53,3 +55,6 @@ TextStyleFlag: TypeAlias = (
 )
 
 BlendFlag: TypeAlias = int  # 混合标志类型，BLEND_* 常量
+
+Vector2 = pygame.math.Vector2  # 二维向量类
+Vector3 = pygame.math.Vector3  # 三维向量类

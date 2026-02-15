@@ -1,5 +1,6 @@
 from __future__ import annotations
 from enum import Enum, IntEnum, auto
+from typing import Final, cast
 
 import pygame
 import pygame.freetype
@@ -115,16 +116,12 @@ __all__ = [
 ]
 
 
-DEFAULTFONT = pygame.freetype.Font(None)  # 默认字体
+DEFAULTFONT: fantas.Font = pygame.freetype.Font(None)  # type: ignore[assignment]  # 默认字体
 DEFAULTFONT.origin = True
 DEFAULTFONT.kerning = True
 
-DEFAULTTEXTSTYLE: fantas.TextStyle = (
-    None  # 默认 Text  样式，在 fantas.style 模块中初始化
-)
-DEFAULTLABELSTYLE: fantas.LabelStyle = (
-    None  # 默认 Label 样式，在 fantas.style 模块中初始化
-)
+DEFAULTTEXTSTYLE: fantas.TextStyle  # 默认 Text  样式，在 fantas.style 模块中初始化
+DEFAULTLABELSTYLE: fantas.LabelStyle  # 默认 Label 样式，在 fantas.style 模块中初始化
 
 
 class Quadrant(IntEnum):
@@ -265,7 +262,7 @@ def get_event_category(event_type: fantas.EventType) -> EventCategory:
 
 
 # 自定义事件
-MOUSEENTERED = custom_event(EventCategory.MOUSE)  # 鼠标进入事件
-MOUSELEAVED = custom_event(EventCategory.MOUSE)  # 鼠标离开事件
-MOUSECLICKED = custom_event(EventCategory.MOUSE)  # 有效单击事件
-DEBUGRECEIVED = custom_event()  # 接收到调试信息事件
+MOUSEENTERED: Final[fantas.EventType] = custom_event(EventCategory.MOUSE)  # 鼠标进入事件
+MOUSELEAVED: Final[fantas.EventType] = custom_event(EventCategory.MOUSE)  # 鼠标离开事件
+MOUSECLICKED: Final[fantas.EventType] = custom_event(EventCategory.MOUSE)  # 有效单击事件
+DEBUGRECEIVED: Final[fantas.EventType] = custom_event()  # 接收到调试信息事件

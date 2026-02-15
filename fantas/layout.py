@@ -1,6 +1,8 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from dataclasses import dataclass, field
+from typing import Protocol, cast
 
 import fantas
 
@@ -13,13 +15,19 @@ __all__ = (
 )
 
 
+class _HasRect(Protocol):
+    rect: fantas.Rect | fantas.IntRect
+
+
 @dataclass(slots=True)
 class Layout(fantas.UI, ABC):
     """
     布局器基类。
     """
 
-    def create_render_commands(self, offset: fantas.Point = (0, 0)):
+    def create_render_commands(
+        self, offset: fantas.Point = (0, 0)
+    ) -> Iterator[fantas.RenderCommand]:
         """
         创建渲染命令列表，由子类实现，本方法会遍历子节点并生成渲染命令
         Args:
@@ -31,7 +39,7 @@ class Layout(fantas.UI, ABC):
         yield from fantas.UI.create_render_commands(self, offset)
 
     @abstractmethod
-    def auto_layout(self):
+    def auto_layout(self) -> None:
         """
         自动布局方法，由子类实现，负责根据布局规则调整子元素的位置和大小。
         """
@@ -44,49 +52,51 @@ class RelativeLayout(Layout):
     相对布局器。
     """
 
-    margin_dict: dict[fantas.UIID, list[int, int, int, int]] = field(
+    margin_dict: dict[fantas.UIID, list[int | None]] = field(
         default_factory=dict, init=False, repr=False
     )  # 元素ID到边距的映射，边距格式为 [left, top, right, bottom]
     default_margin: list[int | None] = field(
         default_factory=lambda: [None, None, None, None], init=False, repr=False
     )  # 默认边距
 
-    def auto_layout(self):
+    def auto_layout(self) -> None:
         """
         自动相对布局。
         """
-        size = self.father.rect.size
+        father = cast(_HasRect, self.father)
+        size = father.rect.size
         for child in self.children:
+            rect_child = cast(_HasRect, child)
             left, top, right, bottom = self.margin_dict.get(
                 child.ui_id, self.default_margin
             )
             # 水平布局
             if left is not None and right is not None:
-                child.rect.left = left
-                child.rect.width = size[0] - left - right
+                rect_child.rect.left = left
+                rect_child.rect.width = size[0] - left - right
             elif left is not None:
-                child.rect.left = left
+                rect_child.rect.left = left
             elif right is not None:
-                child.rect.right = size[0] - right
+                rect_child.rect.right = size[0] - right
             # 垂直布局
             if top is not None and bottom is not None:
-                child.rect.top = top
-                child.rect.height = size[1] - top - bottom
+                rect_child.rect.top = top
+                rect_child.rect.height = size[1] - top - bottom
             elif top is not None:
-                child.rect.top = top
+                rect_child.rect.top = top
             elif bottom is not None:
-                child.rect.bottom = size[1] - bottom
+                rect_child.rect.bottom = size[1] - bottom
 
-    def set_margin(self, child: fantas.UI, margin: list[int, int, int, int]):
+    def set_margin(self, child: fantas.UI, margin: list[int | None]) -> None:
         """
         设置子元素的边距。
         Args:
             child (fantas.UI): 子元素对象。
-            margin (list[int, int, int, int]): 边距值列表，格式为 [left, top, right, bottom]。
+            margin (list[int | None]): 边距值列表，格式为 [left, top, right, bottom]。
         """
         self.margin_dict[child.ui_id] = margin
 
-    def set_margin_left(self, child: fantas.UI, left: int):
+    def set_margin_left(self, child: fantas.UI, left: int) -> None:
         """
         设置子元素的左边距。
         Args:
@@ -96,7 +106,7 @@ class RelativeLayout(Layout):
         margin = self.margin_dict.setdefault(child.ui_id, [None, None, None, None])
         margin[0] = left
 
-    def set_margin_top(self, child: fantas.UI, top: int):
+    def set_margin_top(self, child: fantas.UI, top: int) -> None:
         """
         设置子元素的上边距。
         Args:
@@ -106,7 +116,7 @@ class RelativeLayout(Layout):
         margin = self.margin_dict.setdefault(child.ui_id, [None, None, None, None])
         margin[1] = top
 
-    def set_margin_right(self, child: fantas.UI, right: int):
+    def set_margin_right(self, child: fantas.UI, right: int) -> None:
         """
         设置子元素的右边距。
         Args:
@@ -116,7 +126,7 @@ class RelativeLayout(Layout):
         margin = self.margin_dict.setdefault(child.ui_id, [None, None, None, None])
         margin[2] = right
 
-    def set_margin_bottom(self, child: fantas.UI, bottom: int):
+    def set_margin_bottom(self, child: fantas.UI, bottom: int) -> None:
         """
         设置子元素的下边距。
         Args:
@@ -134,7 +144,7 @@ class RelativeLayout(Layout):
         """
         return self.default_margin[0]
 
-    def _set_default_margin_left(self, value: int | None):
+    def _set_default_margin_left(self, value: int | None) -> None:
         """
         设置默认左边距。
         Args:
@@ -152,7 +162,7 @@ class RelativeLayout(Layout):
         """
         return self.default_margin[1]
 
-    def _set_default_margin_top(self, value: int | None):
+    def _set_default_margin_top(self, value: int | None) -> None:
         """
         设置默认上边距。
         Args:
@@ -170,7 +180,7 @@ class RelativeLayout(Layout):
         """
         return self.default_margin[2]
 
-    def _set_default_margin_right(self, value: int | None):
+    def _set_default_margin_right(self, value: int | None) -> None:
         """
         设置默认右边距。
         Args:
@@ -190,7 +200,7 @@ class RelativeLayout(Layout):
         """
         return self.default_margin[3]
 
-    def _set_default_margin_bottom(self, value: int | None):
+    def _set_default_margin_bottom(self, value: int | None) -> None:
         """
         设置默认下边距。
         Args:
@@ -209,7 +219,7 @@ class RelativeLayout(Layout):
         margin_top: int | None = None,
         margin_right: int | None = None,
         margin_bottom: int | None = None,
-    ):
+    ) -> None:
         """
         添加子元素并设置边距。
 
@@ -233,7 +243,7 @@ class RelativeLayout(Layout):
         margin_top: int | None = None,
         margin_right: int | None = None,
         margin_bottom: int | None = None,
-    ):
+    ) -> None:
         """
         插入子元素并设置边距。
 
@@ -250,7 +260,7 @@ class RelativeLayout(Layout):
         if any(margin):
             self.set_margin(node, margin)
 
-    def remove(self, node: fantas.UI):
+    def remove(self, node: fantas.UI) -> None:
         """
         从自己的子元素中移除 node。
         Args:
@@ -277,14 +287,14 @@ class RelativeLayout(Layout):
             del self.margin_dict[node.ui_id]
         return node
 
-    def clear(self):
+    def clear(self) -> None:
         """
         清除所有子元素。
         """
         fantas.UI.clear(self)
         self.margin_dict.clear()
 
-    def auto_clear(self):
+    def auto_clear(self) -> None:
         """
         清除不存在的子元素的边距数据。
         """
@@ -300,32 +310,34 @@ class RatioLayout(Layout):
     比例布局器。
     """
 
-    ratio_dict: dict[fantas.UIID, list[float, float, float, float]] = field(
+    ratio_dict: dict[fantas.UIID, list[float | None]] = field(
         default_factory=dict, init=False, repr=False
     )  # 元素ID到比例的映射，比例格式为 [left_ratio, top_ratio, width_ratio, height_ratio]
     default_ratio: list[float | None] = field(
         default_factory=lambda: [None, None, None, None], init=False, repr=False
     )  # 默认比例
 
-    def auto_layout(self):
+    def auto_layout(self) -> None:
         """
         自动比例布局。
         """
-        size = self.father.rect.size
+        father = cast(_HasRect, self.father)
+        size = father.rect.size
         for child in self.children:
+            rect_child = cast(_HasRect, child)
             left_ratio, top_ratio, width_ratio, height_ratio = self.ratio_dict.get(
                 child.ui_id, self.default_ratio
             )
             if left_ratio is not None:
-                child.rect.left = round(size[0] * left_ratio)
+                rect_child.rect.left = round(size[0] * left_ratio)
             if top_ratio is not None:
-                child.rect.top = round(size[1] * top_ratio)
+                rect_child.rect.top = round(size[1] * top_ratio)
             if width_ratio is not None:
-                child.rect.width = round(size[0] * width_ratio)
+                rect_child.rect.width = round(size[0] * width_ratio)
             if height_ratio is not None:
-                child.rect.height = round(size[1] * height_ratio)
+                rect_child.rect.height = round(size[1] * height_ratio)
 
-    def set_ratio(self, child: fantas.UI, ratio: list[float, float, float, float]):
+    def set_ratio(self, child: fantas.UI, ratio: list[float | None]) -> None:
         """
         设置子元素的比例。
         Args:
@@ -334,7 +346,7 @@ class RatioLayout(Layout):
         """
         self.ratio_dict[child.ui_id] = ratio
 
-    def set_ratio_left(self, child: fantas.UI, left_ratio: float):
+    def set_ratio_left(self, child: fantas.UI, left_ratio: float) -> None:
         """
         设置子元素的左边距比例。
         Args:
@@ -344,7 +356,7 @@ class RatioLayout(Layout):
         rect_ratio = self.ratio_dict.setdefault(child.ui_id, [None, None, None, None])
         rect_ratio[0] = left_ratio
 
-    def set_ratio_top(self, child: fantas.UI, top_ratio: float):
+    def set_ratio_top(self, child: fantas.UI, top_ratio: float) -> None:
         """
         设置子元素的上边距比例。
         Args:
@@ -354,7 +366,7 @@ class RatioLayout(Layout):
         rect_ratio = self.ratio_dict.setdefault(child.ui_id, [None, None, None, None])
         rect_ratio[1] = top_ratio
 
-    def set_ratio_width(self, child: fantas.UI, width_ratio: float):
+    def set_ratio_width(self, child: fantas.UI, width_ratio: float) -> None:
         """
         设置子元素的宽度比例。
         Args:
@@ -364,7 +376,7 @@ class RatioLayout(Layout):
         rect_ratio = self.ratio_dict.setdefault(child.ui_id, [None, None, None, None])
         rect_ratio[2] = width_ratio
 
-    def set_ratio_height(self, child: fantas.UI, height_ratio: float):
+    def set_ratio_height(self, child: fantas.UI, height_ratio: float) -> None:
         """
         设置子元素的高度比例。
         Args:
@@ -382,7 +394,7 @@ class RatioLayout(Layout):
         """
         return self.default_ratio[0]
 
-    def _set_default_ratio_left(self, value: float | None):
+    def _set_default_ratio_left(self, value: float | None) -> None:
         """
         设置默认左边距比例。
         Args:
@@ -400,7 +412,7 @@ class RatioLayout(Layout):
         """
         return self.default_ratio[1]
 
-    def _set_default_ratio_top(self, value: float | None):
+    def _set_default_ratio_top(self, value: float | None) -> None:
         """
         设置默认上边距比例。
         Args:
@@ -418,7 +430,7 @@ class RatioLayout(Layout):
         """
         return self.default_ratio[2]
 
-    def _set_default_ratio_width(self, value: float | None):
+    def _set_default_ratio_width(self, value: float | None) -> None:
         """
         设置默认宽度比例。
         Args:
@@ -436,7 +448,7 @@ class RatioLayout(Layout):
         """
         return self.default_ratio[3]
 
-    def _set_default_ratio_height(self, value: float | None):
+    def _set_default_ratio_height(self, value: float | None) -> None:
         """
         设置默认高度比例。
         Args:
@@ -455,7 +467,7 @@ class RatioLayout(Layout):
         top_ratio: float | None = None,
         width_ratio: float | None = None,
         height_ratio: float | None = None,
-    ):
+    ) -> None:
         """
         添加子元素并设置比例。
 
@@ -479,7 +491,7 @@ class RatioLayout(Layout):
         top_ratio: float | None = None,
         width_ratio: float | None = None,
         height_ratio: float | None = None,
-    ):
+    ) -> None:
         """
         插入子元素并设置比例。
 
@@ -496,7 +508,7 @@ class RatioLayout(Layout):
         if any(ratio):
             self.set_ratio(node, ratio)
 
-    def remove(self, node: fantas.UI):
+    def remove(self, node: fantas.UI) -> None:
         """
         从自己的子元素中移除 node。
         Args:
@@ -523,14 +535,14 @@ class RatioLayout(Layout):
             del self.ratio_dict[node.ui_id]
         return node
 
-    def clear(self):
+    def clear(self) -> None:
         """
         清除所有子元素。
         """
         fantas.UI.clear(self)
         self.ratio_dict.clear()
 
-    def auto_clear(self):
+    def auto_clear(self) -> None:
         """
         清除不存在的子元素的比例数据。
         """
@@ -550,40 +562,42 @@ class DockLayout(Layout):
         default_factory=dict, init=False, repr=False
     )  # 元素ID到停靠模式的映射
 
-    def auto_layout(self):
+    def auto_layout(self) -> None:
         """
         自动停靠布局。
         """
-        free_rect = self.father.rect.copy()  # 剩余空间矩形，初始为父元素矩形
+        father = cast(_HasRect, self.father)
+        free_rect = father.rect.copy()  # 剩余空间矩形，初始为父元素矩形
         free_rect.topleft = (0, 0)  # 初始偏移为 (0, 0)
         for child in self.children:
+            rect_child = cast(_HasRect, child)
             if free_rect.width <= 0 or free_rect.height <= 0:
                 break
             dock_mode = self.dock_mode_dict.get(child.ui_id, fantas.DockMode.NONE)
             if dock_mode == fantas.DockMode.LEFT:
-                child.rect.topleft = free_rect.topleft
-                child.rect.height = free_rect.height
-                free_rect.left += child.rect.width
-                free_rect.width -= child.rect.width
+                rect_child.rect.topleft = free_rect.topleft
+                rect_child.rect.height = free_rect.height
+                free_rect.left += rect_child.rect.width
+                free_rect.width -= rect_child.rect.width
             elif dock_mode == fantas.DockMode.TOP:
-                child.rect.topleft = free_rect.topleft
-                child.rect.width = free_rect.width
-                free_rect.top += child.rect.height
-                free_rect.height -= child.rect.height
+                rect_child.rect.topleft = free_rect.topleft
+                rect_child.rect.width = free_rect.width
+                free_rect.top += rect_child.rect.height
+                free_rect.height -= rect_child.rect.height
             elif dock_mode == fantas.DockMode.RIGHT:
-                child.rect.topright = free_rect.topright
-                child.rect.height = free_rect.height
-                free_rect.width -= child.rect.width
+                rect_child.rect.topright = free_rect.topright
+                rect_child.rect.height = free_rect.height
+                free_rect.width -= rect_child.rect.width
             elif dock_mode == fantas.DockMode.BOTTOM:
-                child.rect.bottomleft = free_rect.bottomleft
-                child.rect.width = free_rect.width
-                free_rect.height -= child.rect.height
+                rect_child.rect.bottomleft = free_rect.bottomleft
+                rect_child.rect.width = free_rect.width
+                free_rect.height -= rect_child.rect.height
             elif dock_mode == fantas.DockMode.FILL:
-                child.rect.update(free_rect)
+                rect_child.rect.update(free_rect)
                 free_rect.width = 0
                 free_rect.height = 0
 
-    def set_dock_mode(self, child: fantas.UI, dock_mode: fantas.DockMode):
+    def set_dock_mode(self, child: fantas.UI, dock_mode: fantas.DockMode) -> None:
         """
         设置子元素的停靠模式。
         Args:
@@ -594,7 +608,7 @@ class DockLayout(Layout):
 
     def append(
         self, node: fantas.UI, dock_mode: fantas.DockMode = fantas.DockMode.NONE
-    ):
+    ) -> None:
         """
         添加子元素并设置停靠模式。
 
@@ -611,7 +625,7 @@ class DockLayout(Layout):
         index: int,
         node: fantas.UI,
         dock_mode: fantas.DockMode = fantas.DockMode.NONE,
-    ):
+    ) -> None:
         """
         插入子元素并设置停靠模式。
 
@@ -624,7 +638,7 @@ class DockLayout(Layout):
         if dock_mode != fantas.DockMode.NONE:
             self.set_dock_mode(node, dock_mode)
 
-    def remove(self, node: fantas.UI):
+    def remove(self, node: fantas.UI) -> None:
         """
         从自己的子元素中移除 node。
         Args:
@@ -651,14 +665,14 @@ class DockLayout(Layout):
             del self.dock_mode_dict[node.ui_id]
         return node
 
-    def clear(self):
+    def clear(self) -> None:
         """
         清除所有子元素。
         """
         fantas.UI.clear(self)
         self.dock_mode_dict.clear()
 
-    def auto_clear(self):
+    def auto_clear(self) -> None:
         """
         清除不存在的子元素的停靠模式数据。
         """
@@ -684,13 +698,14 @@ class GridLayout(Layout):
         default_factory=dict, init=False, repr=False
     )  # 元素ID到单元格位置的映射，单元格位置格式为 (row_index, column_index)
 
-    def auto_layout(self):
+    def auto_layout(self) -> None:
         """
         自动网格布局。
         """
         # 获取父元素的宽高
-        total_width = self.father.rect.width
-        total_height = self.father.rect.height
+        father = cast(_HasRect, self.father)
+        total_width = father.rect.width
+        total_height = father.rect.height
         # 计算行列坐标
         rt = self.rows.copy()  # 行顶端坐标列表
         cl = self.columns.copy()  # 列左端坐标列表
@@ -732,13 +747,14 @@ class GridLayout(Layout):
             cl[-1] = total_width
         # 设置子元素位置和大小
         for child in self.children:
+            rect_child = cast(_HasRect, child)
             row_index, column_index = self.cell_dict.get(child.ui_id, (0, 0))
-            child.rect.left = cl[column_index]
-            child.rect.top = rt[row_index]
-            child.rect.width = cl[column_index + 1] - cl[column_index]
-            child.rect.height = rt[row_index + 1] - rt[row_index]
+            rect_child.rect.left = cl[column_index]
+            rect_child.rect.top = rt[row_index]
+            rect_child.rect.width = cl[column_index + 1] - cl[column_index]
+            rect_child.rect.height = rt[row_index + 1] - rt[row_index]
 
-    def set_cell(self, child: fantas.UI, row_index: int, column_index: int):
+    def set_cell(self, child: fantas.UI, row_index: int, column_index: int) -> None:
         """
         设置子元素的单元格位置。
         Args:
@@ -748,7 +764,7 @@ class GridLayout(Layout):
         """
         self.cell_dict[child.ui_id] = (row_index, column_index)
 
-    def set_size(self, row: int, column: int):
+    def set_size(self, row: int, column: int) -> None:
         """
         设置网格的行列数及默认单元格大小。
         Args:
@@ -758,7 +774,7 @@ class GridLayout(Layout):
         self.rows = [0] * row
         self.columns = [0] * column
 
-    def set_row_height(self, row_index: int, height: int | float):
+    def set_row_height(self, row_index: int, height: int | float) -> None:
         """
         设置指定行的高度。
         Args:
@@ -767,7 +783,7 @@ class GridLayout(Layout):
         """
         self.rows[row_index] = height
 
-    def set_column_width(self, column_index: int, width: int | float):
+    def set_column_width(self, column_index: int, width: int | float) -> None:
         """
         设置指定列的宽度。
         Args:
@@ -776,7 +792,9 @@ class GridLayout(Layout):
         """
         self.columns[column_index] = width
 
-    def append(self, node: fantas.UI, row_index: int = 0, column_index: int = 0):
+    def append(
+        self, node: fantas.UI, row_index: int = 0, column_index: int = 0
+    ) -> None:
         """
         添加子元素并设置单元格位置。
         Args:
@@ -790,7 +808,7 @@ class GridLayout(Layout):
 
     def insert(
         self, index: int, node: fantas.UI, row_index: int = 0, column_index: int = 0
-    ):
+    ) -> None:
         """
         插入子元素并设置单元格位置。
         Args:
@@ -803,7 +821,7 @@ class GridLayout(Layout):
         if (row_index, column_index) != (0, 0):
             self.set_cell(node, row_index, column_index)
 
-    def remove(self, node: fantas.UI):
+    def remove(self, node: fantas.UI) -> None:
         """
         从自己的子元素中移除 node。
         Args:
@@ -830,14 +848,14 @@ class GridLayout(Layout):
             del self.cell_dict[node.ui_id]
         return node
 
-    def clear(self):
+    def clear(self) -> None:
         """
         清除所有子元素。
         """
         fantas.UI.clear(self)
         self.cell_dict.clear()
 
-    def auto_clear(self):
+    def auto_clear(self) -> None:
         """
         清除不存在的子元素的单元格数据。
         """

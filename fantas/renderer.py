@@ -1,6 +1,8 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections import deque
+from collections.abc import Callable
+from typing import cast
 from dataclasses import dataclass, field
 
 import fantas
@@ -28,11 +30,11 @@ class Renderer:
 
     window: fantas.Window  # 关联的窗口对象
 
-    queue: deque = field(
+    queue: deque[fantas.RenderCommand] = field(
         default_factory=deque, init=False, repr=False
     )  # 渲染命令队列，左端入右端出
 
-    def pre_render(self, root_ui: fantas.UI):
+    def pre_render(self, root_ui: fantas.UI) -> None:
         """
         预处理渲染命令，即更新渲染命令队列。
         Args:
@@ -42,7 +44,7 @@ class Renderer:
         for command in root_ui.create_render_commands():
             self.queue.append(command)
 
-    def render(self, target_surface: fantas.Surface):
+    def render(self, target_surface: fantas.Surface) -> None:
         """
         执行渲染队列中的所有渲染命令。
         Args:
@@ -51,7 +53,7 @@ class Renderer:
         for command in self.queue:
             command.render(target_surface)
 
-    def add_command(self, command: fantas.RenderCommand):
+    def add_command(self, command: fantas.RenderCommand) -> None:
         """
         向渲染队列中添加一个渲染命令。
         Args:
@@ -84,7 +86,7 @@ class RenderCommand(ABC):
     creator: fantas.UI
 
     @abstractmethod
-    def render(self, target_surface: fantas.Surface):
+    def render(self, target_surface: fantas.Surface) -> None:
         """
         执行渲染操作，将渲染结果绘制到目标 Surface 上。
         Args:
@@ -115,12 +117,12 @@ class SurfaceRenderCommand(RenderCommand):
     """
 
     surface: fantas.Surface = field(init=False)
-    dest_rect: fantas.RectLike = field(init=False)
+    dest_rect: fantas.IntRect = field(init=False)
     fill_mode: fantas.FillMode = field(init=False)
 
-    affected_area: fantas.RectLike = field(init=False, repr=False)  # 受影响的矩形区域
+    affected_area: fantas.IntRect = field(init=False, repr=False)  # 受影响的矩形区域
 
-    def render(self, target_surface: fantas.Surface):
+    def render(self, target_surface: fantas.Surface) -> None:
         """
         执行渲染操作。
         Args:
@@ -138,7 +140,7 @@ class SurfaceRenderCommand(RenderCommand):
         """
         return self.affected_area.collidepoint(point)
 
-    def render_IGNORE(self, target_surface: fantas.Surface):
+    def render_IGNORE(self, target_surface: fantas.Surface) -> None:
         """
         执行 IGNORE 填充模式的渲染操作。
         Args:
@@ -146,7 +148,7 @@ class SurfaceRenderCommand(RenderCommand):
         """
         self.affected_area = target_surface.blit(self.surface, self.dest_rect)
 
-    def render_SCALE(self, target_surface: fantas.Surface):
+    def render_SCALE(self, target_surface: fantas.Surface) -> None:
         """
         执行 SCALE 填充模式的渲染操作。
         Args:
@@ -155,7 +157,7 @@ class SurfaceRenderCommand(RenderCommand):
         rect = self.affected_area = self.dest_rect
         target_surface.blit(fantas.transform.scale(self.surface, rect.size), rect)
 
-    def render_SMOOTHSCALE(self, target_surface: fantas.Surface):
+    def render_SMOOTHSCALE(self, target_surface: fantas.Surface) -> None:
         """
         执行 SMOOTHSCALE 填充模式的渲染操作。
         Args:
@@ -164,7 +166,7 @@ class SurfaceRenderCommand(RenderCommand):
         rect = self.affected_area = self.dest_rect
         target_surface.blit(fantas.transform.smoothscale(self.surface, rect.size), rect)
 
-    def render_REPEAT(self, target_surface: fantas.Surface):
+    def render_REPEAT(self, target_surface: fantas.Surface) -> None:
         """
         执行 REPEAT 填充模式的渲染操作。
         Args:
@@ -197,7 +199,7 @@ class SurfaceRenderCommand(RenderCommand):
                 surface, (left_col, top_row), (0, 0, width_remain, height_remain)
             )
 
-    def render_FITMIN(self, target_surface: fantas.Surface):
+    def render_FITMIN(self, target_surface: fantas.Surface) -> None:
         """
         执行 FITMIN 填充模式的渲染操作。
         Args:
@@ -215,7 +217,7 @@ class SurfaceRenderCommand(RenderCommand):
             (left + (width - w) // 2, top + (height - h) // 2),
         )
 
-    def render_FITMAX(self, target_surface: fantas.Surface):
+    def render_FITMAX(self, target_surface: fantas.Surface) -> None:
         """
         执行 FITMAX 填充模式的渲染操作。
         Args:
@@ -237,7 +239,9 @@ class SurfaceRenderCommand(RenderCommand):
 
 
 # SurfaceRenderCommand 渲染映射表
-SurfaceRenderCommand_render_map = {
+SurfaceRenderCommand_render_map: dict[
+    fantas.FillMode, Callable[[SurfaceRenderCommand, fantas.Surface], None]
+] = {
     fantas.FillMode.IGNORE: SurfaceRenderCommand.render_IGNORE,
     fantas.FillMode.SCALE: SurfaceRenderCommand.render_SCALE,
     fantas.FillMode.SMOOTHSCALE: SurfaceRenderCommand.render_SMOOTHSCALE,
@@ -256,11 +260,11 @@ class ColorFillCommand(RenderCommand):
         color    : 填充颜色。
     """
 
-    dest_rect: fantas.RectLike = field(init=False)
+    dest_rect: fantas.IntRect = field(init=False)
     color: fantas.ColorLike = field(init=False)
     blend_flag: fantas.BlendFlag = field(init=False)
 
-    def render(self, target_surface: fantas.Surface):
+    def render(self, target_surface: fantas.Surface) -> None:
         """
         执行填充操作。
         Args:
@@ -288,7 +292,7 @@ class ColorBackgroundFillCommand(RenderCommand):
 
     color: fantas.ColorLike = field(init=False)
 
-    def render(self, target_surface: fantas.Surface):
+    def render(self, target_surface: fantas.Surface) -> None:
         """
         执行填充操作。
         Args:
@@ -317,9 +321,9 @@ class LabelRenderCommand(RenderCommand):
     """
 
     style: fantas.LabelStyle = field(init=False)
-    rect: fantas.RectLike = field(init=False)
+    rect: fantas.IntRect = field(init=False)
 
-    def render(self, target_surface: fantas.Surface):
+    def render(self, target_surface: fantas.Surface) -> None:
         """
         执行渲染操作。
         Args:
@@ -394,14 +398,14 @@ class TextRenderCommand(RenderCommand):
     text: str = field(init=False)
     align_mode: fantas.AlignMode = field(init=False)
     style: fantas.TextStyle = field(init=False)
-    rect: fantas.RectLike = field(init=False)
+    rect: fantas.IntRect = field(init=False)
     offset: fantas.IntPoint = field(init=False)
 
-    affected_rects: list[fantas.RectLike] = field(
+    affected_rects: list[fantas.IntRect] = field(
         default_factory=list, init=False, repr=False
     )  # 受影响的矩形区域列表
 
-    def render(self, target_surface: fantas.Surface):
+    def render(self, target_surface: fantas.Surface) -> None:
         """
         执行多行文本渲染操作。
         Args:
@@ -428,7 +432,7 @@ class TextRenderCommand(RenderCommand):
                 return True
         return False
 
-    def render_LEFT(self, target_surface: fantas.Surface):
+    def render_LEFT(self, target_surface: fantas.Surface) -> None:
         """
         左对齐渲染。
         Args:
@@ -484,7 +488,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_CENTER(self, target_surface: fantas.Surface):
+    def render_CENTER(self, target_surface: fantas.Surface) -> None:
         """
         居中对齐渲染。
         Args:
@@ -543,7 +547,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_RIGHT(self, target_surface: fantas.Surface):
+    def render_RIGHT(self, target_surface: fantas.Surface) -> None:
         """
         右对齐渲染。
         Args:
@@ -602,7 +606,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_TOP(self, target_surface: fantas.Surface):
+    def render_TOP(self, target_surface: fantas.Surface) -> None:
         """
         顶部对齐渲染。
         Args:
@@ -656,7 +660,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_BOTTOM(self, target_surface: fantas.Surface):
+    def render_BOTTOM(self, target_surface: fantas.Surface) -> None:
         """
         底部对齐渲染。
         Args:
@@ -716,7 +720,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_TOPLEFT(self, target_surface: fantas.Surface):
+    def render_TOPLEFT(self, target_surface: fantas.Surface) -> None:
         """
         左上对齐渲染。
         Args:
@@ -767,7 +771,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_TOPRIGHT(self, target_surface: fantas.Surface):
+    def render_TOPRIGHT(self, target_surface: fantas.Surface) -> None:
         """
         右上对齐渲染。
         Args:
@@ -822,7 +826,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_BOTTOMLEFT(self, target_surface: fantas.Surface):
+    def render_BOTTOMLEFT(self, target_surface: fantas.Surface) -> None:
         """
         左下对齐渲染。
         Args:
@@ -879,7 +883,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_BOTTOMRIGHT(self, target_surface: fantas.Surface):
+    def render_BOTTOMRIGHT(self, target_surface: fantas.Surface) -> None:
         """
         右下对齐渲染。
         Args:
@@ -941,7 +945,9 @@ class TextRenderCommand(RenderCommand):
 
 
 # TextRenderCommand 渲染映射表
-TextRenderCommand_render_map = {
+TextRenderCommand_render_map: dict[
+    fantas.AlignMode, Callable[[TextRenderCommand, fantas.Surface], None]
+] = {
     fantas.AlignMode.TOP: TextRenderCommand.render_TOP,
     fantas.AlignMode.LEFT: TextRenderCommand.render_LEFT,
     fantas.AlignMode.RIGHT: TextRenderCommand.render_RIGHT,
@@ -954,7 +960,7 @@ TextRenderCommand_render_map = {
 }
 
 # 象限映射表
-quadrant_map = {
+quadrant_map: dict[fantas.Quadrant, dict[str, bool]] = {
     fantas.Quadrant.TOPRIGHT: {"draw_top_right": True},
     fantas.Quadrant.TOPLEFT: {"draw_top_left": True},
     fantas.Quadrant.BOTTOMLEFT: {"draw_bottom_left": True},
@@ -980,7 +986,7 @@ class QuarterCircleRenderCommand(RenderCommand):
     width: int = 0
     quadrant: fantas.Quadrant = fantas.Quadrant.TOPRIGHT
 
-    def render(self, target_surface: fantas.Surface):
+    def render(self, target_surface: fantas.Surface) -> None:
         """
         执行四分之一圆渲染操作。
         Args:
@@ -1004,9 +1010,8 @@ class QuarterCircleRenderCommand(RenderCommand):
             bool: 如果点在区域内则返回 True，否则返回 False。
         """
         # 计算相对坐标
-        cx, cy = self.center
-        dx = point[0] - cx
-        dy = point[1] - cy
+        dx = point[0] - self.center[0]
+        dy = point[1] - self.center[1]
         # 符号测试
         if not fantas.Quadrant.has_point(self.quadrant, (dx, dy)):
             return False
@@ -1026,24 +1031,26 @@ class LinearGradientRenderCommand(RenderCommand):
         end_pos    : 结束位置。
     """
 
-    rect: fantas.RectLike = field(init=False)
+    rect: fantas.IntRect = field(init=False)
     start_color: fantas.ColorLike = field(init=False)
     end_color: fantas.ColorLike = field(init=False)
-    start_pos: fantas.Point = field(init=False)
-    end_pos: fantas.Point = field(init=False)
+    start_pos: fantas.Vector2 = field(init=False)
+    end_pos: fantas.Vector2 = field(init=False)
 
     cache_dirty: bool = field(default=True, init=False, repr=False)  # 缓存是否脏标志
-    surface_cache: fantas.Surface | None = field(
+    surface_cache: fantas.Surface = field(
         default=None, init=False, repr=False
-    )  # 表面缓存
+    )  # type: ignore[assignment]  # 表面缓存
     last_pix: int = field(default=0, init=False, repr=False)  # 上次渲染的坐标
 
-    def render(self, target_surface: fantas.Surface):
+    def render(self, target_surface: fantas.Surface) -> None:
         """
         执行线性渐变渲染操作。
         Args:
             target_surface (fantas.Surface): 目标 Surface 对象。
         """
+        start_color = cast(fantas.Color, self.start_color)
+        end_color = cast(fantas.Color, self.end_color)
         # 检查缓存是否脏
         if self.cache_dirty:
             # 重新生成缓存
@@ -1052,16 +1059,16 @@ class LinearGradientRenderCommand(RenderCommand):
                 self.surface_cache is None
                 or self.surface_cache.get_size() != self.rect.size
             ):
-                if self.start_color.a == 255 and self.end_color.a == 255:
+                if start_color.a == 255 and end_color.a == 255:
                     self.surface_cache = fantas.Surface(self.rect.size)
                 else:
                     self.surface_cache = fantas.Surface(
                         self.rect.size, flags=fantas.SRCALPHA
                     )
-            if not isinstance(self.start_pos, fantas.math.Vector2):
-                self.start_pos = fantas.math.Vector2(self.start_pos)
-            if not isinstance(self.end_pos, fantas.math.Vector2):
-                self.end_pos = fantas.math.Vector2(self.end_pos)
+            if not isinstance(self.start_pos, fantas.Vector2):
+                self.start_pos = fantas.Vector2(self.start_pos)
+            if not isinstance(self.end_pos, fantas.Vector2):
+                self.end_pos = fantas.Vector2(self.end_pos)
             # 选择渲染方法
             LinearGradientRenderCommand_render_map[
                 ((self.start_pos.y == self.end_pos.y) << 1)
@@ -1080,49 +1087,55 @@ class LinearGradientRenderCommand(RenderCommand):
         """
         return self.rect.collidepoint(point)
 
-    def render_horizontal(self):
+    def render_horizontal(self) -> None:
         """
         执行水平线性渐变渲染操作。
         """
+        start_color = cast(fantas.Color, self.start_color)
+        end_color = cast(fantas.Color, self.end_color)
         left_x = self.rect.left - self.start_pos.x
         x2_x1 = self.end_pos.x - self.start_pos.x
         with fantas.PixelArray(self.surface_cache) as pix:
             for x in range(self.rect.width):
-                col = self.start_color.lerp(
-                    self.end_color, fantas.math.clamp((x + left_x) / x2_x1, 0, 1)
+                col = start_color.lerp(
+                    end_color, fantas.math.clamp((x + left_x) / x2_x1, 0, 1)
                 )
-                pix[x, :] = col
+                pix[x, :] = col  # type: ignore[index]
 
-    def render_vertical(self):
+    def render_vertical(self) -> None:
         """
         执行垂直线性渐变渲染操作。
         """
+        start_color = cast(fantas.Color, self.start_color)
+        end_color = cast(fantas.Color, self.end_color)
         top_y = self.rect.top - self.start_pos.y
         y2_y1 = self.end_pos.y - self.start_pos.y
         with fantas.PixelArray(self.surface_cache) as pix:
             for y in range(self.rect.height):
-                col = self.start_color.lerp(
-                    self.end_color, fantas.math.clamp((y + top_y) / y2_y1, 0, 1)
+                col = start_color.lerp(
+                    end_color, fantas.math.clamp((y + top_y) / y2_y1, 0, 1)
                 )
-                pix[:, y] = col
+                pix[:, y] = col  # type: ignore[index]
 
-    def render_any_angle(self):
+    def render_any_angle(self) -> None:
         """
         执行任意角度线性渐变渲染操作。
         """
+        start_color = cast(fantas.Color, self.start_color)
+        end_color = cast(fantas.Color, self.end_color)
         # 分步绘制时间点
         t = fantas.get_time_ns()
         # 计算xy方向的步长
-        v: fantas.math.Vector2 = self.end_pos - self.start_pos
+        v: fantas.Vector2 = self.end_pos - self.start_pos
         v_length = v.length()
-        x_step = fantas.math.Vector2(1, 0).dot(v) / v_length
-        y_step = fantas.math.Vector2(0, 1).dot(v) / v_length
+        x_step = fantas.Vector2(1, 0).dot(v) / v_length
+        y_step = fantas.Vector2(0, 1).dot(v) / v_length
         # 执行渲染
         with fantas.PixelArray(self.surface_cache) as pix:
             for x in range(self.last_pix, self.rect.width):
                 for y in range(self.rect.height):
-                    pix[x, y] = self.start_color.lerp(
-                        self.end_color,
+                    pix[x, y] = start_color.lerp(  # type: ignore[index]
+                        end_color,
                         fantas.math.clamp(
                             (
                                 (x + self.rect.left - self.start_pos.x) * x_step
@@ -1140,14 +1153,18 @@ class LinearGradientRenderCommand(RenderCommand):
                         return
         self.last_pix = 0
 
-    def render_coinside(self):
+    def render_coinside(self) -> None:
         """
         执行起点和终点重合的线性渐变渲染操作。
         """
-        self.surface_cache.fill(self.start_color.lerp(self.end_color, 0.5), self.rect)
+        start_color = cast(fantas.Color, self.start_color)
+        end_color = cast(fantas.Color, self.end_color)
+        self.surface_cache.fill(start_color.lerp(end_color, 0.5), self.rect)
 
 
-LinearGradientRenderCommand_render_map = {
+LinearGradientRenderCommand_render_map: dict[
+    int, Callable[[LinearGradientRenderCommand], None]
+] = {
     0b00: LinearGradientRenderCommand.render_any_angle,
     0b01: LinearGradientRenderCommand.render_vertical,
     0b10: LinearGradientRenderCommand.render_horizontal,

@@ -16,7 +16,7 @@ python = "^3.10"
 
 [tool.poetry.group.dev.dependencies]
 # pylint = "^3.3.9"
-# mypy = "^1.18.2"
+mypy = "^1.18.1"
 black = "^24.8.0"
 
 [tool.black]
@@ -25,8 +25,18 @@ exclude = '''
 /(
     \.git
   | \.venv
-  | dist
   | tmp
+  | tools
   | pygame-ce-fantas
 )/
 '''
+
+[tool.mypy]
+strict = true
+exclude = [
+    ".venv*",
+    ".git*",
+    "tmp/.*",
+    "tools/.*",
+    "pygame-ce-fantas/.*",
+]

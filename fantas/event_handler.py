@@ -26,7 +26,7 @@ class EventHandler:
         default_factory=dict, init=False
     )  # 事件监听注册表
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.active_ui = self.hover_ui = self.last_hover_ui = self.window.root_ui
 
         pre_handle_event = (
@@ -42,7 +42,9 @@ class EventHandler:
         for event_type, handler in pre_handle_event:
             self.add_event_listener(event_type, self.window.root_ui, True, handler)
 
-    def handle_event(self, event: fantas.Event, focused_ui: fantas.UI | None = None):
+    def handle_event(
+        self, event: fantas.Event, focused_ui: fantas.UI | None = None
+    ) -> None:
         """
         处理单个事件。
         Args:
@@ -81,7 +83,7 @@ class EventHandler:
         ui: fantas.UI,
         use_capture: bool,
         listener: fantas.ListenerFunc,
-    ):
+    ) -> None:
         """
         为指定事件类型和 UI 元素添加事件监听器。
         Args:
@@ -103,7 +105,7 @@ class EventHandler:
         ui: fantas.UI,
         use_capture: bool,
         listener: fantas.ListenerFunc,
-    ):
+    ) -> None:
         """
         移除指定事件类型和 UI 元素的事件监听器。
         Args:
@@ -122,7 +124,7 @@ class EventHandler:
         except ValueError:
             raise ValueError("监听器不存在。") from None
 
-    def set_hover_ui(self, ui: fantas.UI):
+    def set_hover_ui(self, ui: fantas.UI) -> None:
         """
         设置当前悬停的 UI 元素。
         Args:
@@ -155,7 +157,7 @@ class EventHandler:
                 focused_ui=this_hover_pass_path[0],
             )
 
-    def set_active_ui(self, ui: fantas.UI):
+    def set_active_ui(self, ui: fantas.UI) -> None:
         """
         设置当前激活的 UI 元素。
         Args:
@@ -163,7 +165,7 @@ class EventHandler:
         """
         self.active_ui = ui
 
-    def handle_windowclose_event(self, event: fantas.Event):
+    def handle_windowclose_event(self, event: fantas.Event) -> None:
         """
         处理窗口关闭事件。
         Args:
@@ -172,7 +174,7 @@ class EventHandler:
         if event.window is self.window:
             self.window.running = False
 
-    def handle_windowleave_event(self, event: fantas.Event):
+    def handle_windowleave_event(self, event: fantas.Event) -> None:
         """
         处理窗口离开事件，设置悬停 UI 元素为根节点。
         Args:
@@ -182,7 +184,7 @@ class EventHandler:
             self.set_hover_ui(self.window.root_ui)
             self.set_active_ui(self.window.root_ui)
 
-    def handle_windowresized_event(self, event: fantas.Event):
+    def handle_windowresized_event(self, event: fantas.Event) -> None:
         """
         处理窗口调整大小事件，更新根 UI 元素的矩形。
         Args:
@@ -191,7 +193,7 @@ class EventHandler:
         if event.window is self.window:
             self.window.root_ui.update_rect()
 
-    def handle_mousemotion_event(self, event: fantas.Event):
+    def handle_mousemotion_event(self, event: fantas.Event) -> None:
         """
         处理鼠标移动事件，更新悬停的 UI 元素。
         Args:
@@ -200,7 +202,7 @@ class EventHandler:
         # 更新悬停的 UI 元素
         self.set_hover_ui(self.window.renderer.coordinate_hit_test(event.pos))
 
-    def handle_mousebuttondown_event(self, event: fantas.Event):
+    def handle_mousebuttondown_event(self, event: fantas.Event) -> None:
         """
         处理鼠标按下事件，更新激活的 UI 元素。
         Args:
@@ -213,7 +215,7 @@ class EventHandler:
         # 更新上一次按下的 UI 元素
         self.last_pressed_ui = self.hover_ui
 
-    def handle_mousebuttonup_event(self, event: fantas.Event):
+    def handle_mousebuttonup_event(self, event: fantas.Event) -> None:
         """
         处理鼠标释放事件。
         Args:
