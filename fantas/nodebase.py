@@ -1,20 +1,23 @@
+"""
+nodebase.py
+"""
+
 from __future__ import annotations
 from dataclasses import dataclass, field
 from collections import deque
-from typing import Any, Deque, Generic, TypeVar, cast
+from typing import Any, Deque, Generic, TypeVar, cast  # pylint: disable=unused-import
 
 __all__ = ("NodeBase",)
 
 T = TypeVar("T", bound="NodeBase[Any]")
+
 
 @dataclass(slots=True)
 class NodeBase(Generic[T]):
     """树形节点基类，数据域由子类实现。"""
 
     father: T | None = field(default=None, init=False)  # 指向父节点
-    children: list[T] = field(
-        default_factory=list, init=False
-    )  # 存储孩子节点，有序
+    children: list[T] = field(default_factory=list, init=False)  # 存储孩子节点，有序
     pass_path_cache: list[T] | None = field(
         default=None, init=False, repr=False
     )  # 传递路径缓存
@@ -144,7 +147,7 @@ class NodeBase(Generic[T]):
         if self.pass_path_cache is not None:
             return self.pass_path_cache
         # 如果是根节点，路径即为自己
-        elif self.father is None:
+        if self.father is None:
             return [cast(T, self)]
         # 否则递归获取父节点的传递路径并添加自己
         self.pass_path_cache = [cast(T, self)] + self.father.get_pass_path()

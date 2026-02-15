@@ -15,7 +15,7 @@ license = "MIT"
 python = "^3.10"
 
 [tool.poetry.group.dev.dependencies]
-# pylint = "^3.3.9"
+pylint = "^4.0.4"
 mypy = "^1.18.1"
 black = "^24.8.0"
 
@@ -40,3 +40,19 @@ exclude = [
     "tools/.*",
     "pygame-ce-fantas/.*",
 ]
+
+[tool.pylint.main]
+jobs = 32
+extension-pkg-whitelist = ["pygame"]
+
+[tool.pylint.messages_control]
+disable = [
+    "R0401", "R0902", "R0903", "R0912", "R0913", "R0914", "R0917",
+    "C0301", "C0302", "C0413",
+    "W0123", "W0401",
+    "E1136",
+]
+
+[tool.pylint.reports]
+fail-under = 9.0
+

@@ -1,3 +1,7 @@
+"""
+fantas.layout 的 Docstring
+"""
+
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
@@ -43,7 +47,6 @@ class Layout(fantas.UI, ABC):
         """
         自动布局方法，由子类实现，负责根据布局规则调整子元素的位置和大小。
         """
-        pass
 
 
 @dataclass(slots=True)
@@ -52,7 +55,7 @@ class RelativeLayout(Layout):
     相对布局器。
     """
 
-    margin_dict: dict[fantas.UIID, list[int | None]] = field(
+    margin_dict: dict[fantas.UIid, list[int | None]] = field(
         default_factory=dict, init=False, repr=False
     )  # 元素ID到边距的映射，边距格式为 [left, top, right, bottom]
     default_margin: list[int | None] = field(
@@ -63,8 +66,7 @@ class RelativeLayout(Layout):
         """
         自动相对布局。
         """
-        father = cast(_HasRect, self.father)
-        size = father.rect.size
+        size = cast(_HasRect, self.father).rect.size
         for child in self.children:
             rect_child = cast(_HasRect, child)
             left, top, right, bottom = self.margin_dict.get(
@@ -310,7 +312,7 @@ class RatioLayout(Layout):
     比例布局器。
     """
 
-    ratio_dict: dict[fantas.UIID, list[float | None]] = field(
+    ratio_dict: dict[fantas.UIid, list[float | None]] = field(
         default_factory=dict, init=False, repr=False
     )  # 元素ID到比例的映射，比例格式为 [left_ratio, top_ratio, width_ratio, height_ratio]
     default_ratio: list[float | None] = field(
@@ -558,7 +560,7 @@ class DockLayout(Layout):
     停靠布局器。
     """
 
-    dock_mode_dict: dict[fantas.UIID, fantas.DockMode] = field(
+    dock_mode_dict: dict[fantas.UIid, fantas.DockMode] = field(
         default_factory=dict, init=False, repr=False
     )  # 元素ID到停靠模式的映射
 
@@ -694,7 +696,7 @@ class GridLayout(Layout):
     columns: list[int | float] = field(
         default_factory=list, init=False, repr=False
     )  # 列宽列表，0 表示自适应宽度，大于0表示固定宽度，介于0和1之间表示比例宽度
-    cell_dict: dict[fantas.UIID, tuple[int, int]] = field(
+    cell_dict: dict[fantas.UIid, tuple[int, int]] = field(
         default_factory=dict, init=False, repr=False
     )  # 元素ID到单元格位置的映射，单元格位置格式为 (row_index, column_index)
 
@@ -710,12 +712,12 @@ class GridLayout(Layout):
         rt = self.rows.copy()  # 行顶端坐标列表
         cl = self.columns.copy()  # 列左端坐标列表
         # 将比例尺寸转换为绝对尺寸
-        for i in range(len(rt)):
-            if 0 < rt[i] < 1:
-                rt[i] = total_height * rt[i]
-        for i in range(len(cl)):
-            if 0 < cl[i] < 1:
-                cl[i] = total_width * cl[i]
+        for i, h in enumerate(rt):
+            if 0 < h < 1:
+                rt[i] = total_height * h
+        for i, w in enumerate(cl):
+            if 0 < w < 1:
+                cl[i] = total_width * w
         # 计算自适应尺寸
         auto_width = (
             (total_width - sum(width for width in cl if width > 0)) / cl.count(0)
@@ -727,11 +729,11 @@ class GridLayout(Layout):
             if rt.count(0) > 0
             else 0
         )
-        for i in range(len(rt)):
-            if rt[i] == 0:
+        for i, h in enumerate(rt):
+            if h == 0:
                 rt[i] = auto_height
-        for i in range(len(cl)):
-            if cl[i] == 0:
+        for i, w in enumerate(cl):
+            if w == 0:
                 cl[i] = auto_width
         # 计算累积坐标
         rt.insert(0, 0)

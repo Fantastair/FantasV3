@@ -1,3 +1,7 @@
+"""
+curve.py
+"""
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Callable, cast
@@ -32,7 +36,6 @@ class CurveBase(ABC):
         Returns:
             float: 对应的 y 值。
         """
-        pass
 
 
 formula_globals: dict[str, object] = {
@@ -72,10 +75,14 @@ class FormulaCurve(CurveBase):
 
 # 预定义曲线
 # 线性曲线，y = x
-CURVE_LINEAR: Callable[[float], float] = lambda x: x
+CURVE_LINEAR: Callable[[float], float] = lambda x: x  # pylint: disable=invalid-name
 # 渐快曲线，y = x^2
-CURVE_FASTER: Callable[[float], float] = lambda x: x * x
+CURVE_FASTER: Callable[[float], float] = lambda x: x * x  # pylint: disable=invalid-name
 # 渐慢曲线，y = 2x - x^2
-CURVE_SLOWER: Callable[[float], float] = lambda x: 2 * x - x * x
+CURVE_SLOWER: Callable[[float], float] = (  # pylint: disable=invalid-name
+    lambda x: 2 * x - x * x
+)
 # 平滑曲线，y = (1 - cos(pi * x)) / 2
-CURVE_SMOOTH: FormulaCurve = FormulaCurve("(1-cos(pi*x))/2")
+CURVE_SMOOTH: FormulaCurve = FormulaCurve(
+    "(1-cos(pi*x))/2"
+)  # pylint: disable=invalid-name

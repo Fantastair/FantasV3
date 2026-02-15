@@ -1,10 +1,15 @@
+"""
+fantas.window 的 Docstring
+"""
+
 from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Protocol, cast
+from typing import cast
+
+from pygame.window import Window as PygameWindow
 
 import fantas
-from pygame.window import Window as PygameWindow
 
 __all__ = (
     "WindowConfig",
@@ -149,9 +154,9 @@ class Window(PygameWindow):
         root_ui = self.root_ui
         screen = self.screen
         flip = self.flip
-        EVENTLOG = fantas.DebugFlag.EVENTLOG
-        TIMERECORD = fantas.DebugFlag.TIMERECORD
-        DEBUGRECEIVED = fantas.DEBUGRECEIVED
+        EVENTLOG = fantas.DebugFlag.EVENTLOG  # pylint: disable=invalid-name
+        TIMERECORD = fantas.DebugFlag.TIMERECORD  # pylint: disable=invalid-name
+        DEBUGRECEIVED = fantas.DEBUGRECEIVED  # pylint: disable=invalid-name
         send_debug_data = fantas.Debug.send_debug_data
         # 设置帧函数的时钟对象引用
         fantas.set_framefunc_clock(self.clock)
@@ -232,11 +237,9 @@ class Window(PygameWindow):
 
         self.destroy()
 
-    def handle_debug_received_event(self, event: fantas.Event) -> None:
+    def handle_debug_received_event(self, _: fantas.Event) -> None:
         """
         处理从调试窗口接收到输出信息的事件。
-        Args:
-            event (fantas.Event): 触发此事件的 fantas.Event 实例。
         """
         debug_timer = cast(DebugTimer, self.debug_timer)
         debug_timer.record("Event")
@@ -246,7 +249,6 @@ class Window(PygameWindow):
                 fantas.Debug.delete_debug_flag(data[1])
             elif data[0] == "SetMouseMagnifyRatio":
                 self.mouse_magnify_ratio = data[1]
-                pass
             else:
                 print(f"[{data[0]}]", end="")
                 for d in data[1:]:
@@ -270,14 +272,10 @@ class Window(PygameWindow):
         rect = fantas.IntRect(
             event.pos[0] - size // 2, event.pos[1] - size // 2, size, size
         )
-        if rect.left < 0:
-            rect.left = 0
-        if rect.top < 0:
-            rect.top = 0
-        if rect.right > self.size[0]:
-            rect.right = self.size[0]
-        if rect.bottom > self.size[1]:
-            rect.bottom = self.size[1]
+        rect.left = max(rect.left, 0)
+        rect.top = max(rect.top, 0)
+        rect.right = min(rect.right, self.size[0])
+        rect.bottom = min(rect.bottom, self.size[1])
         # 发送到调试窗口
         fantas.Debug.send_debug_data(
             pos[0] - rect.left,
@@ -430,9 +428,9 @@ class MultiWindow:
         windows = self.windows
         run_framefuncs = fantas.run_framefuncs
         record = debug_timer.record
-        EVENTLOG = fantas.DebugFlag.EVENTLOG
-        TIMERECORD = fantas.DebugFlag.TIMERECORD
-        DEBUGRECEIVED = fantas.DEBUGRECEIVED
+        EVENTLOG = fantas.DebugFlag.EVENTLOG  # pylint: disable=invalid-name
+        TIMERECORD = fantas.DebugFlag.TIMERECORD  # pylint: disable=invalid-name
+        DEBUGRECEIVED = fantas.DEBUGRECEIVED  # pylint: disable=invalid-name
         send_debug_data = fantas.Debug.send_debug_data
         # 设置帧函数的时钟对象引用
         fantas.set_framefunc_clock(self.clock)

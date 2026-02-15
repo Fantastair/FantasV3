@@ -1,6 +1,10 @@
+"""
+fantas.constants 模块定义了 Fantas 库中使用的常量、枚举类型和实用函数。
+"""
+
 from __future__ import annotations
 from enum import Enum, IntEnum, auto
-from typing import Final, cast
+from typing import Final
 
 import pygame
 import pygame.freetype
@@ -12,7 +16,55 @@ from pygame.freetype import (
     STYLE_UNDERLINE as TEXTSTYLEFLAG_UNDERLINE,
     STYLE_WIDE as TEXTSTYLEFLAG_WIDE,
 )
-from pygame import (
+from pygame.constants import (
+    WINDOWPOS_UNDEFINED,
+    WINDOWPOS_CENTERED,
+    MOUSEWHEEL,
+    MOUSEMOTION,
+    MOUSEBUTTONUP,
+    MOUSEBUTTONDOWN,
+    KEYUP,
+    KEYDOWN,
+    TEXTINPUT,
+    WINDOWCLOSE,
+    TEXTEDITING,
+    WINDOWLEAVE,
+    WINDOWSHOWN,
+    WINDOWMOVED,
+    WINDOWHIDDEN,
+    WINDOWRESIZED,
+    WINDOWRESTORED,
+    WINDOWMINIMIZED,
+    WINDOWMAXIMIZED,
+    WINDOWFOCUSLOST,
+    WINDOWFOCUSGAINED,
+    WINDOWDISPLAYCHANGED,
+    BUTTON_X1,
+    BUTTON_X2,
+    BUTTON_LEFT,
+    BUTTON_RIGHT,
+    BUTTON_MIDDLE,
+    BUTTON_WHEELUP,
+    BUTTON_WHEELDOWN,
+    SRCALPHA,
+    BLENDMODE_NONE,
+    BLEND_ADD,
+    BLEND_RGB_ADD,
+    BLEND_RGBA_ADD,
+    BLEND_SUB,
+    BLEND_RGB_SUB,
+    BLEND_RGBA_SUB,
+    BLEND_MULT,
+    BLEND_RGB_MULT,
+    BLEND_RGBA_MULT,
+    BLEND_MIN,
+    BLEND_RGB_MIN,
+    BLEND_RGBA_MIN,
+    BLEND_MAX,
+    BLEND_RGB_MAX,
+    BLEND_RGBA_MAX,
+    BLEND_PREMULTIPLIED,
+    BLEND_ALPHA_SDL2,
     SYSTEM_CURSOR_ARROW,
     SYSTEM_CURSOR_IBEAM,
     SYSTEM_CURSOR_WAIT,
@@ -26,11 +78,12 @@ from pygame import (
     SYSTEM_CURSOR_NO,
     SYSTEM_CURSOR_HAND,
 )
-from pygame.locals import *
+from pygame import colordict
 
 import fantas
 
 __all__ = [
+    "colordict",
     "DEFAULTFONT",
     "DEFAULTTEXTSTYLE",
     "DEFAULTLABELSTYLE",
@@ -147,7 +200,7 @@ class Quadrant(IntEnum):
         Returns:
             bool: 如果点在当前象限中则返回 True，否则返回 False。
         """
-        return not ((quadrant & 0b11) ^ ((point[0] >= 0) | ((point[1] >= 0) << 1)))
+        return not (quadrant & 0b11) ^ ((point[0] >= 0) | ((point[1] >= 0) << 1))
 
 
 class BoxMode(Enum):
@@ -262,7 +315,11 @@ def get_event_category(event_type: fantas.EventType) -> EventCategory:
 
 
 # 自定义事件
-MOUSEENTERED: Final[fantas.EventType] = custom_event(EventCategory.MOUSE)  # 鼠标进入事件
+MOUSEENTERED: Final[fantas.EventType] = custom_event(
+    EventCategory.MOUSE
+)  # 鼠标进入事件
 MOUSELEAVED: Final[fantas.EventType] = custom_event(EventCategory.MOUSE)  # 鼠标离开事件
-MOUSECLICKED: Final[fantas.EventType] = custom_event(EventCategory.MOUSE)  # 有效单击事件
+MOUSECLICKED: Final[fantas.EventType] = custom_event(
+    EventCategory.MOUSE
+)  # 有效单击事件
 DEBUGRECEIVED: Final[fantas.EventType] = custom_event()  # 接收到调试信息事件

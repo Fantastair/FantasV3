@@ -1,3 +1,7 @@
+"""
+fantas.resource 的 Docstring
+"""
+
 from __future__ import annotations
 from pathlib import Path
 from typing import Generic, TypeVar
@@ -147,9 +151,7 @@ class ColorLoader(ResourceLoader[fantas.Color]):
 
     def load_preset_colors(self) -> None:
         """加载预设颜色。"""
-        from pygame import colordict
-
-        for name, color in colordict.THECOLORS.items():
+        for name, color in fantas.colordict.THECOLORS.items():
             self._resources[name] = fantas.Color(color)
 
 
@@ -165,6 +167,17 @@ class AnimationLoader(ResourceLoader[fantas.AnimationHelper]):
         alias: str | None = None,
         hook: Callable[[fantas.Surface], fantas.Surface] = fantas.image_convert_hook,
     ) -> None:
+        """
+        load 的 Docstring
+
+        :param self: 说明
+        :param path: 说明
+        :type path: Path | str
+        :param alias: 说明
+        :type alias: str | None
+        :param hook: 说明
+        :type hook: Callable[[fantas.Surface], fantas.Surface]
+        """
         if not isinstance(path, Path):
             path = Path(path)
         self._resources[alias if alias else path.stem] = fantas.AnimationHelper(

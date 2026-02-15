@@ -1,7 +1,10 @@
+"""
+fantas.ui 的 Docstring
+"""
+
 from __future__ import annotations
 from dataclasses import dataclass, field
 from collections.abc import Iterator
-from typing import cast
 
 import fantas
 
@@ -23,7 +26,7 @@ __all__ = (
 class UI(fantas.NodeBase["UI"]):
     """显示元素基类。"""
 
-    ui_id: fantas.UIID = field(
+    ui_id: fantas.UIid = field(
         default_factory=fantas.generate_unique_id, init=False
     )  # 唯一标识 ID
 
@@ -417,8 +420,12 @@ class LinearGradientLabel(UI):
         c.rect = rect
         c.start_color = self.start_color
         c.end_color = self.end_color
-        c.start_pos = fantas.Vector2(self.start_pos[0] + offset[0], self.start_pos[1] + offset[1])
-        c.end_pos = fantas.Vector2(self.end_pos[0] + offset[0], self.end_pos[1] + offset[1])
+        c.start_pos = fantas.Vector2(
+            self.start_pos[0] + offset[0], self.start_pos[1] + offset[1]
+        )
+        c.end_pos = fantas.Vector2(
+            self.end_pos[0] + offset[0], self.end_pos[1] + offset[1]
+        )
         # 生成渲染命令
         yield c
         # 生成子元素的渲染命令

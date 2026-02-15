@@ -1,14 +1,18 @@
+"""
+fantas.udp 的 Docstring
+"""
+
 import socket
 
 __all__ = (
-    "create_UDP_socket",
+    "create_udp_socket",
     "get_socket_port",
     "udp_send_data",
     "udp_receive_data",
 )
 
 
-def create_UDP_socket(
+def create_udp_socket(
     host: str = "127.0.0.1", port: int = 0, timeout: float | None = None
 ) -> socket.socket:
     """
@@ -24,15 +28,15 @@ def create_UDP_socket(
     return udp_socket
 
 
-def get_socket_port(socket: socket.socket) -> int:
+def get_socket_port(sk: socket.socket) -> int:
     """
     获取 UDP 套接字绑定的端口号。
     Args:
-        socket (socket.socket): 目标 UDP 套接字。
+        sk (socket.socket): 目标 UDP 套接字。
     Returns:
         int: 绑定的端口号。
     """
-    return socket.getsockname()[1]  # type: ignore[no-any-return]
+    return sk.getsockname()[1]  # type: ignore[no-any-return]
 
 
 def udp_send_data(

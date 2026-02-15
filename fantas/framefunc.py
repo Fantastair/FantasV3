@@ -1,3 +1,7 @@
+"""
+framefunc.py
+"""
+
 from __future__ import annotations
 from dataclasses import dataclass, field
 from collections.abc import Callable
@@ -35,7 +39,7 @@ def set_framefunc_clock(new_clock: fantas.time.Clock) -> None:
     Args:
         new_clock (Clock): 新的时钟对象。
     """
-    global clock
+    global clock  # pylint: disable=global-statement
     clock = new_clock
 
 
@@ -47,9 +51,9 @@ def run_framefuncs() -> None:
     """
     运行所有已启动的帧函数。
     """
-    for ID, framefunc in tuple(framefunc_dict.items()):
+    for func_id, framefunc in tuple(framefunc_dict.items()):
         if framefunc.call():
-            framefunc_dict.pop(ID)
+            framefunc_dict.pop(func_id)
 
 
 @dataclass(slots=True)
@@ -58,7 +62,7 @@ class FrameFuncBase(ABC):
     帧函数基类，用于定义帧函数接口。
     """
 
-    ID: int = field(
+    func_id: int = field(
         default_factory=fantas.generate_unique_id, init=False
     )  # 唯一标识 ID
 
@@ -66,13 +70,13 @@ class FrameFuncBase(ABC):
         """
         启动帧函数。
         """
-        framefunc_dict[self.ID] = self
+        framefunc_dict[self.func_id] = self
 
     def stop(self) -> None:
         """
         停止帧函数。
         """
-        framefunc_dict.pop(self.ID, None)
+        framefunc_dict.pop(self.func_id, None)
 
     def is_started(self) -> bool:
         """
@@ -81,7 +85,7 @@ class FrameFuncBase(ABC):
         Returns:
             bool: 如果帧函数已启动则返回 True，否则返回 False。
         """
-        return self.ID in framefunc_dict
+        return self.func_id in framefunc_dict
 
     @abstractmethod
     def call(self) -> bool:
@@ -90,7 +94,6 @@ class FrameFuncBase(ABC):
         Returns:
             bool: 返回 True 可以自动停止帧函数，返回 False 则继续运行。
         """
-        pass
 
 
 @dataclass(slots=True)
@@ -286,7 +289,6 @@ class KeyFrameBase(TimerBase, ABC):
         Args:
             ratio (float): 当前时间点与总时间的比例。
         """
-        pass
 
 
 @dataclass(slots=True)

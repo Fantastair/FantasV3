@@ -104,6 +104,8 @@ def cmd_run(
 
 
 def check_git_clean() -> None:
+    pprint("检查 git 仓库状态中 (使用 git)")
+
     try:
         cmd_run(["git", "--no-pager", "status", "--porcelain"], error_on_output=True)
     except subprocess.CalledProcessError:
@@ -115,27 +117,24 @@ def show_diff_and_help_commit(command: str) -> None:
     try:
         cmd_run(["git", "--no-pager", "status", "--porcelain"], error_on_output=True)
     except subprocess.CalledProcessError:
-        try:
-            cmd_run(["git", "--no-pager", "diff"])
-        finally:
-            pprint(f"运行 {command} 命令时产生了上述更改", Colors.RED)
-            pprint("是否需要自动添加这些修改并提交一次commit？ (y/n)", Colors.RED)
+        pprint(f"运行 {command} 命令时产生了上述更改", Colors.RED)
+        pprint("是否需要自动添加这些修改并提交一次commit？ (y/n)", Colors.RED)
 
+        answer = input().strip().lower()
+        while answer not in ("y", "n"):
+            pprint("请输入 y 或 n", Colors.RED)
             answer = input().strip().lower()
-            while answer not in ("y", "n"):
-                pprint("请输入 y 或 n", Colors.RED)
-                answer = input().strip().lower()
 
-            if answer == "y":
-                try:
-                    cmd_run(["git", "add", "."])
-                    cmd_run(["git", "commit", "-m", f"保存 {command} 命令产生的更改"])
-                    pprint("更改已提交，请重新运行 dev.py", Colors.GREEN)
-                except subprocess.CalledProcessError:
-                    pprint("自动提交失败，请手动检查更改并提交", Colors.RED)
-            else:
-                pprint("请手动检查更改并提交，然后重新运行 dev.py", Colors.YELLOW)
-            sys.exit(1)
+        if answer == "y":
+            try:
+                cmd_run(["git", "add", "."])
+                cmd_run(["git", "commit", "-m", f"保存 {command} 命令产生的更改"])
+                pprint("更改已提交，请重新运行 dev.py", Colors.GREEN)
+            except subprocess.CalledProcessError:
+                pprint("自动提交失败，请手动检查更改并提交", Colors.RED)
+        else:
+            pprint("请手动检查更改并提交，然后重新运行 dev.py", Colors.YELLOW)
+        sys.exit(1)
 
 
 def get_poetry_executable() -> Path | None:
@@ -404,10 +403,18 @@ class Dev:
     #     if "CI" in os.environ:
     #         show_diff_and_help_commit("docs")
 
-    # def cmd_lint(self):
-    #     pprint("检查代码中 (使用 pylint)")
+    def cmd_lint(self) -> None:
+        pprint("检查代码中 (使用 pylint)")
 
-    #     cmd_run([self.py, "-m", "pylint", "fantas", "docs"])
+        cmd_run(
+            [
+                self.venv_py,
+                "-m",
+                "pylint",
+                "fantas",
+                "--output-format=colorized",
+            ]
+        )
 
     def cmd_stubs(self) -> None:
         pprint("执行静态类型检查中 (使用 mypy)")
@@ -437,7 +444,7 @@ class Dev:
     def cmd_auto(self) -> None:
         self.cmd_format()
         self.cmd_stubs()
-        # self.cmd_lint()
+        self.cmd_lint()
         # self.cmd_docs(full=self.args.full_docs)
         # self.cmd_test()
         # if self.args.install:
@@ -517,7 +524,7 @@ class Dev:
 
         # 如果没有指定子命令，则默认为 auto
         if not self.args["command"]:
-            self.args["command"] = "stubs"
+            self.args["command"] = "auto"
 
     def prep_venv(self) -> None:
         pprint("准备虚拟环境中 (使用 Poetry)")
@@ -566,7 +573,7 @@ class Dev:
             pprint("程序被用户中断", Colors.RED)
             sys.exit(1)
 
-        pprint("命令执行成功", Colors.GREEN)
+        pprint(f"子命令 '{self.args['command']}' 执行成功", Colors.GREEN)
 
 
 if __name__ == "__main__":

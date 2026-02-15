@@ -1,7 +1,12 @@
+"""
+fantas.misc 的 Docstring
+"""
+
 import platform
 from pathlib import Path
 from typing import Callable, ParamSpec, TypeVar, cast
 from itertools import count
+
 # from importlib import resources
 from functools import lru_cache, wraps
 from dataclasses import dataclass, field
@@ -50,7 +55,9 @@ R = TypeVar("R")
 
 
 # 类型装饰器以支持类型注解的 lru_cache
-def lru_cache_typed(maxsize: int = 128, typed: bool = False) -> Callable[[Callable[P, R]], Callable[P, R]]:
+def lru_cache_typed(
+    maxsize: int = 128, typed: bool = False
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     生成一个保留原函数类型签名的 LRU 缓存装饰器。
     Args:

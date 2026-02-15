@@ -6,7 +6,6 @@
 from __future__ import annotations
 import sys
 from collections import deque
-from collections.abc import Callable
 from typing import ClassVar, Deque, cast
 
 import fantas
@@ -17,7 +16,7 @@ debug_flags = fantas.DebugFlag(int(sys.argv[1]))
 windows_title: str
 
 # 如果没有启用任何调试标志，则退出子进程
-if not debug_flags in fantas.DebugFlag.ALL:
+if debug_flags not in fantas.DebugFlag.ALL:
     sys.exit(0)
 
 # 预加载资源
@@ -108,10 +107,10 @@ class EventLogWindow(fantas.Window):
 
         self.lines: deque[str] = deque(maxlen=64)
         self.add_event_listener(
-            fantas.WINDOWRESIZED, self.root_ui, True, self.handle_WINDOWRESIZED_event
+            fantas.WINDOWRESIZED, self.root_ui, True, self.handle_windowresized_event
         )
         self.add_event_listener(
-            fantas.WINDOWCLOSE, self.root_ui, True, self.handle_WINDOWCLOSE_event
+            fantas.WINDOWCLOSE, self.root_ui, True, self.handle_windowclose_event
         )
 
         self.log_kf = fantas.AttrKeyFrame(
@@ -132,7 +131,11 @@ class EventLogWindow(fantas.Window):
         # 调整文本区域高度（目的是保持新文本添加后原来的文本位置不变，然后通过关键帧动画平滑过渡）
         s = self.text.text_style
         self.text.rect.height += (
-            len(s.font.auto_wrap(s.style_flag, s.size, event_str, round(self.text.rect.width)))
+            len(
+                s.font.auto_wrap(
+                    s.style_flag, s.size, event_str, round(self.text.rect.width)
+                )
+            )
             + 1
         ) * s.line_height
         self.log_kf.set_duration_ms(
@@ -140,16 +143,14 @@ class EventLogWindow(fantas.Window):
         )
         self.log_kf.start()
 
-    def handle_WINDOWRESIZED_event(self, event: fantas.Event) -> bool:
+    def handle_windowresized_event(self, event: fantas.Event) -> bool:
         """
         处理窗口大小改变事件。
         Args:
             event (fantas.Event): 窗口大小改变事件对象。
         """
-        if event.x < EventLogWindow.min_size[0]:
-            event.x = EventLogWindow.min_size[0]
-        if event.y < EventLogWindow.min_size[1]:
-            event.y = EventLogWindow.min_size[1]
+        event.x = max(event.x, EventLogWindow.min_size[0])
+        event.y = max(event.y, EventLogWindow.min_size[1])
         if self.size != (event.x, event.y):
             self.size = (event.x, event.y)
         self.text.rect.width = event.x - 20
@@ -157,11 +158,9 @@ class EventLogWindow(fantas.Window):
         self.log_kf.end_value = self.log_kf.start_value = event.y
         return False
 
-    def handle_WINDOWCLOSE_event(self, event: fantas.Event) -> bool:
+    def handle_windowclose_event(self, _: fantas.Event) -> bool:
         """
         处理窗口关闭事件。
-        Args:
-            event (fantas.Event): 窗口关闭事件对象。
         """
         fantas.Debug.send_debug_data(
             fantas.DebugFlag.EVENTLOG, prompt="CloseDebugWindow"
@@ -180,7 +179,7 @@ class TimeRecordWindow(fantas.Window):
         "Debug": "调试",
         "Idle": "空闲",
     }
-    for key in time_category.keys():
+    for key in time_category:
         Lpf.flit(f"{key}Time", 0, 0.05, 5)
         Lpf.flit(f"{key}Ratio", 0, 0.05, 5)
     Lpf.flit("FPS", 0, 0.05, 5)
@@ -247,7 +246,7 @@ class TimeRecordWindow(fantas.Window):
         self.legend_text.text = text.strip()
         self.background.append(self.legend_text)
         self.times: dict[str, float] = {
-            key: 0.0 for key in TimeRecordWindow.time_category.keys()
+            key: 0.0 for key in TimeRecordWindow.time_category
         }
         self.time_text = fantas.Text(
             fantas.Rect(
@@ -270,7 +269,7 @@ class TimeRecordWindow(fantas.Window):
             )
         self.background.append(self.time_text)
         self.ratios: dict[str, float] = {
-            key: 0.0 for key in TimeRecordWindow.time_category.keys()
+            key: 0.0 for key in TimeRecordWindow.time_category
         }
         self.time_ratio_bars: dict[str, tuple[fantas.Label, fantas.Label]] = {}
         for i, key in enumerate(TimeRecordWindow.time_category.keys()):
@@ -290,10 +289,10 @@ class TimeRecordWindow(fantas.Window):
             bar1.label_style.border_radius_bottom_right
         ) = 4
         self.add_event_listener(
-            fantas.WINDOWRESIZED, self.root_ui, True, self.handle_WINDOWRESIZED_event
+            fantas.WINDOWRESIZED, self.root_ui, True, self.handle_windowresized_event
         )
         self.add_event_listener(
-            fantas.WINDOWCLOSE, self.root_ui, True, self.handle_WINDOWCLOSE_event
+            fantas.WINDOWCLOSE, self.root_ui, True, self.handle_windowclose_event
         )
 
     def update_fps(self, fps: float) -> None:
@@ -331,23 +330,20 @@ class TimeRecordWindow(fantas.Window):
             self.size[0] - 10 - x
         )  # 修正舍入误差
 
-    def handle_WINDOWRESIZED_event(self, event: fantas.Event) -> bool:
+    def handle_windowresized_event(self, event: fantas.Event) -> bool:
         """
         处理窗口大小改变事件。
         Args:
             event (fantas.Event): 窗口大小改变事件对象。
         """
-        if event.x < TimeRecordWindow.min_width:
-            event.x = TimeRecordWindow.min_width
+        event.x = max(event.x, TimeRecordWindow.min_width)
         if self.size != (event.x, TimeRecordWindow.fix_height):
             self.size = (event.x, TimeRecordWindow.fix_height)
         return False
 
-    def handle_WINDOWCLOSE_event(self, event: fantas.Event) -> bool:
+    def handle_windowclose_event(self, _: fantas.Event) -> bool:
         """
         处理窗口关闭事件。
-        Args:
-            event (fantas.Event): 窗口关闭事件对象。
         """
         fantas.Debug.send_debug_data(
             fantas.DebugFlag.TIMERECORD, prompt="CloseDebugWindow"
@@ -407,10 +403,10 @@ class MouseMagnifyWindow(fantas.Window):
         self.background.append(self.cursor_color_label)
 
         self.add_event_listener(
-            fantas.WINDOWCLOSE, self.root_ui, True, self.handle_WINDOWCLOSE_event
+            fantas.WINDOWCLOSE, self.root_ui, True, self.handle_windowclose_event
         )
         self.add_event_listener(
-            fantas.MOUSEWHEEL, self.mouse_shot_img, True, self.handle_MOUSEWHEEL_event
+            fantas.MOUSEWHEEL, self.mouse_shot_img, True, self.handle_mousewheel_event
         )
 
     def update_text(self) -> None:
@@ -439,18 +435,16 @@ class MouseMagnifyWindow(fantas.Window):
         self.cursor_color_label.label_style.bgcolor = self.cursor_color
         self.update_text()
 
-    def handle_WINDOWCLOSE_event(self, event: fantas.Event) -> bool:
+    def handle_windowclose_event(self, _: fantas.Event) -> bool:
         """
         处理窗口关闭事件。
-        Args:
-            event (fantas.Event): 窗口关闭事件对象。
         """
         fantas.Debug.send_debug_data(
             fantas.DebugFlag.MOUSEMAGNIFY, prompt="CloseDebugWindow"
         )
         return False
 
-    def handle_MOUSEWHEEL_event(self, event: fantas.Event) -> bool:
+    def handle_mousewheel_event(self, event: fantas.Event) -> bool:
         """
         处理鼠标滚轮事件。
         Args:
@@ -472,11 +466,9 @@ class MouseMagnifyWindow(fantas.Window):
         return False
 
 
-def handle_debug_received_event(event: fantas.Event) -> bool:
+def handle_debugreceived_event(_: fantas.Event) -> bool:
     """
     处理接收到的调试命令事件。
-    Args:
-        event (fantas.Event): 接收到的调试命令事件对象。
     """
     while not fantas.Debug.queue.empty():
         data = fantas.Debug.queue.get()
@@ -514,7 +506,7 @@ if fantas.DebugFlag.MOUSEMAGNIFY in debug_flags:
 # 注册接收调试命令事件的处理器
 for window in windows:
     window.add_event_listener(
-        fantas.DEBUGRECEIVED, window.root_ui, True, handle_debug_received_event
+        fantas.DEBUGRECEIVED, window.root_ui, True, handle_debugreceived_event
     )
 # 创建调试窗口
 debug_windows = fantas.MultiWindow(*windows)

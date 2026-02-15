@@ -1,3 +1,7 @@
+"""
+fantas.fantas_typing 的 Docstring
+"""
+
 from typing import TypeAlias, Callable
 import pygame
 
@@ -14,7 +18,7 @@ __all__ = (
     "FileLike",
     "Event",
     "EventType",
-    "UIID",
+    "UIid",
     "ListenerKey",
     "ListenerFunc",
     "ListenerDict",
@@ -43,8 +47,8 @@ from pygame.event import Event  # 事件类
 
 EventType: TypeAlias = int  # 事件类型
 
-UIID: TypeAlias = int  # UI 元素唯一标识类型
-ListenerKey: TypeAlias = tuple[EventType, UIID, bool]  # 监听器键类型
+UIid: TypeAlias = int  # UI 元素唯一标识类型
+ListenerKey: TypeAlias = tuple[EventType, UIid, bool]  # 监听器键类型
 ListenerFunc: TypeAlias = Callable[[Event], bool | None]  # 监听器函数类型
 ListenerDict: TypeAlias = dict[ListenerKey, list[ListenerFunc]]  # 监听器字典类型
 

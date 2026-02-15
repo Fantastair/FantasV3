@@ -1,7 +1,9 @@
+"""
+fantas.font 的 Docstring
+"""
+
 from __future__ import annotations
-import copy
 from bisect import bisect_right
-from dataclasses import dataclass
 from collections.abc import Sequence
 from typing import Any, Callable
 
@@ -115,24 +117,24 @@ class Font(pygame.freetype.Font):
         """
         results: list[tuple[str, int]] = []
         append = results.append
-        for text in text.splitlines():
+        for t in text.splitlines():
             line_width: Sequence[int] = (
-                self.get_widthes(style_flag, size, text) if text else [0]
+                self.get_widthes(style_flag, size, t) if t else [0]
             )
             # 如果整行宽度小于等于区域宽度则直接添加
             if line_width[-1] <= width:
-                append((text, line_width[-1]))
+                append((t, line_width[-1]))
                 continue
             # 否则拆行
             last_index = 0
             _width = width
-            while last_index < len(text):
+            while last_index < len(t):
                 line_index = bisect_right(line_width, _width, lo=last_index)
                 if line_index == last_index:
                     line_index += 1
                 append(
                     (
-                        text[last_index:line_index],
+                        t[last_index:line_index],
                         line_width[line_index - 1]
                         - (line_width[last_index - 1] if last_index > 0 else 0),
                     )
@@ -145,7 +147,9 @@ class Font(pygame.freetype.Font):
 pygame.freetype.Font = Font  # type: ignore[assignment, misc]
 
 
-def SysFont(name: Any, size: float = 16.0) -> Font | Any:
+def SysFont(  # pylint: disable=invalid-name
+    name: Any, size: float = 16.0
+) -> Font | Any:
     """
     创建并返回一个系统字体的 Font 实例。
     Args:

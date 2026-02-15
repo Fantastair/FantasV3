@@ -1,3 +1,7 @@
+"""
+提供与颜色相关的实用函数。
+"""
+
 from __future__ import annotations
 
 import fantas

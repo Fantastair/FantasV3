@@ -1,3 +1,7 @@
+"""
+event_handler.py
+"""
+
 from __future__ import annotations
 from dataclasses import dataclass, field
 
@@ -215,11 +219,9 @@ class EventHandler:
         # 更新上一次按下的 UI 元素
         self.last_pressed_ui = self.hover_ui
 
-    def handle_mousebuttonup_event(self, event: fantas.Event) -> None:
+    def handle_mousebuttonup_event(self, _: fantas.Event) -> None:
         """
         处理鼠标释放事件。
-        Args:
-            event (fantas.Event): 鼠标释放事件对象。
         """
         # 判断有效单击
         if self.last_pressed_ui is self.hover_ui:

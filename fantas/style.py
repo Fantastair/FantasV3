@@ -1,3 +1,7 @@
+"""
+fantas.style 的 Docstring
+"""
+
 from __future__ import annotations
 from dataclasses import dataclass
 from copy import copy

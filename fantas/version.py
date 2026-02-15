@@ -1,3 +1,7 @@
+"""
+fantas.version 的 Docstring
+"""
+
 __all__ = ("__version__",)
 
 MAJOR = 3

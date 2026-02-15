@@ -1,12 +1,16 @@
+"""
+fantas 的 Docstring
+"""
+
 __all__ = (
-    'time',
-    'draw',
-    'math',
-    'event',
-    'mouse',
-    'image',
-    'display',
-    'transform',
+    "time",
+    "draw",
+    "math",
+    "event",
+    "mouse",
+    "image",
+    "display",
+    "transform",
 )
 
 # 设置 Pygame 环境变量以优化性能和兼容性
@@ -52,14 +56,7 @@ pygame.init()
 pygame.freetype.init(cache_size=1024)
 
 # 导入 Pygame 的子模块以简化调用链
-import pygame.time as time
-import pygame.draw as draw
-import pygame.math as math
-import pygame.event as event
-import pygame.mouse as mouse
-import pygame.image as image
-import pygame.display as display
-import pygame.transform as transform
+from pygame import time, draw, math, event, mouse, image, display, transform
 
 # 导入 fantas 包的各个子模块
 from fantas.version import *  # 版本信息

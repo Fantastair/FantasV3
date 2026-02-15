@@ -1,3 +1,7 @@
+"""
+fantas.debug 的 Docstring
+"""
+
 # import os
 import sys
 import atexit
@@ -7,7 +11,6 @@ import subprocess
 import socket
 from queue import Queue
 from enum import Flag
-from typing import Any
 
 import fantas
 
@@ -32,10 +35,16 @@ debug_received_event: fantas.Event = fantas.Event(fantas.DEBUGRECEIVED)
 
 
 class Debug:
+    """
+    调试工具类，提供启动调试窗口、发送调试数据等功能。
+    """
+
     process: subprocess.Popen[str] | None = None  # 调试窗口子进程对象
     queue: Queue[tuple] = Queue()  # type: ignore[type-arg]  # 调试子进程返回队列
     debug_flag: DebugFlag = DebugFlag.NONE  # 当前调试选项标志
-    udp_socket: socket.socket = fantas.create_UDP_socket(port=0, timeout=1.0)  # UDP 通信套接字
+    udp_socket: socket.socket = fantas.create_udp_socket(
+        port=0, timeout=1.0
+    )  # UDP 通信套接字
     reading: bool = False  # 是否正在读取子进程输出
     debug_port: int = 0  # 调试窗口子进程的接收端口号
 
@@ -74,20 +83,21 @@ class Debug:
 
         # 启动子进程
         try:
-            Debug.process = subprocess.Popen(
+            with subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,  # 接收信息通信管道
                 text=True,  # 文本模式，自动编码/解码
                 bufsize=1,  # 行缓冲
                 # env=env,  # 子进程环境变量
-            )
-            # 子进程运行后会返回端口号
-            line = Debug.process.stdout.readline() if Debug.process.stdout else None
-            if line:
-                # 获取调试端口号
-                Debug.set_sendto_port(int(line.rstrip("\n")))
-                # 记录当前调试选项标志
-                Debug.debug_flag = flag
+            ) as process:
+                Debug.process = process
+                # 子进程运行后会返回端口号
+                line = Debug.process.stdout.readline() if Debug.process.stdout else None
+                if line:
+                    # 获取调试端口号
+                    Debug.set_sendto_port(int(line.rstrip("\n")))
+                    # 记录当前调试选项标志
+                    Debug.debug_flag = flag
         except FileNotFoundError as e:
             raise RuntimeError(f"命令{cmd}出错，无法启动调试窗口:") from e
 

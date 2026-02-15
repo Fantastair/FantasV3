@@ -1,3 +1,7 @@
+"""
+fantas.renderer 的 Docstring
+"""
+
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections import deque
@@ -92,7 +96,6 @@ class RenderCommand(ABC):
         Args:
             target_surface (fantas.Surface): 目标 Surface 对象。
         """
-        pass
 
     @abstractmethod
     def hit_test(self, point: fantas.IntPoint) -> bool:
@@ -103,7 +106,6 @@ class RenderCommand(ABC):
         Returns:
             bool: 如果点在区域内则返回 True，否则返回 False。
         """
-        pass
 
 
 @dataclass(slots=True)
@@ -128,7 +130,7 @@ class SurfaceRenderCommand(RenderCommand):
         Args:
             target_surface (fantas.Surface): 目标 Surface 对象。
         """
-        SurfaceRenderCommand_render_map[self.fill_mode](self, target_surface)
+        surface_render_command_render_map[self.fill_mode](self, target_surface)
 
     def hit_test(self, point: fantas.IntPoint) -> bool:
         """
@@ -140,7 +142,7 @@ class SurfaceRenderCommand(RenderCommand):
         """
         return self.affected_area.collidepoint(point)
 
-    def render_IGNORE(self, target_surface: fantas.Surface) -> None:
+    def render_ignore(self, target_surface: fantas.Surface) -> None:
         """
         执行 IGNORE 填充模式的渲染操作。
         Args:
@@ -148,7 +150,7 @@ class SurfaceRenderCommand(RenderCommand):
         """
         self.affected_area = target_surface.blit(self.surface, self.dest_rect)
 
-    def render_SCALE(self, target_surface: fantas.Surface) -> None:
+    def render_scale(self, target_surface: fantas.Surface) -> None:
         """
         执行 SCALE 填充模式的渲染操作。
         Args:
@@ -157,7 +159,7 @@ class SurfaceRenderCommand(RenderCommand):
         rect = self.affected_area = self.dest_rect
         target_surface.blit(fantas.transform.scale(self.surface, rect.size), rect)
 
-    def render_SMOOTHSCALE(self, target_surface: fantas.Surface) -> None:
+    def render_smoothscale(self, target_surface: fantas.Surface) -> None:
         """
         执行 SMOOTHSCALE 填充模式的渲染操作。
         Args:
@@ -166,7 +168,7 @@ class SurfaceRenderCommand(RenderCommand):
         rect = self.affected_area = self.dest_rect
         target_surface.blit(fantas.transform.smoothscale(self.surface, rect.size), rect)
 
-    def render_REPEAT(self, target_surface: fantas.Surface) -> None:
+    def render_repeat(self, target_surface: fantas.Surface) -> None:
         """
         执行 REPEAT 填充模式的渲染操作。
         Args:
@@ -199,7 +201,7 @@ class SurfaceRenderCommand(RenderCommand):
                 surface, (left_col, top_row), (0, 0, width_remain, height_remain)
             )
 
-    def render_FITMIN(self, target_surface: fantas.Surface) -> None:
+    def render_fitmin(self, target_surface: fantas.Surface) -> None:
         """
         执行 FITMIN 填充模式的渲染操作。
         Args:
@@ -217,7 +219,7 @@ class SurfaceRenderCommand(RenderCommand):
             (left + (width - w) // 2, top + (height - h) // 2),
         )
 
-    def render_FITMAX(self, target_surface: fantas.Surface) -> None:
+    def render_fitmax(self, target_surface: fantas.Surface) -> None:
         """
         执行 FITMAX 填充模式的渲染操作。
         Args:
@@ -239,15 +241,15 @@ class SurfaceRenderCommand(RenderCommand):
 
 
 # SurfaceRenderCommand 渲染映射表
-SurfaceRenderCommand_render_map: dict[
+surface_render_command_render_map: dict[
     fantas.FillMode, Callable[[SurfaceRenderCommand, fantas.Surface], None]
 ] = {
-    fantas.FillMode.IGNORE: SurfaceRenderCommand.render_IGNORE,
-    fantas.FillMode.SCALE: SurfaceRenderCommand.render_SCALE,
-    fantas.FillMode.SMOOTHSCALE: SurfaceRenderCommand.render_SMOOTHSCALE,
-    fantas.FillMode.REPEAT: SurfaceRenderCommand.render_REPEAT,
-    fantas.FillMode.FITMIN: SurfaceRenderCommand.render_FITMIN,
-    fantas.FillMode.FITMAX: SurfaceRenderCommand.render_FITMAX,
+    fantas.FillMode.IGNORE: SurfaceRenderCommand.render_ignore,
+    fantas.FillMode.SCALE: SurfaceRenderCommand.render_scale,
+    fantas.FillMode.SMOOTHSCALE: SurfaceRenderCommand.render_smoothscale,
+    fantas.FillMode.REPEAT: SurfaceRenderCommand.render_repeat,
+    fantas.FillMode.FITMIN: SurfaceRenderCommand.render_fitmin,
+    fantas.FillMode.FITMAX: SurfaceRenderCommand.render_fitmax,
 }
 
 
@@ -283,6 +285,7 @@ class ColorFillCommand(RenderCommand):
         return self.dest_rect.collidepoint(point)
 
 
+@dataclass(slots=True)
 class ColorBackgroundFillCommand(RenderCommand):
     """
     颜色背景填充命令类。
@@ -414,10 +417,8 @@ class TextRenderCommand(RenderCommand):
         # 文本为空则不渲染
         if not self.text:
             return
-        # 简化引用
-        s = self.style
         # 执行渲染
-        TextRenderCommand_render_map[self.align_mode](self, target_surface)
+        text_render_command_render_map[self.align_mode](self, target_surface)
 
     def hit_test(self, point: fantas.IntPoint) -> bool:
         """
@@ -432,7 +433,7 @@ class TextRenderCommand(RenderCommand):
                 return True
         return False
 
-    def render_LEFT(self, target_surface: fantas.Surface) -> None:
+    def render_left(self, target_surface: fantas.Surface) -> None:
         """
         左对齐渲染。
         Args:
@@ -465,7 +466,7 @@ class TextRenderCommand(RenderCommand):
         part_min_y = full_min_y - line_height  # 部分可见时的最小 y 坐标
         part_max_y = full_max_y + line_height  # 部分可见时的最大 y 坐标
         # 执行渲染
-        for text, width in wraps:
+        for text, _ in wraps:
             if full_min_y <= origin_y <= full_max_y:  # 完全可见，正常渲染
                 ar_append(
                     font.render_to(
@@ -488,7 +489,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_CENTER(self, target_surface: fantas.Surface) -> None:
+    def render_center(self, target_surface: fantas.Surface) -> None:
         """
         居中对齐渲染。
         Args:
@@ -547,7 +548,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_RIGHT(self, target_surface: fantas.Surface) -> None:
+    def render_right(self, target_surface: fantas.Surface) -> None:
         """
         右对齐渲染。
         Args:
@@ -606,7 +607,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_TOP(self, target_surface: fantas.Surface) -> None:
+    def render_top(self, target_surface: fantas.Surface) -> None:
         """
         顶部对齐渲染。
         Args:
@@ -660,7 +661,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_BOTTOM(self, target_surface: fantas.Surface) -> None:
+    def render_bottom(self, target_surface: fantas.Surface) -> None:
         """
         底部对齐渲染。
         Args:
@@ -720,7 +721,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_TOPLEFT(self, target_surface: fantas.Surface) -> None:
+    def render_topleft(self, target_surface: fantas.Surface) -> None:
         """
         左上对齐渲染。
         Args:
@@ -748,7 +749,7 @@ class TextRenderCommand(RenderCommand):
         part_min_y = full_min_y - line_height  # 部分可见时的最小 y 坐标
         part_max_y = full_max_y + line_height  # 部分可见时的最大 y 坐标
         # 执行渲染
-        for text, width in wraps:
+        for text, _ in wraps:
             if full_min_y <= origin_y <= full_max_y:  # 完全可见，正常渲染
                 ar_append(
                     font.render_to(
@@ -771,7 +772,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_TOPRIGHT(self, target_surface: fantas.Surface) -> None:
+    def render_topright(self, target_surface: fantas.Surface) -> None:
         """
         右上对齐渲染。
         Args:
@@ -826,7 +827,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_BOTTOMLEFT(self, target_surface: fantas.Surface) -> None:
+    def render_bottomleft(self, target_surface: fantas.Surface) -> None:
         """
         左下对齐渲染。
         Args:
@@ -860,7 +861,7 @@ class TextRenderCommand(RenderCommand):
         part_min_y = full_min_y - line_height  # 部分可见时的最小 y 坐标
         part_max_y = full_max_y + line_height  # 部分可见时的最大 y 坐标
         # 执行渲染
-        for text, width in wraps:
+        for text, _ in wraps:
             if full_min_y <= origin_y <= full_max_y:  # 完全可见，正常渲染
                 ar_append(
                     font.render_to(
@@ -883,7 +884,7 @@ class TextRenderCommand(RenderCommand):
                 )
             origin_y += line_height
 
-    def render_BOTTOMRIGHT(self, target_surface: fantas.Surface) -> None:
+    def render_bottomright(self, target_surface: fantas.Surface) -> None:
         """
         右下对齐渲染。
         Args:
@@ -945,18 +946,18 @@ class TextRenderCommand(RenderCommand):
 
 
 # TextRenderCommand 渲染映射表
-TextRenderCommand_render_map: dict[
+text_render_command_render_map: dict[
     fantas.AlignMode, Callable[[TextRenderCommand, fantas.Surface], None]
 ] = {
-    fantas.AlignMode.TOP: TextRenderCommand.render_TOP,
-    fantas.AlignMode.LEFT: TextRenderCommand.render_LEFT,
-    fantas.AlignMode.RIGHT: TextRenderCommand.render_RIGHT,
-    fantas.AlignMode.BOTTOM: TextRenderCommand.render_BOTTOM,
-    fantas.AlignMode.CENTER: TextRenderCommand.render_CENTER,
-    fantas.AlignMode.TOPLEFT: TextRenderCommand.render_TOPLEFT,
-    fantas.AlignMode.TOPRIGHT: TextRenderCommand.render_TOPRIGHT,
-    fantas.AlignMode.BOTTOMLEFT: TextRenderCommand.render_BOTTOMLEFT,
-    fantas.AlignMode.BOTTOMRIGHT: TextRenderCommand.render_BOTTOMRIGHT,
+    fantas.AlignMode.TOP: TextRenderCommand.render_top,
+    fantas.AlignMode.LEFT: TextRenderCommand.render_left,
+    fantas.AlignMode.RIGHT: TextRenderCommand.render_right,
+    fantas.AlignMode.BOTTOM: TextRenderCommand.render_bottom,
+    fantas.AlignMode.CENTER: TextRenderCommand.render_center,
+    fantas.AlignMode.TOPLEFT: TextRenderCommand.render_topleft,
+    fantas.AlignMode.TOPRIGHT: TextRenderCommand.render_topright,
+    fantas.AlignMode.BOTTOMLEFT: TextRenderCommand.render_bottomleft,
+    fantas.AlignMode.BOTTOMRIGHT: TextRenderCommand.render_bottomright,
 }
 
 # 象限映射表
@@ -1070,7 +1071,7 @@ class LinearGradientRenderCommand(RenderCommand):
             if not isinstance(self.end_pos, fantas.Vector2):
                 self.end_pos = fantas.Vector2(self.end_pos)
             # 选择渲染方法
-            LinearGradientRenderCommand_render_map[
+            linear_gradient_render_command_render_map[
                 ((self.start_pos.y == self.end_pos.y) << 1)
                 | (self.start_pos.x == self.end_pos.x)
             ](self)
@@ -1162,7 +1163,7 @@ class LinearGradientRenderCommand(RenderCommand):
         self.surface_cache.fill(start_color.lerp(end_color, 0.5), self.rect)
 
 
-LinearGradientRenderCommand_render_map: dict[
+linear_gradient_render_command_render_map: dict[
     int, Callable[[LinearGradientRenderCommand], None]
 ] = {
     0b00: LinearGradientRenderCommand.render_any_angle,
