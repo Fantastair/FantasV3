@@ -1,5 +1,5 @@
 """
-提供与颜色相关的实用函数。
+提供颜色相关的增强功能。
 """
 
 from __future__ import annotations
@@ -11,13 +11,12 @@ __all__ = ("get_distinct_blackorwhite",)
 
 def get_distinct_blackorwhite(color: fantas.Color) -> fantas.Color:
     """
-    获取与当前颜色形成高对比度的黑色或白色颜色对象。
-    Args:
-        color (Color): 原颜色对象。
-    Returns:
-        Color: 生成的高对比度颜色对象。
+    根据输入颜色的亮度，返回一个与之对比鲜明的黑色或白色。
+
+    :param color: 输入颜色
+    :type color: fantas.Color
+    :return: 与输入颜色对比鲜明的黑色或白色颜色对象
+    :rtype: fantas.Color
     """
-    # 提取原颜色的HSLA值
     h, s, l, a = color.hsla
-    # 返回新的颜色对象
     return fantas.Color.from_hsla(h, s, 100 if l < 50 else 0, a)

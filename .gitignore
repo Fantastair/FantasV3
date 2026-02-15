@@ -2,7 +2,7 @@ tmp/
 dist
 *.pyc
 *venv*
-/build/
+build/
 .vscode/
 .DS_Store
 __pycache__

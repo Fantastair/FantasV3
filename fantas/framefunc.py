@@ -29,7 +29,7 @@ clamp = fantas.math.clamp
 lerp = fantas.math.lerp
 
 # 时钟对象引用
-clock: fantas.time.Clock
+CLOCK: fantas.time.Clock | None = None
 
 
 def set_framefunc_clock(new_clock: fantas.time.Clock) -> None:
@@ -39,8 +39,8 @@ def set_framefunc_clock(new_clock: fantas.time.Clock) -> None:
     Args:
         new_clock (Clock): 新的时钟对象。
     """
-    global clock  # pylint: disable=global-statement
-    clock = new_clock
+    global CLOCK  # pylint: disable=global-statement
+    CLOCK = new_clock
 
 
 # 帧函数字典
@@ -329,9 +329,10 @@ class AttrKeyFrame(KeyFrameBase):
                 self.start_value = getattr(self.obj, self.attr)
             else:
                 self.start_value = start_value
-            # 需要把 start_time 往前调整一帧的时间，否则重启后的动画会有一帧的停顿
-            fps = clock.get_fps()
-            self.start_time -= round(1_000_000_000 / fps) if fps > 0 else 0
+            if CLOCK is not None:
+                # 需要把 start_time 往前调整一帧的时间，否则重启后的动画会有一帧的停顿
+                fps = CLOCK.get_fps()
+                self.start_time -= round(1_000_000_000 / fps) if fps > 0 else 0
 
     def tick(self, ratio: float) -> None:
         """

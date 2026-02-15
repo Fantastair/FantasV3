@@ -1,5 +1,7 @@
 """
-fantas.constants 模块定义了 Fantas 库中使用的常量、枚举类型和实用函数。
+提供 fantas 库中使用的常量、枚举类型和相关函数。
+
+.. hint:: 使用常量的时候一般不需要关心具体的值，也不要相信某个常量的值在不同平台或版本中是相同的。
 """
 
 from __future__ import annotations
@@ -85,8 +87,6 @@ import fantas
 __all__ = [
     "colordict",
     "DEFAULTFONT",
-    "DEFAULTTEXTSTYLE",
-    "DEFAULTLABELSTYLE",
     "Quadrant",
     "BoxMode",
     "FillMode",
@@ -169,12 +169,10 @@ __all__ = [
 ]
 
 
-DEFAULTFONT: fantas.Font = pygame.freetype.Font(None)  # type: ignore[assignment]  # 默认字体
+DEFAULTFONT: fantas.Font = pygame.freetype.Font(None)  # type: ignore[assignment]
+""" 默认字体 """
 DEFAULTFONT.origin = True
 DEFAULTFONT.kerning = True
-
-DEFAULTTEXTSTYLE: fantas.TextStyle  # 默认 Text  样式，在 fantas.style 模块中初始化
-DEFAULTLABELSTYLE: fantas.LabelStyle  # 默认 Label 样式，在 fantas.style 模块中初始化
 
 
 class Quadrant(IntEnum):
@@ -183,22 +181,29 @@ class Quadrant(IntEnum):
     低 2 位用于快速符号计算，高 4 位作为单比特掩码。
     """
 
-    TOPRIGHT = 0b000101  # 第一象限
-    TOPLEFT = 0b001000  # 第二象限
-    BOTTOMLEFT = 0b010010  # 第三象限
-    BOTTOMRIGHT = 0b100011  # 第四象限
+    TOPRIGHT = 0b000101
+    """ 第一象限。 """
+    TOPLEFT = 0b001000
+    """ 第二象限。 """
+    BOTTOMLEFT = 0b010010
+    """ 第三象限。 """
+    BOTTOMRIGHT = 0b100011
+    """ 第四象限。 """
 
-    ALL = TOPLEFT | TOPRIGHT | BOTTOMLEFT | BOTTOMRIGHT  # 全部象限
+    ALL = TOPLEFT | TOPRIGHT | BOTTOMLEFT | BOTTOMRIGHT
+    """ 全部象限。 """
 
     @staticmethod
     def has_point(quadrant: Quadrant, point: fantas.Point) -> bool:
         """
         检查给定点是否在当前象限中。
-        Args:
-            quadrant (Quadrant)    : 象限掩码。
-            point    (fantas.Point): 要检查的点。
-        Returns:
-            bool: 如果点在当前象限中则返回 True，否则返回 False。
+        
+        :param quadrant: 象限掩码。
+        :type quadrant: Quadrant
+        :param point: 要检查的点。
+        :type point: fantas.Point
+        :return: 如果点在当前象限中则返回 True，否则返回 False。
+        :rtype: bool
         """
         return not (quadrant & 0b11) ^ ((point[0] >= 0) | ((point[1] >= 0) << 1))
 
@@ -206,60 +211,86 @@ class Quadrant(IntEnum):
 class BoxMode(Enum):
     """盒子模式枚举，用来控制边框的扩展方向。"""
 
-    INSIDE = auto()  # 内部盒子，表示边框只会向内部扩展
-    OUTSIDE = auto()  # 外部盒子，表示边框只会向外部扩展
-    INOUTSIDE = auto()  # 中间盒子，表示边框会向内部和外部同时扩展
+    INSIDE = auto()
+    """ 内部盒子，表示边框只会向内部扩展 """
+    OUTSIDE = auto()
+    """ 外部盒子，表示边框只会向外部扩展 """
+    INOUTSIDE = auto()
+    """ 中间盒子，表示边框会向内部和外部同时扩展 """
 
 
 class FillMode(Enum):
     """Surface 填充模式枚举。"""
 
-    IGNORE = auto()  # 忽略填充模式，只对齐 topleft，不关心 size
-    SCALE = auto()  # 缩放填充模式，对齐 topleft 并缩放图片至目标 size
-    SMOOTHSCALE = auto()  # 平滑缩放填充模式，对齐 topleft 并平滑缩放图片至目标 size
-    REPEAT = auto()  # 重复填充模式，对齐 topleft 并重复平铺图片至目标 size
-    FITMIN = (
-        auto()
-    )  # 最小适应填充模式，等比缩放图片，确保图片完整显示在目标 rect 内（可能留有空白）
-    FITMAX = (
-        auto()
-    )  # 最大适应填充模式，等比缩放图片，确保图片覆盖整个目标 rect（超出部分将被裁剪）
+    IGNORE = auto()
+    """ 忽略填充模式，只对齐 topleft，不关心 size """
+    SCALE = auto()
+    """ 缩放填充模式，对齐 topleft 并缩放图片至目标 size """
+    SMOOTHSCALE = auto()
+    """ 平滑缩放填充模式，对齐 topleft 并平滑缩放图片至目标 size """
+    REPEAT = auto()
+    """ 重复填充模式，对齐 topleft 并重复平铺图片至目标 size """
+    FITMIN = auto()
+    """ 最小适应填充模式，等比缩放图片，确保图片完整显示在目标 rect 内（可能留有空白）"""
+    FITMAX = auto()
+    """ 最大适应填充模式，等比缩放图片，确保图片覆盖整个目标 rect（超出部分将被裁剪）"""
 
 
 class AlignMode(Enum):
     """对齐模式枚举。"""
 
-    LEFT = auto()  # 左对齐
-    CENTER = auto()  # 居中对齐
-    RIGHT = auto()  # 右对齐
-    TOP = auto()  # 顶部对齐
-    BOTTOM = auto()  # 底部对齐
-    TOPLEFT = auto()  # 左上对齐
-    TOPRIGHT = auto()  # 右上对齐
-    BOTTOMLEFT = auto()  # 左下对齐
-    BOTTOMRIGHT = auto()  # 右下对齐
+    LEFT = auto()
+    """ 左对齐 """
+    CENTER = auto()
+    """ 居中对齐 """
+    RIGHT = auto()
+    """ 右对齐 """
+    TOP = auto()
+    """ 顶部对齐 """
+    BOTTOM = auto()
+    """ 底部对齐 """
+    TOPLEFT = auto()
+    """ 左上对齐 """
+    TOPRIGHT = auto()
+    """ 右上对齐 """
+    BOTTOMLEFT = auto()
+    """ 左下对齐 """
+    BOTTOMRIGHT = auto()
+    """ 右下对齐 """
 
 
 class DockMode(Enum):
     """停靠模式枚举。"""
 
-    NONE = auto()  # 不停靠
-    LEFT = auto()  # 停靠在左侧
-    TOP = auto()  # 停靠在顶部
-    RIGHT = auto()  # 停靠在右侧
-    BOTTOM = auto()  # 停靠在底部
-    FILL = auto()  # 填充剩余空间
+    NONE = auto()
+    """ 不停靠 """
+    LEFT = auto()
+    """ 停靠在左侧 """
+    TOP = auto()
+    """ 停靠在顶部 """
+    RIGHT = auto()
+    """ 停靠在右侧 """
+    BOTTOM = auto()
+    """ 停靠在底部 """
+    FILL = auto()
+    """ 填充剩余空间 """
 
 
 class EventCategory(Enum):
     """事件分类枚举。"""
 
-    MOUSE = auto()  # 鼠标事件
-    KEYBOARD = auto()  # 键盘事件
-    INPUT = auto()  # 输入事件
-    WINDOW = auto()  # 窗口事件
-    USER = auto()  # 用户自定义事件
-    NONE = auto()  # 未分类事件
+    MOUSE = auto()
+    """ 鼠标事件 """
+    KEYBOARD = auto()
+    """ 键盘事件 """
+    INPUT = auto()
+    """ 输入事件 """
+    WINDOW = auto()
+    """ 窗口事件 """
+    USER = auto()
+    """ 用户自定义事件 """
+    NONE = auto()
+    """ 未分类事件 """
 
 
 # 事件分类表
@@ -292,10 +323,11 @@ def custom_event(
 ) -> fantas.EventType:
     """
     生成一个自定义事件类型 id。
-    Args:
-        event_category (fantas.EventCategory): 事件分类，默认为 USER。
-    Returns:
-        fantas.EventType: 自定义事件类型 id。
+
+    :param event_category: 事件分类，默认为 USER。
+    :type event_category: EventCategory
+    :return: 一个新的自定义事件类型 id。
+    :rtype: EventType
     """
     t = fantas.event.custom_type()
     event_category_dict[t] = event_category
@@ -306,20 +338,20 @@ def custom_event(
 def get_event_category(event_type: fantas.EventType) -> EventCategory:
     """
     获取事件分类。
-    Args:
-        event_type (fantas.EventType): 事件类型。
-    Returns:
-        fantas.EventCategory: 事件分类枚举值。
+    
+    :param event_type: 事件类型。
+    :type event_type: fantas.EventType
+    :return: 事件分类枚举值。
+    :rtype: EventCategory
     """
     return event_category_dict.get(event_type, EventCategory.NONE)
 
 
-# 自定义事件
-MOUSEENTERED: Final[fantas.EventType] = custom_event(
-    EventCategory.MOUSE
-)  # 鼠标进入事件
-MOUSELEAVED: Final[fantas.EventType] = custom_event(EventCategory.MOUSE)  # 鼠标离开事件
-MOUSECLICKED: Final[fantas.EventType] = custom_event(
-    EventCategory.MOUSE
-)  # 有效单击事件
-DEBUGRECEIVED: Final[fantas.EventType] = custom_event()  # 接收到调试信息事件
+MOUSEENTERED: Final[fantas.EventType] = custom_event(EventCategory.MOUSE)
+""" 鼠标进入事件 """
+MOUSELEAVED: Final[fantas.EventType] = custom_event(EventCategory.MOUSE)
+""" 鼠标离开事件 """
+MOUSECLICKED: Final[fantas.EventType] = custom_event(EventCategory.MOUSE)
+""" 有效单击事件 """
+DEBUGRECEIVED: Final[fantas.EventType] = custom_event()
+""" 接收到调试信息事件 """

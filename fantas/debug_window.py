@@ -4,6 +4,9 @@
 """
 
 from __future__ import annotations
+if __name__ == "__main__":
+    raise RuntimeError("这个模块不能直接运行。")
+
 import sys
 from collections import deque
 from typing import ClassVar, Deque, cast
@@ -97,8 +100,8 @@ class EventLogWindow(fantas.Window):
         self.append(self.background)
 
         self.text = fantas.Text(
-            fantas.Rect(10, 0, self.size[0] - 20, self.size[1]),
             "",
+            fantas.Rect(10, 0, self.size[0] - 20, self.size[1]),
             align_mode=fantas.AlignMode.BOTTOMLEFT,
         )
         if fantas.platform.system() == "Linux":
@@ -209,7 +212,7 @@ class TimeRecordWindow(fantas.Window):
         self.background = fantas.ColorBackground(fantas.colors.get("debug_bg"))
         self.root_ui.append(self.background)
 
-        self.fps_text = fantas.Text(fantas.Rect(8, 6, 110, 30), "FPS: 0.0")
+        self.fps_text = fantas.Text("FPS: 0.0", fantas.Rect(8, 6, 110, 30))
         self.background.append(self.fps_text)
         if fantas.platform.system() == "Linux":
             self.fps_text.offset = (
@@ -218,7 +221,8 @@ class TimeRecordWindow(fantas.Window):
             )
 
         self.legend_text = fantas.Text(
-            fantas.Rect(
+            "",
+            rect=fantas.Rect(
                 50,
                 70
                 - fantas.DEFAULTTEXTSTYLE.font.get_sized_ascender(
@@ -226,7 +230,7 @@ class TimeRecordWindow(fantas.Window):
                 ),
                 100,
                 30 * len(TimeRecordWindow.time_category) + 1,
-            )
+            ),
         )
         self.legend_text.text_style.line_height = 30
         if fantas.platform.system() == "Linux":
@@ -249,6 +253,7 @@ class TimeRecordWindow(fantas.Window):
             key: 0.0 for key in TimeRecordWindow.time_category
         }
         self.time_text = fantas.Text(
+            "",
             fantas.Rect(
                 160,
                 70
@@ -258,7 +263,6 @@ class TimeRecordWindow(fantas.Window):
                 100,
                 30 * len(TimeRecordWindow.time_category) + 1,
             ),
-            "",
         )
         self.time_text.text_style.line_spacing = 1
         self.time_text.text_style.line_height = 30
@@ -372,8 +376,8 @@ class MouseMagnifyWindow(fantas.Window):
         self.ratio: int = 8
         self.cursor_color: fantas.Color = fantas.colors.get("debug_fg")
         self.text = fantas.Text(
-            fantas.Rect(10, 0, 190, 64),
             f"放大倍数：{self.ratio}x\n鼠标颜色：{self.cursor_color}",
+            fantas.Rect(10, 0, 190, 64),
         )
         self.text.text_style.line_height = 32
         if fantas.platform.system() == "Linux":

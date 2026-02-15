@@ -17,7 +17,6 @@ import fantas
 __all__ = (
     "platform",
     "get_time_ns",
-    # "package_path",
     "generate_unique_id",
     "lru_cache_typed",
     "set_cursor",
@@ -25,17 +24,6 @@ __all__ = (
     "image_convert_alpha_hook",
     "AnimationHelper",
 )
-
-
-# 提供 fantas 包的路径获取函数
-# def package_path() -> Path:
-#     """
-#     获取 fantas 包的目录路径。
-#     Returns:
-#         path (Path): 模块所在的文件系统路径。
-#     """
-#     return Path(resources.files(__name__))
-
 
 # 全局唯一 ID 生成器
 id_counter = count()

@@ -6,9 +6,9 @@
 
 import os
 import sys
-import shutil
 import argparse
 import subprocess
+import urllib.request
 from enum import Enum
 from typing import Any
 from pathlib import Path
@@ -23,6 +23,11 @@ FANTAS_SOURCE_DIR = CWD / "fantas"
 
 
 class Colors(Enum):
+    """
+    Colors 枚举定义了用于终端输出的颜色代码。它提供了一种方便的方式来在终端中使用颜色，
+    以增强输出的可读性和视觉效果。
+    """
+
     RESET = "\033[0m"
     RED = "\033[31m"
     GREEN = "\033[32m"
@@ -34,6 +39,10 @@ class Colors(Enum):
 
 
 class PygameStatus(Enum):
+    """
+    PygameStatus 枚举定义了 pygame-ce (fantas 分支版本) 的安装状态。
+    """
+
     NOT_INSTALLED = 0
     INSTALLED_CORRECTLY = 1
     INSTALLED_INCORRECTLY = 2
@@ -42,6 +51,9 @@ class PygameStatus(Enum):
 
 # 参考链接 https://docs.python.org/3.13/using/cmdline.html#controlling-color
 def has_color() -> bool:
+    """
+    has_color 函数用于判断当前环境是否支持颜色输出。
+    """
     # 最高优先级
     python_colors = os.environ.get("PYTHON_COLORS", "").strip()
     if python_colors == "1":
@@ -62,6 +74,10 @@ def has_color() -> bool:
 
 
 def pprint(arg: str, col: Colors = Colors.YELLOW) -> None:
+    """
+    pprint 函数用于在终端中打印带有颜色的消息。它根据环境变量和参数决定是否使用颜色，
+    并且在输出前添加 [dev.py] 前缀以标识消息来源。
+    """
     do_col = has_color()
     start = Colors.BLUE.value if do_col else ""
     mid = col.value if do_col else ""
@@ -75,6 +91,9 @@ def cmd_run(
     error_on_output: bool = False,
     cwd: Path = CWD,
 ) -> str:
+    """
+    运行一个命令，并且根据参数决定是否捕获输出或者在有输出时视为错误。
+    """
     if error_on_output:
         capture_output = True
 
@@ -87,6 +106,7 @@ def cmd_run(
             stderr=subprocess.STDOUT,
             text=capture_output,
             cwd=cwd,
+            check=True,
         )
     except FileNotFoundError:
         pprint(f"{norm_cmd[0]}: 未找到指令", Colors.RED)
@@ -104,6 +124,9 @@ def cmd_run(
 
 
 def check_git_clean() -> None:
+    """
+    检查当前 git 仓库是否存在未提交的更改，如果存在则提示用户先提交这些更改
+    """
     pprint("检查 git 仓库状态中 (使用 git)")
 
     try:
@@ -114,6 +137,9 @@ def check_git_clean() -> None:
 
 
 def show_diff_and_help_commit(command: str) -> None:
+    """
+    显示 git 仓库的更改，并提示用户是否需要自动提交这些更改以继续运行 dev.py
+    """
     try:
         cmd_run(["git", "--no-pager", "status", "--porcelain"], error_on_output=True)
     except subprocess.CalledProcessError:
@@ -138,6 +164,9 @@ def show_diff_and_help_commit(command: str) -> None:
 
 
 def get_poetry_executable() -> Path | None:
+    """
+    查找 Poetry 可执行文件的路径，首先尝试通过命令行查找，如果失败则遍历常见安装路径
+    """
     pprint("查找 Poetry 可执行文件中")
     try:
         # 命令行查找
@@ -176,17 +205,22 @@ def get_poetry_executable() -> Path | None:
 
 
 def download_poetry_install_script(destination: Path) -> None:
+    """
+    下载 Poetry 安装管理脚本到指定路径
+    """
     if not destination.parent.exists():
         destination.parent.mkdir(parents=True, exist_ok=True)
 
     if not destination.exists():
         pprint("下载 Poetry 安装管理脚本中")
-        import urllib.request
 
         urllib.request.urlretrieve("https://install.python-poetry.org/", destination)
 
 
 def install_poetry() -> Path:
+    """
+    安装 Poetry，并返回 Poetry 可执行文件的路径
+    """
     pprint("安装 Poetry 中")
 
     install_poetry_script_path = CWD / "tools" / "install_poetry.py"
@@ -209,6 +243,9 @@ def install_poetry() -> Path:
 
 
 def uninstall_poetry() -> None:
+    """
+    卸载 Poetry
+    """
     pprint("卸载 Poetry 中")
 
     install_poetry_script_path = CWD / "tools" / "install_poetry.py"
@@ -227,7 +264,10 @@ def uninstall_poetry() -> None:
 
 
 def poetry_install_dependencies(poetry_path: Path) -> None:
-    pprint("安装项目依赖中 (使用 Poetry)")
+    """
+    使用 Poetry 安装项目依赖
+    """
+    pprint("安装项目其他依赖中 (使用 Poetry)")
 
     try:
         cmd_run([poetry_path, "install", "--no-root"])
@@ -237,6 +277,9 @@ def poetry_install_dependencies(poetry_path: Path) -> None:
 
 
 def get_pygame_ce_fantas_status(py: Path) -> PygameStatus:
+    """
+    检查 pygame-ce (fantas 分支版本) 的安装状态，返回 PygameStatus 枚举值
+    """
     pprint("检查 pygame-ce (fantas 分支版本) 安装状态中")
 
     check_script_path = CWD / "tools" / "check_pygame_ce_fantas.py"
@@ -280,6 +323,10 @@ else:
 
 
 def check_and_update_pygame_ce_fantas() -> None:
+    """
+    检查 pygame-ce-fantas 仓库是否存在并且在正确的分支上，如果不存在则克隆仓库，
+    如果存在但不在正确的分支上则切换分支，并且拉取最新的提交
+    """
     pprint("检查 pygame-ce-fantas 仓库中 (使用 git)")
 
     if not PYGAME_CE_FANTAS_DIR.exists():
@@ -338,7 +385,7 @@ def check_and_update_pygame_ce_fantas() -> None:
         cmd_run(["git", "pull"], cwd=PYGAME_CE_FANTAS_DIR)
     except subprocess.CalledProcessError:
         pprint("- 请检查网络连接，是否能访问 GitHub", Colors.MAGENTA)
-        pprint(f"- 或者手动执行命令：", Colors.MAGENTA)
+        pprint("- 或者手动执行命令：", Colors.MAGENTA)
         pprint(f"  git -C {PYGAME_CE_FANTAS_DIR} pull", Colors.CYAN)
         pprint(
             "更新 pygame-ce-fantas 仓库失败，请执行上述检查后重新运行 dev.py",
@@ -348,6 +395,9 @@ def check_and_update_pygame_ce_fantas() -> None:
 
 
 def build_and_install_pygame_ce_fantas(py: Path) -> None:
+    """
+    构建并安装 pygame-ce (fantas 分支版本)
+    """
     pprint("安装 pygame-ce (fantas 分支版本) 中")
     try:
         cmd_run([py, "-m", "pip", "install", "."], cwd=PYGAME_CE_FANTAS_DIR)
@@ -357,6 +407,9 @@ def build_and_install_pygame_ce_fantas(py: Path) -> None:
 
 
 def uninstall_pygame_ce_fantas(py: Path, status: PygameStatus) -> None:
+    """
+    卸载 pygame 或 pygame-ce
+    """
     pprint(
         f"卸载 {'pygame' if status == PygameStatus.INSTALLED_PYGAME else 'pygame-ce'} 中 (使用 pip)"
     )
@@ -380,8 +433,15 @@ def uninstall_pygame_ce_fantas(py: Path, status: PygameStatus) -> None:
 
 
 class Dev:
+    """
+    Dev 类封装了所有开发相关的命令和流程。它负责解析命令行参数，准备虚拟环境，
+    检查和安装依赖，并执行对应的子命令。
+    """
+
     def __init__(self) -> None:
         self.py: Path = Path(sys.executable)
+        self.venv_py: Path
+        self.poetry_path: Path
         self.args: dict[str, Any] = {}
 
     # def cmd_install(self):
@@ -393,18 +453,33 @@ class Dev:
     # def cmd_update(self):
     #     pass
 
-    # def cmd_docs(self, full: bool = None):
-    #     full = self.args.get("full", False) if full is None else full
+    def cmd_docs(self) -> None:
+        """
+        执行 docs 子命令，使用 Sphinx 生成文档
+        """
+        full = self.args.get("full", False)
 
-    #     pprint(f"生成文档中 (参数 {full=})")
-    #     extra_args = ["full_generation"] if full else []
-    #     cmd_run([self.py, "buildconfig/make_docs.py", *extra_args])
+        pprint(f"生成文档中 (参数 {full=})")
 
-    #     if "CI" in os.environ:
-    #         show_diff_and_help_commit("docs")
+        cmd: list[str | Path] = [
+            self.venv_py,
+            "-m",
+            "sphinx",
+            "-b",
+            "html",
+            "docs/source",
+            "docs/build/html",
+            "--quiet",
+        ]
+        if full:
+            cmd.append("-E")
+        cmd_run(cmd)
 
     def cmd_lint(self) -> None:
-        pprint("检查代码中 (使用 pylint)")
+        """
+        执行 lint 子命令，使用 pylint 进行代码质量检查
+        """
+        pprint("分析代码质量中 (使用 pylint)")
 
         cmd_run(
             [
@@ -417,6 +492,9 @@ class Dev:
         )
 
     def cmd_stubs(self) -> None:
+        """
+        执行 stubs 子命令，使用 mypy 进行静态类型检查
+        """
         pprint("执行静态类型检查中 (使用 mypy)")
 
         cmd_run(
@@ -424,6 +502,9 @@ class Dev:
         )
 
     def cmd_format(self) -> None:
+        """
+        执行 format 子命令，使用 black 格式化代码
+        """
         pprint("格式化代码中 (使用 black)")
 
         cmd_run([self.venv_py, "-m", "black", "."])
@@ -442,10 +523,13 @@ class Dev:
     #         cmd_run([self.py, "-m", "fantas.tests"])
 
     def cmd_auto(self) -> None:
+        """
+        自动运行所有检查和测试，然后构建并安装项目
+        """
         self.cmd_format()
         self.cmd_stubs()
         self.cmd_lint()
-        # self.cmd_docs(full=self.args.full_docs)
+        self.cmd_docs()
         # self.cmd_test()
         # if self.args.install:
         #     self.cmd_install()
@@ -453,6 +537,9 @@ class Dev:
         #     self.cmd_build()
 
     def parse_args(self) -> None:
+        """
+        解析命令行参数，设置 self.args 字典
+        """
         parser = argparse.ArgumentParser(
             description=(
                 "项目开发命令集成。"
@@ -527,6 +614,9 @@ class Dev:
             self.args["command"] = "auto"
 
     def prep_venv(self) -> None:
+        """
+        准备虚拟环境，确保后续命令在隔离的环境中运行
+        """
         pprint("准备虚拟环境中 (使用 Poetry)")
 
         cmd_run([self.poetry_path, "env", "use", self.py])
@@ -539,6 +629,9 @@ class Dev:
             self.venv_py = Path(venv_py) / "bin" / "python"
 
     def run(self) -> None:
+        """
+        运行开发命令的主流程
+        """
         # check_git_clean()
 
         self.parse_args()
@@ -555,7 +648,7 @@ class Dev:
             self.prep_venv()
 
             pygame_status = get_pygame_ce_fantas_status(self.venv_py)
-            if not pygame_status == PygameStatus.INSTALLED_CORRECTLY:
+            if pygame_status != PygameStatus.INSTALLED_CORRECTLY:
                 if pygame_status == PygameStatus.INSTALLED_INCORRECTLY:
                     uninstall_pygame_ce_fantas(self.venv_py, pygame_status)
                 check_and_update_pygame_ce_fantas()

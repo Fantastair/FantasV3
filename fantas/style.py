@@ -11,6 +11,8 @@ import fantas
 __all__ = (
     "TextStyle",
     "LabelStyle",
+    "DEFAULTTEXTSTYLE",
+    "DEFAULTLABELSTYLE",
 )
 
 
@@ -47,7 +49,7 @@ class TextStyle:
     line_height = property(get_lineheight, set_lineheight)
 
 
-fantas.DEFAULTTEXTSTYLE = TextStyle()  # 初始化默认文本样式
+DEFAULTTEXTSTYLE: TextStyle = TextStyle()  # 默认文本样式
 
 
 @dataclass(slots=True)
@@ -79,4 +81,4 @@ class LabelStyle:
         return copy(self)
 
 
-fantas.DEFAULTLABELSTYLE = LabelStyle()  # 初始化默认 Label 样式
+DEFAULTLABELSTYLE: LabelStyle = LabelStyle()  # 默认 Label 样式

@@ -1,8 +1,7 @@
 """
-fantas.debug 的 Docstring
+调试模块，可以启动一个独立的调试子进程。
 """
 
-# import os
 import sys
 import atexit
 import pickle
@@ -23,12 +22,17 @@ __all__ = (
 class DebugFlag(Flag):
     """调试选项标志枚举。"""
 
-    EVENTLOG = 1  # 事件日志
-    TIMERECORD = 2  # 时间记录
-    MOUSEMAGNIFY = 4  # 鼠标放大镜
+    EVENTLOG = 1
+    """ 事件日志 """
+    TIMERECORD = 2
+    """ 时间记录 """
+    MOUSEMAGNIFY = 4
+    """ 鼠标放大镜 """
 
     ALL = EVENTLOG | TIMERECORD | MOUSEMAGNIFY
+    """ 全部调试选项 """
     NONE = 0
+    """ 无调试选项 """
 
 
 debug_received_event: fantas.Event = fantas.Event(fantas.DEBUGRECEIVED)
@@ -39,14 +43,20 @@ class Debug:
     调试工具类，提供启动调试窗口、发送调试数据等功能。
     """
 
-    process: subprocess.Popen[str] | None = None  # 调试窗口子进程对象
-    queue: Queue[tuple] = Queue()  # type: ignore[type-arg]  # 调试子进程返回队列
-    debug_flag: DebugFlag = DebugFlag.NONE  # 当前调试选项标志
+    process: subprocess.Popen[str] | None = None
+    """ 调试窗口子进程对象 """
+    queue: Queue[tuple] = Queue()  # type: ignore[type-arg]
+    """ 调试子进程返回队列 """
+    debug_flag: DebugFlag = DebugFlag.NONE
+    """ 当前调试选项标志 """
     udp_socket: socket.socket = fantas.create_udp_socket(
         port=0, timeout=1.0
-    )  # UDP 通信套接字
-    reading: bool = False  # 是否正在读取子进程输出
-    debug_port: int = 0  # 调试窗口子进程的接收端口号
+    )
+    """ UDP 通信套接字 """
+    reading: bool = False
+    """ 是否正在读取子进程输出 """
+    debug_port: int = 0
+    """ 调试窗口子进程的接收端口号 """
 
     @staticmethod
     def start_debug(
@@ -54,23 +64,16 @@ class Debug:
     ) -> None:
         """
         启动调试窗口子进程。
-        Args:
-            flag   (DebugFlag)    : 调试选项标志。
-            windows_title (str)   : 调试窗口标题。
+        
+        :param flag: 调试选项标志，默认为 DebugFlag.ALL。
+        :type flag: DebugFlag
+        :param windows_title: 调试窗口标题，默认为 "fantas 调试窗口"。
+        :type windows_title: str
         """
         # 先关闭已有的调试窗口
         Debug.close_debug()
         # 启动后台线程读取子进程输出
         Debug.start_read_thread()
-        # 设置子进程的环境变量，确保可以找到 fantas 包
-        # env = os.environ.copy()
-        # env["PYTHONPATH"] = os.pathsep.join(
-        #     [
-        #         str(fantas.package_path().parent),
-        #         *env.get("PYTHONPATH", "").split(os.pathsep),
-        #     ]
-        # )
-        # 使用同一个 Python 解释器，构建命令行参数
 
         cmd = [
             sys.executable,
@@ -103,7 +106,7 @@ class Debug:
 
     @staticmethod
     def close_debug() -> None:
-        """关闭调试窗口子进程。"""
+        """ 关闭调试窗口子进程。 """
         if Debug.process is not None:
             Debug.process.kill()
             Debug.process.wait()
@@ -113,8 +116,9 @@ class Debug:
     def set_sendto_port(port: int) -> None:
         """
         设置调试窗口进程的接收端口号。
-        Args:
-            port (int): 目标端口号。
+        
+        :param port: 目标端口号。
+        :type port: int
         """
         Debug.debug_port = port
 
@@ -122,8 +126,11 @@ class Debug:
     def send_debug_data(*data: object, prompt: str = "Debug") -> None:
         """
         发送调试数据到调试窗口子进程。
-        Args:
-            data (object): 要发送的调试数据对象。
+        
+        :param data: 要发送的调试数据对象。
+        :type data: object
+        :param prompt: 调试提示信息。
+        :type prompt: str
         """
         fantas.udp_send_data(
             Debug.udp_socket,
@@ -160,8 +167,9 @@ class Debug:
     def add_debug_flag(flag: DebugFlag) -> None:
         """
         添加指定的调试选项标志。
-        Args:
-            flag (DebugFlag): 要添加的调试选项标志。
+
+        :param flag: 要添加的调试选项标志。
+        :type flag: DebugFlag
         """
         Debug.debug_flag |= flag
 
@@ -169,8 +177,9 @@ class Debug:
     def delete_debug_flag(flag: DebugFlag) -> None:
         """
         删除指定的调试选项标志。
-        Args:
-            flag (DebugFlag): 要删除的调试选项标志。
+
+        :param flag: 要删除的调试选项标志。
+        :type flag: DebugFlag
         """
         Debug.debug_flag &= ~flag
 

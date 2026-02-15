@@ -233,8 +233,8 @@ class Text(UI):
         default=None, init=False, repr=False
     )  # type: ignore[assignment]  # 纯色文本不包含子元素
 
+    text: str
     rect: fantas.Rect
-    text: str = "text"
     text_style: fantas.TextStyle = field(default_factory=fantas.DEFAULTTEXTSTYLE.copy)
     align_mode: fantas.AlignMode = fantas.AlignMode.LEFT
     offset: fantas.IntPoint = field(default_factory=lambda: [0, 0])
