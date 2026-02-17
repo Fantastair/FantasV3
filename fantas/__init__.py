@@ -1,5 +1,5 @@
 """
-fantas 的 Docstring
+fantas 顶级包
 """
 
 __all__ = (

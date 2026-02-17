@@ -1,6 +1,4 @@
 tmp/
-dist
-*.pyc
 *venv*
 build/
 .vscode/

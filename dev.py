@@ -411,7 +411,8 @@ def uninstall_pygame_ce_fantas(py: Path, status: PygameStatus) -> None:
     卸载 pygame 或 pygame-ce
     """
     pprint(
-        f"卸载 {'pygame' if status == PygameStatus.INSTALLED_PYGAME else 'pygame-ce'} 中 (使用 pip)"
+        f"卸载 {'pygame' if status == PygameStatus.INSTALLED_PYGAME else 'pygame-ce'}"
+        " 中 (使用 pip)"
     )
     try:
         cmd_run(
@@ -426,10 +427,24 @@ def uninstall_pygame_ce_fantas(py: Path, status: PygameStatus) -> None:
         )
     except subprocess.CalledProcessError as e:
         pprint(
-            f"{'pygame' if status == PygameStatus.INSTALLED_PYGAME else 'pygame-ce'} 卸载失败",
+            f"{'pygame' if status == PygameStatus.INSTALLED_PYGAME else 'pygame-ce'}"
+            " 卸载失败",
             Colors.RED,
         )
         raise e
+
+
+def delete_directory(path: Path) -> None:
+    """
+    删除一个目录及其所有内容
+    """
+    if path.is_dir():
+        for item in path.iterdir():
+            if item.is_dir():
+                delete_directory(item)
+            else:
+                item.unlink()
+        path.rmdir()
 
 
 class Dev:
@@ -444,98 +459,6 @@ class Dev:
         self.poetry_path: Path
         self.args: dict[str, Any] = {}
 
-    # def cmd_install(self):
-    #     pass
-
-    # def cmd_build(self):
-    #     pass
-
-    # def cmd_update(self):
-    #     pass
-
-    def cmd_docs(self) -> None:
-        """
-        执行 docs 子命令，使用 Sphinx 生成文档
-        """
-        full = self.args.get("full", False)
-
-        pprint(f"生成文档中 (参数 {full=})")
-
-        cmd: list[str | Path] = [
-            self.venv_py,
-            "-m",
-            "sphinx",
-            "-b",
-            "html",
-            "docs/source",
-            "docs/build/html",
-            "--quiet",
-        ]
-        if full:
-            cmd.append("-E")
-        cmd_run(cmd)
-
-    def cmd_lint(self) -> None:
-        """
-        执行 lint 子命令，使用 pylint 进行代码质量检查
-        """
-        pprint("分析代码质量中 (使用 pylint)")
-
-        cmd_run(
-            [
-                self.venv_py,
-                "-m",
-                "pylint",
-                "fantas",
-                "--output-format=colorized",
-            ]
-        )
-
-    def cmd_stubs(self) -> None:
-        """
-        执行 stubs 子命令，使用 mypy 进行静态类型检查
-        """
-        pprint("执行静态类型检查中 (使用 mypy)")
-
-        cmd_run(
-            [self.venv_py, "-m", "mypy", CWD, "--config-file", CWD / "pyproject.toml"]
-        )
-
-    def cmd_format(self) -> None:
-        """
-        执行 format 子命令，使用 black 格式化代码
-        """
-        pprint("格式化代码中 (使用 black)")
-
-        cmd_run([self.venv_py, "-m", "black", "."])
-
-        # show_diff_and_help_commit("format")
-
-    # def cmd_test(self):
-    #     mod = self.args.get("mod", [])
-
-    #     if mod:
-    #         pprint(f"测试模块 ({' '.join(mod)}) 中")
-    #         for i in mod:
-    #             cmd_run([self.py, "-m", f"fantas.tests.{i}_test"])
-    #     else:
-    #         pprint("测试所有模块中")
-    #         cmd_run([self.py, "-m", "fantas.tests"])
-
-    def cmd_auto(self) -> None:
-        """
-        自动运行所有检查和测试，然后构建并安装项目
-        """
-        self.cmd_format()
-        self.cmd_stubs()
-        self.cmd_lint()
-        self.cmd_docs()
-        # self.cmd_test()
-        # if self.args.install:
-        #     self.cmd_install()
-        # else:
-        #     self.cmd_build()
-
     def parse_args(self) -> None:
         """
         解析命令行参数，设置 self.args 字典
@@ -548,11 +471,13 @@ class Dev:
         )
         subparsers = parser.add_subparsers(dest="command", help="子命令，默认为 auto")
 
-        # install 命令
-        subparsers.add_parser("install", help="构建并安装项目 (常规安装)")
-
         # build 命令
-        subparsers.add_parser("build", help="构建并安装项目 (可编辑安装)")
+        build_parser = subparsers.add_parser(
+            "build", help="构建并安装项目 (默认为可编辑安装)"
+        )
+        build_parser.add_argument(
+            "--install", action="store_true", help="使用常规安装而不是可编辑安装"
+        )
 
         # update 命令
         subparsers.add_parser(
@@ -563,6 +488,7 @@ class Dev:
         docs_parser = subparsers.add_parser("docs", help="生成文档")
         docs_parser.add_argument(
             "--full",
+            "--full-docs",
             action="store_true",
             help=("强制生成完整文档，忽略之前的缓存。"),
         )
@@ -627,6 +553,108 @@ class Dev:
             self.venv_py = Path(venv_py) / "Scripts" / "python.exe"
         else:
             self.venv_py = Path(venv_py) / "bin" / "python"
+
+    # def cmd_build(self):
+    #     pass
+
+    # def cmd_update(self):
+    #     pass
+
+    def cmd_docs(self) -> None:
+        """
+        执行 docs 子命令，使用 Sphinx 生成文档
+        """
+        full = self.args.get("full", False)
+
+        pprint(f"生成文档中 (参数 {full=})")
+
+        cmd: list[str | Path] = [
+            self.venv_py,
+            "-m",
+            "sphinx",
+            "-b",
+            "html",
+            "docs/source",
+            "docs/build/html",
+        ]
+        if full:
+            cmd.append("-E")
+        try:
+            cmd_run(cmd, error_on_output=True)
+        except subprocess.CalledProcessError:
+            pprint("文档生成失败，请检查 Sphinx 输出的错误信息", Colors.RED)
+            sys.exit(1)
+
+    def cmd_lint(self) -> None:
+        """
+        执行 lint 子命令，使用 pylint 进行代码质量检查
+        """
+        pprint("分析代码质量中 (使用 pylint)")
+
+        cmd_run(
+            [
+                self.venv_py,
+                "-m",
+                "pylint",
+                "fantas",
+                "--output-format=colorized",
+            ]
+        )
+
+    def cmd_stubs(self) -> None:
+        """
+        执行 stubs 子命令，使用 mypy 进行静态类型检查
+        """
+        pprint("执行静态类型检查中 (使用 mypy)")
+
+        cmd_run(
+            [self.venv_py, "-m", "mypy", CWD, "--config-file", CWD / "pyproject.toml"]
+        )
+
+    def cmd_format(self) -> None:
+        """
+        执行 format 子命令，使用 black 格式化代码
+        """
+        pprint("格式化代码中 (使用 black)")
+
+        cmd_run([self.venv_py, "-m", "black", "."])
+
+        # show_diff_and_help_commit("format")
+
+    # def cmd_test(self):
+    #     mod = self.args.get("mod", [])
+
+    #     if mod:
+    #         pprint(f"测试模块 ({' '.join(mod)}) 中")
+    #         for i in mod:
+    #             cmd_run([self.py, "-m", f"fantas.tests.{i}_test"])
+    #     else:
+    #         pprint("测试所有模块中")
+    #         cmd_run([self.py, "-m", "fantas.tests"])
+
+    def cmd_auto(self) -> None:
+        """
+        自动运行所有检查和测试，然后构建并安装项目
+        """
+        self.cmd_format()
+        self.cmd_stubs()
+        self.cmd_lint()
+        self.cmd_docs()
+        # self.cmd_test()
+        # if self.args.install:
+        #     self.cmd_install()
+        # else:
+        #     self.cmd_build()
+
+    def cmd_clean(self) -> None:
+        """
+        清理项目构建缓存和临时文件
+        """
+        pprint("清理项目构建缓存和临时文件中")
+
+        for pattern in ("build", "tmp", ".mypy_cache", "__pycache__"):
+            for path in CWD.glob(f"**/{pattern}"):
+                delete_directory(path)
 
     def run(self) -> None:
         """

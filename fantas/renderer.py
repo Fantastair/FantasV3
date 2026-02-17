@@ -119,10 +119,10 @@ class SurfaceRenderCommand(RenderCommand):
     """
 
     surface: fantas.Surface = field(init=False)
-    dest_rect: fantas.IntRect = field(init=False)
+    dest_rect: fantas.Rect = field(init=False)
     fill_mode: fantas.FillMode = field(init=False)
 
-    affected_area: fantas.IntRect = field(init=False, repr=False)  # 受影响的矩形区域
+    affected_area: fantas.Rect = field(init=False, repr=False)  # 受影响的矩形区域
 
     def render(self, target_surface: fantas.Surface) -> None:
         """
@@ -177,8 +177,8 @@ class SurfaceRenderCommand(RenderCommand):
         # 简化引用
         rect = self.affected_area = self.dest_rect
         surface = self.surface
-        if isinstance(rect, fantas.Rect):
-            rect = fantas.IntRect(rect)
+        if isinstance(rect, fantas.FRect):
+            rect = fantas.Rect(rect)
         left, top, width, height = rect
         w, h = surface.get_size()
         # 计算重复次数并绘制
@@ -262,7 +262,7 @@ class ColorFillCommand(RenderCommand):
         color    : 填充颜色。
     """
 
-    dest_rect: fantas.IntRect = field(init=False)
+    dest_rect: fantas.Rect = field(init=False)
     color: fantas.ColorLike = field(init=False)
     blend_flag: fantas.BlendFlag = field(init=False)
 
@@ -324,7 +324,7 @@ class LabelRenderCommand(RenderCommand):
     """
 
     style: fantas.LabelStyle = field(init=False)
-    rect: fantas.IntRect = field(init=False)
+    rect: fantas.Rect = field(init=False)
 
     def render(self, target_surface: fantas.Surface) -> None:
         """
@@ -401,10 +401,10 @@ class TextRenderCommand(RenderCommand):
     text: str = field(init=False)
     align_mode: fantas.AlignMode = field(init=False)
     style: fantas.TextStyle = field(init=False)
-    rect: fantas.IntRect = field(init=False)
+    rect: fantas.Rect = field(init=False)
     offset: fantas.IntPoint = field(init=False)
 
-    affected_rects: list[fantas.IntRect] = field(
+    affected_rects: list[fantas.Rect] = field(
         default_factory=list, init=False, repr=False
     )  # 受影响的矩形区域列表
 
@@ -1032,7 +1032,7 @@ class LinearGradientRenderCommand(RenderCommand):
         end_pos    : 结束位置。
     """
 
-    rect: fantas.IntRect = field(init=False)
+    rect: fantas.Rect = field(init=False)
     start_color: fantas.ColorLike = field(init=False)
     end_color: fantas.ColorLike = field(init=False)
     start_pos: fantas.Vector2 = field(init=False)

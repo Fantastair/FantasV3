@@ -49,9 +49,7 @@ class Debug:
     """ 调试子进程返回队列 """
     debug_flag: DebugFlag = DebugFlag.NONE
     """ 当前调试选项标志 """
-    udp_socket: socket.socket = fantas.create_udp_socket(
-        port=0, timeout=1.0
-    )
+    udp_socket: socket.socket = fantas.create_udp_socket(port=0, timeout=1.0)
     """ UDP 通信套接字 """
     reading: bool = False
     """ 是否正在读取子进程输出 """
@@ -64,7 +62,7 @@ class Debug:
     ) -> None:
         """
         启动调试窗口子进程。
-        
+
         :param flag: 调试选项标志，默认为 DebugFlag.ALL。
         :type flag: DebugFlag
         :param windows_title: 调试窗口标题，默认为 "fantas 调试窗口"。
@@ -106,7 +104,7 @@ class Debug:
 
     @staticmethod
     def close_debug() -> None:
-        """ 关闭调试窗口子进程。 """
+        """关闭调试窗口子进程。"""
         if Debug.process is not None:
             Debug.process.kill()
             Debug.process.wait()
@@ -116,7 +114,7 @@ class Debug:
     def set_sendto_port(port: int) -> None:
         """
         设置调试窗口进程的接收端口号。
-        
+
         :param port: 目标端口号。
         :type port: int
         """
@@ -126,7 +124,7 @@ class Debug:
     def send_debug_data(*data: object, prompt: str = "Debug") -> None:
         """
         发送调试数据到调试窗口子进程。
-        
+
         :param data: 要发送的调试数据对象。
         :type data: object
         :param prompt: 调试提示信息。

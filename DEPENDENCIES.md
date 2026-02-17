@@ -4,9 +4,9 @@
 
 - **pygame-ce**: 基于 LGPL-2.1 许可证分发。（License: LGPL-2.1）
   - 源仓库地址（Source Repository）：[https://github.com/pygame-community/pygame-ce](https://github.com/pygame-community/pygame-ce)。
-  - 保留pygame-ce原有的LGPL许可证声明，详情查看[pygame-ce LICENSE](Docs/licenses/LICENSE.pygame-ce.txt)文件。
-    The original LGPL license notice of pygame-ce has been retained, see the [pygame-ce LICENSE](Docs/licenses/LICENSE.pygame-ce.txt) file for details.
-  - 本项目使用特殊修改过的版本，地址（Modified Version）：[https://github.com/Fantastair/pygame-ce](https://github.com/Fantastair/pygame-ce)。
+  - 保留pygame-ce原有的LGPL许可证声明，详情查看[pygame-ce LICENSE](docs/licenses/LICENSE.pygame-ce.txt)文件。
+    The original LGPL license notice of pygame-ce has been retained, see the [pygame-ce LICENSE](docs/licenses/LICENSE.pygame-ce.txt) file for details.
+  - 本项目使用修改过的版本，地址（Modified Version）：[https://github.com/Fantastair/pygame-ce](https://github.com/Fantastair/pygame-ce)。
   - 使用的分支（Branch）：`fantas`。
   - 修改说明（Modification Notes）：
     - 修复了`pygame.draw.aacircle`的`width`参数的计算问题。

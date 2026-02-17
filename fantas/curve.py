@@ -1,11 +1,5 @@
 """
 提供曲线相关的类和预定义曲线。
-
-.. tip::
-
-    曲线可以来控制动画，轻松实现优秀的非线性动画效果。
-    
-    当然你也可以用于其他数学用途。
 """
 
 from abc import ABC, abstractmethod
@@ -38,7 +32,7 @@ class CurveBase(ABC):
     def __call__(self, x: float) -> float:
         """
         计算曲线在给定 x 值处的 y 值。
-        
+
         :param x: 输入的 x 值。
         :type x: float
         :return: 对应的 y 值。
@@ -46,7 +40,6 @@ class CurveBase(ABC):
 
         子类需要实现这个方法来定义曲线的具体形状。
         """
-
 
 
 formula_globals: dict[str, object] = {
@@ -81,7 +74,7 @@ class FormulaCurve(CurveBase):
     def __call__(self, x: float) -> float:
         """
         计算曲线在给定 x 值处的 y 值。
-        
+
         :param x: 输入的 x 值。
         :type x: float
         :return: 对应的 y 值。

@@ -53,7 +53,7 @@ class Font(pygame.freetype.Font):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Font) and self.FANTASID == other.FANTASID
 
-    get_rect: Callable[..., fantas.IntRect] = fantas.lru_cache_typed(maxsize=65536)(
+    get_rect: Callable[..., fantas.Rect] = fantas.lru_cache_typed(maxsize=65536)(
         pygame.freetype.Font.get_rect
     )
 

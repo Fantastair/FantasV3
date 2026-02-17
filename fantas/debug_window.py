@@ -4,6 +4,7 @@
 """
 
 from __future__ import annotations
+
 if __name__ == "__main__":
     raise RuntimeError("这个模块不能直接运行。")
 

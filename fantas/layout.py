@@ -20,7 +20,7 @@ __all__ = (
 
 
 class _HasRect(Protocol):
-    rect: fantas.Rect | fantas.IntRect
+    rect: fantas.Rect | fantas.FRect
 
 
 @dataclass(slots=True)

@@ -48,7 +48,7 @@ class UI(fantas.NodeBase["UI"]):
 class BlankUI(UI):
     """空显示元素类。"""
 
-    rect: fantas.Rect | fantas.IntRect
+    rect: fantas.Rect | fantas.FRect
 
     def create_render_commands(
         self, offset: fantas.Point = (0, 0)
@@ -72,10 +72,10 @@ class WindowRoot(UI):
     """
 
     window: fantas.Window
-    rect: fantas.IntRect = field(init=False)  # 窗口矩形区域
+    rect: fantas.Rect = field(init=False)  # 窗口矩形区域
 
     def __post_init__(self) -> None:
-        self.rect = fantas.IntRect((0, 0), self.window.size)
+        self.rect = fantas.Rect((0, 0), self.window.size)
 
     def update_rect(self) -> None:
         """更新窗口矩形区域。"""
@@ -128,7 +128,7 @@ class Label(UI):
         box_mode   : 盒子模式。
     """
 
-    rect: fantas.Rect | fantas.IntRect
+    rect: fantas.Rect | fantas.FRect
     label_style: fantas.LabelStyle = field(
         default_factory=fantas.DEFAULTLABELSTYLE.copy
     )
@@ -153,8 +153,8 @@ class Label(UI):
         # 简化引用
         bw = self.label_style.border_width
         # 计算渲染命令矩形和偏移位置
-        if isinstance(self.rect, fantas.Rect):
-            rect = fantas.IntRect(self.rect).move(offset)
+        if isinstance(self.rect, fantas.FRect):
+            rect = fantas.Rect(self.rect).move(offset)
         else:
             rect = self.rect.move(offset)
         if bw > 0:
@@ -182,7 +182,7 @@ class Image(UI):
     """
 
     surface: fantas.Surface
-    rect: fantas.Rect | fantas.IntRect = None  # type: ignore[assignment]
+    rect: fantas.Rect | fantas.FRect = None  # type: ignore[assignment]
     fill_mode: fantas.FillMode = fantas.FillMode.IGNORE
 
     command: fantas.SurfaceRenderCommand = field(init=False, repr=False)  # 渲染命令对象
@@ -208,8 +208,8 @@ class Image(UI):
         c.surface = self.surface
         c.fill_mode = self.fill_mode
         # 调整矩形区域
-        if isinstance(self.rect, fantas.Rect):
-            c.dest_rect = fantas.IntRect(self.rect).move(offset)
+        if isinstance(self.rect, fantas.FRect):
+            c.dest_rect = fantas.Rect(self.rect).move(offset)
         else:
             c.dest_rect = self.rect.move(offset)
         yield c
@@ -261,8 +261,8 @@ class Text(UI):
         # 简化引用
         rc = self.command
         # 设置文本显示区域
-        if isinstance(self.rect, fantas.Rect):
-            rc.rect = fantas.IntRect(self.rect).move(offset)
+        if isinstance(self.rect, fantas.FRect):
+            rc.rect = fantas.Rect(self.rect).move(offset)
         else:
             rc.rect = self.rect.move(offset)
         # 设置文本内容
@@ -306,7 +306,7 @@ class TextLabel(UI):
         offset     : 文本偏移位置。
     """
 
-    rect: fantas.Rect | fantas.IntRect
+    rect: fantas.Rect | fantas.FRect
 
     text: str = "text"
     text_style: fantas.TextStyle = field(default_factory=fantas.DEFAULTTEXTSTYLE.copy)
@@ -337,8 +337,8 @@ class TextLabel(UI):
         trc = self.text_command
         bw = self.label_style.border_width
         # 计算渲染命令矩形
-        if isinstance(self.rect, fantas.Rect):
-            rect = fantas.IntRect(self.rect).move(offset)
+        if isinstance(self.rect, fantas.FRect):
+            rect = fantas.Rect(self.rect).move(offset)
         else:
             rect = self.rect.move(offset)
         if bw > 0:
@@ -385,7 +385,7 @@ class LinearGradientLabel(UI):
         end_pos    : 结束位置。
     """
 
-    rect: fantas.Rect | fantas.IntRect
+    rect: fantas.Rect | fantas.FRect
     start_color: fantas.ColorLike
     end_color: fantas.ColorLike
     start_pos: fantas.Point
@@ -410,8 +410,8 @@ class LinearGradientLabel(UI):
             RenderCommand: 渲染命令对象。
         """
         # 计算渲染命令矩形
-        if isinstance(self.rect, fantas.Rect):
-            rect = fantas.IntRect(self.rect).move(offset)
+        if isinstance(self.rect, fantas.FRect):
+            rect = fantas.Rect(self.rect).move(offset)
         else:
             rect = self.rect.move(offset)
         # 简化引用
@@ -449,7 +449,7 @@ class Animation(UI):
     """
 
     animation_helper: fantas.AnimationHelper
-    rect: fantas.Rect | fantas.IntRect
+    rect: fantas.Rect | fantas.FRect
     fill_mode: fantas.FillMode = fantas.FillMode.IGNORE
     loops: int = 1
 
@@ -476,8 +476,8 @@ class Animation(UI):
             RenderCommand: 渲染命令对象。
         """
         # 计算渲染命令矩形
-        if isinstance(self.rect, fantas.Rect):
-            rect = fantas.IntRect(self.rect).move(offset)
+        if isinstance(self.rect, fantas.FRect):
+            rect = fantas.Rect(self.rect).move(offset)
         else:
             rect = self.rect.move(offset)
         # 简化引用

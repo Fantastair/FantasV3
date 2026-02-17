@@ -5,14 +5,13 @@
 
 import os
 import sys
+import fnmatch
 
 sys.path.insert(0, os.path.abspath('../../fantas'))
 
 extensions = [
     'sphinx.ext.autodoc',      # 核心：提供 automodule/autofunction 等指令
     'sphinx.ext.napoleon',     # 可选：支持 Google/NumPy 风格的 docstring
-    # 'sphinx.ext.viewcode',     # 可选：显示代码链接
-    # 'sphinx.ext.todo',         # 可选：支持 todo 标记
 ]
 
 autodoc_member_order = 'bysource'
@@ -42,3 +41,25 @@ html_static_path = ["_static"]
 html_extra_path = [
     '../../LICENSE',
 ]
+
+hidden_objects = [
+    'fantas.Color',
+    'fantas.Rect',
+    'fantas.FRect',
+    'fantas.Surface',
+    'fantas.PixelArray',
+]
+
+def setup(app):
+    app.add_config_value('hidden_objects', [], 'env')
+    
+    def hide_docstring(app, what, name, obj, options, lines):
+        # 通过 name 判断，而不是自定义参数
+        hidden_patterns = app.config.hidden_objects
+        
+        for pattern in hidden_patterns:
+            if name.startswith(pattern) or fnmatch.fnmatch(name, pattern):
+                lines.clear()
+                return
+    
+    app.connect('autodoc-process-docstring', hide_docstring)

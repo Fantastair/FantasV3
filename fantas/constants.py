@@ -1,7 +1,5 @@
 """
 提供 fantas 库中使用的常量、枚举类型和相关函数。
-
-.. hint:: 使用常量的时候一般不需要关心具体的值，也不要相信某个常量的值在不同平台或版本中是相同的。
 """
 
 from __future__ import annotations
@@ -197,7 +195,7 @@ class Quadrant(IntEnum):
     def has_point(quadrant: Quadrant, point: fantas.Point) -> bool:
         """
         检查给定点是否在当前象限中。
-        
+
         :param quadrant: 象限掩码。
         :type quadrant: Quadrant
         :param point: 要检查的点。
@@ -338,7 +336,7 @@ def custom_event(
 def get_event_category(event_type: fantas.EventType) -> EventCategory:
     """
     获取事件分类。
-    
+
     :param event_type: 事件类型。
     :type event_type: fantas.EventType
     :return: 事件分类枚举值。

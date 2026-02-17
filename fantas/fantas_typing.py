@@ -1,5 +1,5 @@
 """
-fantas.fantas_typing 的 Docstring
+提供 fantas 模块中使用的类型别名，或把某些 pygame 类型重新导出以供 fantas 使用。
 """
 
 from typing import TypeAlias, Callable
@@ -10,7 +10,7 @@ __all__ = (
     "PixelArray",
     "RectLike",
     "Rect",
-    "IntRect",
+    "FRect",
     "ColorLike",
     "Color",
     "Point",
@@ -33,7 +33,7 @@ from pygame import Surface  # 表面类
 from pygame import PixelArray  # 像素数组类
 
 RectLike: TypeAlias = pygame.typing.RectLike  # 矩形类型
-from pygame import FRect as Rect, Rect as IntRect  # 矩形类
+from pygame import Rect, FRect  # 矩形类
 
 ColorLike: TypeAlias = pygame.typing.ColorLike  # 颜色类型
 from pygame import Color  # 颜色类

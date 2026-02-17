@@ -269,7 +269,7 @@ class Window(PygameWindow):
         pos = list(event.pos)
         pos[0] = fantas.math.clamp(pos[0], 0, self.size[0] - 1)
         pos[1] = fantas.math.clamp(pos[1], 0, self.size[1] - 1)
-        rect = fantas.IntRect(
+        rect = fantas.Rect(
             event.pos[0] - size // 2, event.pos[1] - size // 2, size, size
         )
         rect.left = max(rect.left, 0)
