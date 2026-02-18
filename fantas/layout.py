@@ -344,7 +344,12 @@ class RatioLayout(Layout):
         设置子元素的比例。
         Args:
             child (fantas.UI): 子元素对象。
-            ratio (list[float, float, float, float]): 比例值列表，格式为 [left_ratio, top_ratio, width_ratio, height_ratio]。
+            ratio (list[float, float, float, float]): 比例值列表，格式为 [
+                left_ratio,
+                top_ratio,
+                width_ratio,
+                height_ratio
+            ]
         """
         self.ratio_dict[child.ui_id] = ratio
 

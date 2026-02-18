@@ -34,7 +34,7 @@ os.environ.update(
         "SDL_VIDEO_WAYLAND_SCALE_TO_DISPLAY": "0",  # 禁用 Wayland 显示缩放
         "SDL_VIDEO_X11_SCALING_FACTOR": "0",  # 禁用 X11 显示缩放
         "SDL_MOUSE_DPI_SCALE_CURSORS": "1",  # 启用鼠标 DPI 缩放光标
-        "SDL_VIDEO_METAL_AUTO_RESIZE_DRAWABLE": "1",  # 启用 Metal 自动调整可绘制区域大小
+        "SDL_VIDEO_METAL_AUTO_RESIZE_DRAWABLE": "1",  # 启用 Metal 自动调整可绘制区域
         "SDL_RENDER_LINE_METHOD": "1",  # 使用更高质量的线条渲染方法
         "SDL_VIDEO_WAYLAND_ALLOW_LIBDECOR": "0",  # 禁用 Wayland Libdecor 支持
         "SDL_WINDOWS_ENABLE_MESSAGELOOP": "1",  # 启用 Windows 消息循环

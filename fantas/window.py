@@ -26,7 +26,8 @@ class WindowConfig:
     Args:
         title (str): 窗口标题。
         window_size (fantas.IntPoint): 窗口尺寸（宽, 高）（像素）。
-        window_position (fantas.IntPoint | int): 窗口位置（x, y）或预设常量 fantas.WINDOWPOS_CENTERED / fantas.WINDOWPOS_UNDEFINED。
+        window_position (fantas.IntPoint | int): 窗口位置（x, y）或预设常量
+            fantas.WINDOWPOS_CENTERED / fantas.WINDOWPOS_UNDEFINED。
         borderless (bool): 窗口是否无边框。
         resizable (bool): 是否可以调整窗口大小。
         fps (int): 窗口帧率。

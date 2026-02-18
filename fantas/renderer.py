@@ -61,7 +61,7 @@ class Renderer:
         """
         向渲染队列中添加一个渲染命令。
         Args:
-            command (fantas.RenderCommand): 渲染命令对象，必须实现 render(target_surface) 方法。
+            command (fantas.RenderCommand): 渲染命令对象。
         """
         self.queue.appendleft(command)
 

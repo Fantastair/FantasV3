@@ -22,7 +22,10 @@ __all__ = (
 
 
 class Font(freetype.Font):
-    """Fantas3 字体类，继承自 pygame.freetype.Font，添加唯一 ID 属性，并支持通过 ID 查找字体实例。"""
+    """
+    Fantas3 字体类，继承自 pygame.freetype.Font，
+    添加唯一 ID 属性，并支持通过 ID 查找字体实例。
+    """
 
     def __init__(
         self,
@@ -88,7 +91,7 @@ class Font(freetype.Font):
             size       (float)               : 字体大小。
             text       (str)                 : 要测量的文本内容。
         Returns:
-            tuple[int]: 字体度量信息列表，每一个元素对应文本中字符的右侧坐标（从 0 开始）。
+            tuple[int]: 字体度量信息列表，每一个元素对应文本中字符的右侧坐标。
         """
         # 初始化度量信息列表
         widthes: list[int] = [self.get_rect(text[0], style_flag, size=size).width]

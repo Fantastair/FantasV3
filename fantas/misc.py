@@ -133,7 +133,8 @@ class AnimationHelper:
         初始化动画资源辅助类。
         Args:
             path (Path): 动画文件路径。
-            hook (Callable[[fantas.Surface], fantas.Surface], optional): 图像转换钩子函数，默认为 image_convert_hook。
+            hook (Callable[[fantas.Surface], fantas.Surface], optional):
+                图像转换钩子函数，默认为 image_convert_hook。
         """
         self.frames = []
         self.cumulative_times = []

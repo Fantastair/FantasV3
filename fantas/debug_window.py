@@ -133,7 +133,8 @@ class EventLogWindow(fantas.Window):
         # 添加新事件到日志列表
         self.lines.append(event_str)
         self.text.text = "\n---\n".join(self.lines)
-        # 调整文本区域高度（目的是保持新文本添加后原来的文本位置不变，然后通过关键帧动画平滑过渡）
+        # 调整文本区域高度
+        # 目的是保持新文本添加后原来的文本位置不变，然后通过关键帧动画平滑过渡
         s = self.text.text_style
         self.text.rect.height += (
             len(

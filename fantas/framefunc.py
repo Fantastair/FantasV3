@@ -320,8 +320,8 @@ class AttrKeyFrame(KeyFrameBase):
         启动属性关键帧。
 
         Args:
-            start_value (float, optional): 起始值。如果为 None，则使用当前属性值作为起始值。
-            restart (bool): 重复启动关键帧时是否重新开始，如果为 True，则使用上次的 start_value，否则重新获取当前属性值作为起始值。
+            start_value (float, optional): 起始值。为 None 则使用当前属性值作为起始值。
+            restart (bool): 重复启动关键帧时是否重新获取当前属性值作为起始值。
         """
         KeyFrameBase.start(self)
         if not (self.is_started() and restart):
@@ -366,8 +366,8 @@ class ColorKeyframe(AttrKeyFrame):
         启动颜色关键帧。
 
         Args:
-            start_value (Color, optional): 起始值。如果为 None，则使用当前属性值作为起始值。
-            restart (bool): 重复启动关键帧时是否重新开始，如果为 True，则使用上次的 start_value，否则重新获取当前属性值作为起始值。
+            start_value (Color, optional): 起始值。为 None 则使用当前属性值作为起始值。
+            restart (bool): 重复启动关键帧时是否重新获取当前属性值作为起始值。
         """
         AttrKeyFrame.start(self, start_value, restart)
         if not isinstance(self.start_value, fantas.Color):
@@ -403,8 +403,8 @@ class PointKeyFrame(AttrKeyFrame):
         启动点关键帧。
 
         Args:
-            start_value (Point, optional): 起始值。如果为 None，则使用当前属性值作为起始值。
-            restart (bool): 重复启动关键帧时是否重新开始，如果为 True，则使用上次的 start_value，否则重新获取当前属性值作为起始值。
+            start_value (Point, optional): 起始值。为 None 则使用当前属性值作为起始值。
+            restart (bool): 重复启动关键帧时是否重新获取当前属性值作为起始值。
         """
         AttrKeyFrame.start(self, start_value, restart)
         if not isinstance(self.start_value, fantas.Vector2):

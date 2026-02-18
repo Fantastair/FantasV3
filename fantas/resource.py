@@ -65,7 +65,8 @@ class ImageLoader(ResourceLoader[fantas.Surface]):
         Args:
             path (Path): 图像文件路径。
             alias (str, optional): 资源别名，默认为 None，使用文件名作为资源名称。
-            hook (Callable[[fantas.Surface], fantas.Surface], optional): 图像转换钩子函数，默认为 image_convert_hook。
+            hook (Callable[[fantas.Surface], fantas.Surface], optional):
+                图像转换钩子函数，默认为 image_convert_hook。
         """
         if not isinstance(path, Path):
             path = Path(path)
@@ -84,7 +85,8 @@ class ImageLoader(ResourceLoader[fantas.Surface]):
             path (Path): SVG 文件路径。
             alias (str, optional): 资源别名，默认为 None，使用文件名作为资源名称。
             size (int, optional): 图像最长边大小，默认为 64 像素。
-            hook (Callable[[fantas.Surface], fantas.Surface], optional): 图像转换钩子函数，默认为 image_convert_alpha_hook。
+            hook (Callable[[fantas.Surface], fantas.Surface], optional):
+                图像转换钩子函数，默认为 image_convert_alpha_hook。
         """
         if not isinstance(path, Path):
             path = Path(path)
