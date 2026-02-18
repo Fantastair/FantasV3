@@ -157,8 +157,7 @@ def get_poetry_executable() -> Path | None:
             Path.home() / ".local/bin/poetry",
             Path.home() / ".local/share/pypoetry/venv/bin/poetry",
             Path.home() / ".local/share/pypoetry/venv/Scripts/poetry",
-            Path(os.environ.get("APPDATA", Path.home()))
-            / "pypoetry/venv/Scripts/poetry",
+            Path(os.environ.get("APPDATA", Path.home())) / "Python/Scripts/poetry.exe",
             Path("/usr/local/bin/poetry"),
             Path("/usr/bin/poetry"),
         ]
@@ -234,7 +233,7 @@ def get_pygame_commit_hash(path: Path) -> str | None:
     if not path.exists():
         return None
 
-    with path.open() as f:
+    with path.open(encoding="utf-8") as f:
         content = f.read()
         match = re.search(r'commit_hash\s*=\s*"([a-fA-F0-9]+)"', content)
         if match:
@@ -249,7 +248,7 @@ def set_pygame_commit_hash(path: Path, commit_hash: str) -> None:
     content = f'''# pygame-ce for fantas 的版本锁定文件，不需要手动修改
 commit_hash = "{commit_hash}"'''
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w") as f:
+    with path.open("w", encoding="utf-8") as f:
         f.write(content)
 
 
@@ -680,6 +679,11 @@ class Dev:
 
         pprint(f"生成文档中 (参数 {full=})")
 
+        _static_dir = CWD / "docs" / "source" / "_static"
+        _static_dir.mkdir(parents=True, exist_ok=True)
+        _templates_dir = CWD / "docs" / "source" / "_templates"
+        _templates_dir.mkdir(parents=True, exist_ok=True)
+
         cmd: list[str | Path] = [
             self.venv_py,
             "-m",
@@ -861,7 +865,7 @@ class Dev:
                 Colors.MAGENTA,
             )
             if sys.platform == "win32":
-                pprint(f"  > {self.venv_py.parent}\\Scripts\\activate", Colors.CYAN)
+                pprint(f"  > {self.venv_py.parent}\\activate", Colors.CYAN)
             else:
                 pprint(f"  > source {self.venv_py.parent}/bin/activate", Colors.CYAN)
 
