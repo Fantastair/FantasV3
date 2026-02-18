@@ -130,46 +130,6 @@ def cmd_run(
     return ret.stdout.strip() if capture_output else ""
 
 
-def check_git_clean() -> None:
-    """
-    检查当前 git 仓库是否存在未提交的更改，如果存在则提示用户先提交这些更改
-    """
-    pprint("检查 git 仓库状态中 (使用 git)")
-
-    try:
-        cmd_run(["git", "--no-pager", "status", "--porcelain"], error_on_output=True)
-    except subprocess.CalledProcessError:
-        pprint("当前 git 仓库存在未提交的更改，请先提交这些更改", Colors.RED)
-        sys.exit(1)
-
-
-def show_diff_and_help_commit(command: str) -> None:
-    """
-    显示 git 仓库的更改，并提示用户是否需要自动提交这些更改以继续运行 dev.py
-    """
-    try:
-        cmd_run(["git", "--no-pager", "status", "--porcelain"], error_on_output=True)
-    except subprocess.CalledProcessError:
-        pprint(f"运行 {command} 命令时产生了上述更改", Colors.RED)
-        pprint("是否需要自动添加这些修改并提交一次commit？ (y/n)", Colors.RED)
-
-        answer = input().strip().lower()
-        while answer not in ("y", "n"):
-            pprint("请输入 y 或 n", Colors.RED)
-            answer = input().strip().lower()
-
-        if answer == "y":
-            try:
-                cmd_run(["git", "add", "."])
-                cmd_run(["git", "commit", "-m", f"保存 {command} 命令产生的更改"])
-                pprint("更改已提交，请重新运行 dev.py", Colors.GREEN)
-            except subprocess.CalledProcessError:
-                pprint("自动提交失败，请手动检查更改并提交", Colors.RED)
-        else:
-            pprint("请手动检查更改并提交，然后重新运行 dev.py", Colors.YELLOW)
-        sys.exit(1)
-
-
 def get_poetry_executable() -> Path | None:
     """
     查找 Poetry 可执行文件的路径，首先尝试通过命令行查找，如果失败则遍历常见安装路径
@@ -441,6 +401,58 @@ class Dev:
         self.poetry_path: Path
         self.args: dict[str, Any] = {}
 
+    def check_git_clean(self) -> None:
+        """
+        检查当前 git 仓库是否存在未提交的更改，如果存在则提示用户先提交这些更改
+        """
+        if self.args.get("ignore_git", False):
+            pprint("忽略 git 仓库状态检查", Colors.BLUE)
+            return
+
+        pprint("检查 git 仓库状态中 (使用 git)")
+
+        try:
+            cmd_run(
+                ["git", "--no-pager", "status", "--porcelain"], error_on_output=True
+            )
+        except subprocess.CalledProcessError:
+            pprint("当前 git 仓库存在未提交的更改，请先提交这些更改", Colors.RED)
+            sys.exit(1)
+
+        pprint("git 仓库干净", Colors.GREEN)
+
+    def show_diff_and_help_commit(self, command: str) -> None:
+        """
+        显示 git 仓库的更改，并提示用户是否需要自动提交这些更改以继续运行 dev.py
+        """
+        if self.args.get("ignore_git", False):
+            pprint("忽略 git 仓库状态检查", Colors.BLUE)
+            return
+
+        try:
+            cmd_run(
+                ["git", "--no-pager", "status", "--porcelain"], error_on_output=True
+            )
+        except subprocess.CalledProcessError:
+            pprint(f"运行 {command} 命令时产生了上述更改", Colors.RED)
+            pprint("是否需要自动添加这些修改并提交一次commit？ (y/n)", Colors.RED)
+
+            answer = input().strip().lower()
+            while answer not in ("y", "n"):
+                pprint("请输入 y 或 n", Colors.RED)
+                answer = input().strip().lower()
+
+            if answer == "y":
+                try:
+                    cmd_run(["git", "add", "."])
+                    cmd_run(["git", "commit", "-m", f"保存 {command} 命令产生的更改"])
+                    pprint("更改已提交，请重新运行 dev.py", Colors.GREEN)
+                except subprocess.CalledProcessError:
+                    pprint("自动提交失败，请手动检查更改并提交", Colors.RED)
+            else:
+                pprint("请手动检查更改并提交，然后重新运行 dev.py", Colors.YELLOW)
+            sys.exit(1)
+
     def parse_args(self) -> None:
         """
         解析命令行参数，设置 self.args 字典
@@ -452,13 +464,13 @@ class Dev:
             )
         )
         subparsers = parser.add_subparsers(dest="command", help="子命令，默认为 auto")
+        parser.add_argument(
+            "--ignore-git", "-i", action="store_true", help="忽略 git 仓库状态检查"
+        )
 
         # build 命令
         build_parser = subparsers.add_parser(
-            "build", help="构建并安装项目 (默认为可编辑安装)"
-        )
-        build_parser.add_argument(
-            "--install", action="store_true", help="使用常规安装而不是可编辑安装"
+            "build", help="构建并安装项目 (默认为常规)"
         )
 
         # install 命令
@@ -471,7 +483,7 @@ class Dev:
         docs_parser = subparsers.add_parser("docs", help="生成文档")
         docs_parser.add_argument(
             "--full",
-            "--full-docs",
+            "-f",
             action="store_true",
             help=("强制生成完整文档，忽略之前的缓存。"),
         )
@@ -498,7 +510,8 @@ class Dev:
             "auto", help="自动运行所有检查和测试，然后构建并安装项目"
         )
         auto_parser.add_argument(
-            "--full-docs",
+            "--full",
+            "-f",
             action="store_true",
             help="强制生成完整文档，忽略之前的缓存。",
         )
@@ -721,7 +734,7 @@ class Dev:
 
         cmd_run([self.venv_py, "-m", "black", "fantas", "tests", "dev.py"])
 
-        show_diff_and_help_commit("format")
+        self.show_diff_and_help_commit("format")
 
         pprint("代码已格式化", Colors.GREEN)
 
@@ -802,9 +815,9 @@ class Dev:
         """
         start_time = get_time_ns()
 
-        check_git_clean()
-
         self.parse_args()
+
+        self.check_git_clean()
 
         pprint(f"运行子命令 '{self.args['command']}'")
 
@@ -833,7 +846,8 @@ class Dev:
             elapsed_time /= 1000
             unit_index += 1
         pprint(
-            f"子命令 '{self.args['command']}' 执行成功, 耗时: {elapsed_time:.2f} {units[unit_index]}",
+            f"子命令 '{self.args['command']}' 执行成功, 耗时: {elapsed_time:.2f} "
+            f"{units[unit_index]}",
             Colors.GREEN,
         )
 
