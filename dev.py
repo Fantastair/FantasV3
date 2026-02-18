@@ -157,8 +157,7 @@ def get_poetry_executable() -> Path | None:
             Path.home() / ".local/bin/poetry",
             Path.home() / ".local/share/pypoetry/venv/bin/poetry",
             Path.home() / ".local/share/pypoetry/venv/Scripts/poetry",
-            Path(os.environ.get("APPDATA", Path.home()))
-            / "pypoetry/venv/Scripts/poetry",
+            Path(os.environ.get("APPDATA", Path.home())) / "Python/Scripts/poetry",
             Path("/usr/local/bin/poetry"),
             Path("/usr/bin/poetry"),
         ]
