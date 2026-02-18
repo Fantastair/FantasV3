@@ -1,0 +1,78 @@
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "fantas"
+version = "3.0.0"
+description = "A 2D graphics program framework based on pygame-ce"
+authors = ["Fantastair <Fantastair@qq.com>"]
+readme = "README.rst"
+packages = [
+    {include = "fantas"},
+]
+include = [
+    {path = "fantas/_vendor/pygame/**/*", format = "wheel"},
+]
+license = "MIT"
+repository = "https://github.com/Fantastair/FantasV3"
+classifiers = []
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.8.0"
+mypy = "^1.18.1"
+pylint = "^4.0.4"
+sphinx = "^9.1.0"
+furo = "^2025.12.19"
+pytest = "^9.0.2"
+pytest-cov = "^7.0.0"
+
+[tool.poetry.urls]
+Homepage = "https://fantastair.cn"
+Documentation = "https://fantastair.cn"
+AuthorPage = "https://fantastair.cn"
+GitHub = "https://github.com/Fantastair/FantasV3"
+issue = "https://github.com/Fantastair/FantasV3/issues"
+
+[tool.black]
+line-length = 88
+
+[tool.mypy]
+strict = true
+files = [
+    "fantas",
+    "dev.py",
+]
+exclude = [
+    "fantas/_vendor",
+]
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = "fantas._vendor.*"
+ignore_errors = true
+ignore_missing_imports = true
+follow_imports = "skip"
+
+[tool.pylint.main]
+jobs = 8
+extension-pkg-allow-list = "fantas._vendor.pygame"
+ignore = "pygame"
+
+[tool.pylint.messages_control]
+disable = [
+    "R0401", "R0902", "R0903", "R0912", "R0913", "R0914", "R0917",
+    "C0301", "C0302", "C0413",
+    "W0123", "W0401",
+    "E1136",
+]
+
+[tool.pylint.reports]
+fail-under = 9.5
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
