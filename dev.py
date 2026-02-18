@@ -469,7 +469,7 @@ class Dev:
         )
 
         # build 命令
-        build_parser = subparsers.add_parser("build", help="安装项目 (可编辑安装)")
+        subparsers.add_parser("build", help="安装项目 (可编辑安装)")
 
         # install 命令
         subparsers.add_parser("install", help="构建并安装项目 (常规安装)")

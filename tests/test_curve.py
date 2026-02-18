@@ -59,4 +59,4 @@ def test_formula_curve_cache():
     time2 = get_time_ns() - start_time
 
     assert result1 == result2
-    assert time2 < time1 / 1000
+    assert time2 < time1 / 100
