@@ -26,6 +26,7 @@ PYGAME_CE_FANTAS_INSTALL_DIR = FANTAS_SOURCE_DIR / "_vendor"
 PYGAME_COMMIT_HASH_FILE = FANTAS_SOURCE_DIR / "_vendor" / "pygame" / "commit_hash"
 PYGAME_LOCK_HASH_FILE = CWD / "pygame.lock"
 
+DIST_DIR = CWD / "dist"
 
 class Colors(Enum):
     """
@@ -613,11 +614,41 @@ class Dev:
 
         pprint("开发环境已就绪", Colors.GREEN)
 
-    # def cmd_build(self):
-    #     pass
+    def cmd_build(self):
+        pprint("构建项目中")
 
-    # def cmd_update(self):
-    #     pass
+        delete_file_or_dir(DIST_DIR)
+
+        try:
+            cmd_run([self.poetry_path, "build", "-f", "wheel"])
+        except subprocess.CalledProcessError:
+            pprint("项目构建失败", Colors.RED)
+            sys.exit(1)
+        
+        pprint(f"项目已构建 ({DIST_DIR})", Colors.GREEN)
+        pprint("安装项目中 (常规安装)")
+
+        wheel_files = list(DIST_DIR.glob("*.whl"))
+        if not wheel_files:
+            pprint("未找到生成的 wheel 文件", Colors.RED)
+            sys.exit(1)
+
+        try:
+            cmd_run([self.venv_py, "-m", "pip", "install", wheel_files[0]])
+        except subprocess.CalledProcessError:
+            pprint("项目安装失败", Colors.RED)
+            sys.exit(1)
+
+        pprint(f"项目已安装 ({wheel_files[0]})", Colors.GREEN)
+    
+    def cmd_install(self):
+        pprint("安装项目中 (可编辑安装)")
+
+        try:
+            cmd_run([self.poetry_path, "install"])
+        except subprocess.CalledProcessError:
+            pprint("项目安装失败", Colors.RED)
+            sys.exit(1)
 
     def cmd_docs(self) -> None:
         """
@@ -660,7 +691,6 @@ class Dev:
                 "pylint",
                 "fantas",
                 "--output-format=colorized",
-                # "--rcfile=pyproject.toml",
             ]
         )
 
@@ -693,7 +723,7 @@ class Dev:
 
         cmd_run([self.venv_py, "-m", "black", "fantas", "tests", "dev.py"])
 
-        # show_diff_and_help_commit("format")
+        show_diff_and_help_commit("format")
 
         pprint("代码已格式化", Colors.GREEN)
 
@@ -719,7 +749,11 @@ class Dev:
         self.cmd_lint()
         self.cmd_docs()
         self.cmd_test()
-        # self.cmd_build()
+        if not self.args.get("install", False):
+            self.cmd_build()
+        else:
+            self.cmd_install()
+        self.cmd_build()
 
     def cmd_clean(self) -> None:
         """
@@ -745,7 +779,7 @@ class Dev:
         """
         运行开发命令的主流程
         """
-        # check_git_clean()
+        check_git_clean()
 
         self.parse_args()
 
@@ -769,6 +803,17 @@ class Dev:
                 sys.exit(1)
 
         pprint(f"子命令 '{self.args['command']}' 执行成功", Colors.GREEN)
+
+        if self.py != self.venv_py:
+            pprint(
+                f"当前环境 ({self.py}) 与虚拟环境 ({self.venv_py}) 不同，"
+                "建议使用虚拟环境: ",
+                Colors.MAGENTA,
+            )
+            if sys.platform == "win32":
+                pprint(f"  > {self.venv_py.parent}\\Scripts\\activate", Colors.CYAN)
+            else:
+                pprint(f"  > source {self.venv_py.parent}/bin/activate", Colors.CYAN)
 
 
 if __name__ == "__main__":

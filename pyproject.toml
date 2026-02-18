@@ -11,6 +11,9 @@ readme = "README.rst"
 packages = [
     {include = "fantas"},
 ]
+include = [
+    {path = "fantas/_vendor/pygame/**/*", format = "wheel"},
+]
 license = "MIT"
 repository = "https://github.com/Fantastair/FantasV3"
 classifiers = []
