@@ -5,6 +5,7 @@
 """
 
 import os
+import re
 import sys
 import argparse
 import subprocess
@@ -15,11 +16,15 @@ from pathlib import Path
 
 CWD = Path(__file__).parent
 
-PYGAME_CE_FANTAS_DIR = CWD / "pygame-ce-fantas"
+PYGAME_CE_FANTAS_SRCDIR = CWD / "pygame-ce-fantas"
 PYGAME_CE_FANTAS_REPO = "https://github.com/Fantastair/pygame-ce.git"
 PYGAME_CE_FANTAS_BRANCH = "fantas"
 
 FANTAS_SOURCE_DIR = CWD / "fantas"
+
+PYGAME_CE_FANTAS_INSTALL_DIR = FANTAS_SOURCE_DIR / "_vendor"
+PYGAME_COMMIT_HASH_FILE = FANTAS_SOURCE_DIR / "_vendor" / "pygame" / "commit_hash"
+PYGAME_LOCK_HASH_FILE = CWD / "pygame.lock"
 
 
 class Colors(Enum):
@@ -40,13 +45,12 @@ class Colors(Enum):
 
 class PygameStatus(Enum):
     """
-    PygameStatus 枚举定义了 pygame-ce (fantas 分支版本) 的安装状态。
+    PygameStatus 枚举定义了 pygame-ce (fantas 分支) 的安装状态。
     """
 
     NOT_INSTALLED = 0
     INSTALLED_CORRECTLY = 1
     INSTALLED_INCORRECTLY = 2
-    INSTALLED_PYGAME = 3
 
 
 # 参考链接 https://docs.python.org/3.13/using/cmdline.html#controlling-color
@@ -167,7 +171,7 @@ def get_poetry_executable() -> Path | None:
     """
     查找 Poetry 可执行文件的路径，首先尝试通过命令行查找，如果失败则遍历常见安装路径
     """
-    pprint("查找 Poetry 可执行文件中")
+    pprint("- 查找 Poetry 可执行文件")
     try:
         # 命令行查找
         subprocess.run(
@@ -208,12 +212,9 @@ def download_poetry_install_script(destination: Path) -> None:
     """
     下载 Poetry 安装管理脚本到指定路径
     """
-    if not destination.parent.exists():
-        destination.parent.mkdir(parents=True, exist_ok=True)
-
+    destination.parent.mkdir(parents=True, exist_ok=True)
     if not destination.exists():
         pprint("下载 Poetry 安装管理脚本中")
-
         urllib.request.urlretrieve("https://install.python-poetry.org/", destination)
 
 
@@ -263,75 +264,52 @@ def uninstall_poetry() -> None:
     pprint("Poetry 卸载成功", Colors.GREEN)
 
 
-def poetry_install_dependencies(poetry_path: Path) -> None:
+def get_pygame_commit_hash(path: Path) -> str | None:
     """
-    使用 Poetry 安装项目依赖
+    从文件中读取 commit 哈希值，如果文件不存在或者格式不正确则返回 None
     """
-    pprint("安装项目其他依赖中 (使用 Poetry)")
+    if not path.exists():
+        return None
 
     try:
-        cmd_run([poetry_path, "install", "--no-root"])
-    except subprocess.CalledProcessError as e:
-        pprint("项目依赖安装失败", Colors.RED)
-        raise e
+        with path.open() as f:
+            content = f.read()
+            match = re.search(r'commit_hash\s*=\s*"([a-fA-F0-9]+)"', content)
+            if match:
+                return match.group(1)
+    except Exception:
+        return None
+
+    return None
 
 
-def get_pygame_ce_fantas_status(py: Path) -> PygameStatus:
+def set_pygame_commit_hash(path: Path, commit_hash: str) -> None:
     """
-    检查 pygame-ce (fantas 分支版本) 的安装状态，返回 PygameStatus 枚举值
+    将 commit 哈希值写入文件，如果文件不存在则创建文件
     """
-    pprint("检查 pygame-ce (fantas 分支版本) 安装状态中")
-
-    check_script_path = CWD / "tools" / "check_pygame_ce_fantas.py"
-
-    if not check_script_path.parent.exists():
-        check_script_path.parent.mkdir(parents=True, exist_ok=True)
-
-    if not check_script_path.exists():
-        check_script_path.write_text(
-            """import os
-import sys
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-try:
-    import pygame
-except ImportError:
-    print('0')    # pygame 未安装
-    sys.exit(0)
-if getattr(pygame, 'IS_CE', False):
-    if getattr(pygame, 'IS_FANTAS', False):
-        print('1')    # pygame-ce 正确安装
-    else:
-        print('2')    # pygame-ce 版本不正确
-else:
-    print('3')    # 安装了非 pygame-ce
-"""
-        )
-
-    output = cmd_run([py, check_script_path], capture_output=True)
-    status = PygameStatus(int(output))
-
-    if status == PygameStatus.NOT_INSTALLED:
-        pprint("pygame 未安装")
-    elif status == PygameStatus.INSTALLED_CORRECTLY:
-        pprint("pygame-ce (fantas 分支版本) 已正确安装", Colors.GREEN)
-    elif status == PygameStatus.INSTALLED_INCORRECTLY:
-        pprint("pygame-ce 已安装但版本不正确", Colors.RED)
-    elif status == PygameStatus.INSTALLED_PYGAME:
-        pprint("安装了非 pygame-ce 版本的 pygame", Colors.RED)
-
-    return status
+    content = f'''# pygame-ce for fantas 的版本锁定文件，不需要手动修改
+commit_hash = "{commit_hash}"'''
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w") as f:
+        f.write(content)
 
 
-def check_and_update_pygame_ce_fantas() -> None:
+def delete_pygame_ce_for_fantas() -> None:
     """
-    检查 pygame-ce-fantas 仓库是否存在并且在正确的分支上，如果不存在则克隆仓库，
-    如果存在但不在正确的分支上则切换分支，并且拉取最新的提交
+    删除 pygame-ce for fantas
     """
-    pprint("检查 pygame-ce-fantas 仓库中 (使用 git)")
+    for path in FANTAS_SOURCE_DIR.glob("pygame*/"):
+        delete_file_or_dir(path)
 
-    if not PYGAME_CE_FANTAS_DIR.exists():
-        pprint("下载 pygame-ce-fantas 仓库中")
 
+def checkout_pygame_ce_for_fantas(commit_hash: str | None) -> None:
+    """
+    切换到指定版本的 pygame-ce for fantas
+    """
+    pprint(f"- 检查 pygame-ce for fantas 源代码")
+
+    if not PYGAME_CE_FANTAS_SRCDIR.exists():
+        pprint("  # 下载源代码", Colors.RED)
         try:
             cmd_run(
                 [
@@ -340,15 +318,15 @@ def check_and_update_pygame_ce_fantas() -> None:
                     "-b",
                     PYGAME_CE_FANTAS_BRANCH,
                     PYGAME_CE_FANTAS_REPO,
-                    str(PYGAME_CE_FANTAS_DIR),
+                    PYGAME_CE_FANTAS_SRCDIR,
                 ]
             )
         except subprocess.CalledProcessError:
-            pprint("- 请检查网络连接，是否能访问 GitHub", Colors.MAGENTA)
-            pprint("- 或者手动执行命令：", Colors.MAGENTA)
+            pprint("  * 请检查网络连接，是否能访问 GitHub", Colors.MAGENTA)
+            pprint("  * 或者手动执行命令：", Colors.MAGENTA)
             pprint(
-                f"  git clone -b {PYGAME_CE_FANTAS_BRANCH}"
-                f" {PYGAME_CE_FANTAS_REPO} {PYGAME_CE_FANTAS_DIR}",
+                f"  > git clone -b {PYGAME_CE_FANTAS_BRANCH}"
+                f" {PYGAME_CE_FANTAS_REPO} {PYGAME_CE_FANTAS_SRCDIR}",
                 Colors.CYAN,
             )
             pprint(
@@ -356,95 +334,98 @@ def check_and_update_pygame_ce_fantas() -> None:
                 Colors.RED,
             )
             sys.exit(1)
-    else:
-        try:
-            branch = cmd_run(
-                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-                capture_output=True,
-                cwd=PYGAME_CE_FANTAS_DIR,
-            ).strip()
-            if branch != PYGAME_CE_FANTAS_BRANCH:
-                pprint(f"切换分支 {branch} -> {PYGAME_CE_FANTAS_BRANCH}")
-                cmd_run(
-                    ["git", "checkout", PYGAME_CE_FANTAS_BRANCH],
-                    cwd=PYGAME_CE_FANTAS_DIR,
-                )
-        except subprocess.CalledProcessError:
-            pprint("- 请检查是否安装 git", Colors.MAGENTA)
-            pprint("- 或者手动执行命令：", Colors.MAGENTA)
-            pprint(
-                f"  git -C {PYGAME_CE_FANTAS_DIR}"
-                f" checkout {PYGAME_CE_FANTAS_BRANCH}",
-                Colors.CYAN,
-            )
-            pprint("切换分支失败，请执行上述检查后重新运行 dev.py", Colors.RED)
-            sys.exit(1)
-
-    pprint("更新 pygame-ce-fantas 仓库中 (使用 git)")
+    pprint(
+        f"  # 源代码已下载，切换到版本 {commit_hash[:7] if commit_hash else '最新'}",
+        Colors.GREEN,
+    )
     try:
-        cmd_run(["git", "pull"], cwd=PYGAME_CE_FANTAS_DIR)
+        cmd_run(
+            ["git", "pull", "origin", PYGAME_CE_FANTAS_BRANCH],
+            cwd=PYGAME_CE_FANTAS_SRCDIR,
+        )
+        if commit_hash is not None:
+            cmd_run(
+                ["git", "-c", "advice.detachedHead=false", "checkout", commit_hash],
+                cwd=PYGAME_CE_FANTAS_SRCDIR,
+            )
     except subprocess.CalledProcessError:
-        pprint("- 请检查网络连接，是否能访问 GitHub", Colors.MAGENTA)
-        pprint("- 或者手动执行命令：", Colors.MAGENTA)
-        pprint(f"  git -C {PYGAME_CE_FANTAS_DIR} pull", Colors.CYAN)
+        pprint("  * 请检查网络连接，是否能访问 GitHub", Colors.MAGENTA)
+        pprint("  * 或者手动执行命令：", Colors.MAGENTA)
         pprint(
-            "更新 pygame-ce-fantas 仓库失败，请执行上述检查后重新运行 dev.py",
+            f"  > git -c advice.detachedHead=false checkout {commit_hash} && git pull"
+            f" origin {PYGAME_CE_FANTAS_BRANCH}",
+            Colors.CYAN,
+        )
+        pprint(
+            f"切换到版本 {commit_hash[:7] if commit_hash else '最新'} 失败，请执行上述"
+            "检查后重新运行 dev.py",
             Colors.RED,
         )
         sys.exit(1)
 
-
-def build_and_install_pygame_ce_fantas(py: Path) -> None:
-    """
-    构建并安装 pygame-ce (fantas 分支版本)
-    """
-    pprint("安装 pygame-ce (fantas 分支版本) 中")
-    try:
-        cmd_run([py, "-m", "pip", "install", "."], cwd=PYGAME_CE_FANTAS_DIR)
-    except subprocess.CalledProcessError as e:
-        pprint("pygame-ce (fantas 分支版本) 安装失败", Colors.RED)
-        raise e
+    pprint("  pygame-ce for fantas 源代码已就绪", Colors.GREEN)
 
 
-def uninstall_pygame_ce_fantas(py: Path, status: PygameStatus) -> None:
+def install_pygame_ce_for_fantas(py: Path, commit_hash: str | None) -> None:
     """
-    卸载 pygame 或 pygame-ce
+    安装 pygame-ce for fantas
     """
+    checkout_pygame_ce_for_fantas(commit_hash)
+
     pprint(
-        f"卸载 {'pygame' if status == PygameStatus.INSTALLED_PYGAME else 'pygame-ce'}"
-        " 中 (使用 pip)"
+        f"- 安装 pygame-ce for fantas ({commit_hash[:7] if commit_hash else '最新'})"
     )
+
+    delete_pygame_ce_for_fantas()
     try:
         cmd_run(
             [
                 py,
                 "-m",
                 "pip",
-                "uninstall",
-                "-y",
-                "pygame" if status == PygameStatus.INSTALLED_PYGAME else "pygame-ce",
+                "install",
+                PYGAME_CE_FANTAS_SRCDIR,
+                "--target",
+                PYGAME_CE_FANTAS_INSTALL_DIR,
             ]
         )
     except subprocess.CalledProcessError as e:
-        pprint(
-            f"{'pygame' if status == PygameStatus.INSTALLED_PYGAME else 'pygame-ce'}"
-            " 卸载失败",
-            Colors.RED,
-        )
+        pprint("pygame-ce for fantas 安装失败", Colors.RED)
         raise e
 
+    if commit_hash is None:
+        try:
+            commit_hash = cmd_run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=PYGAME_CE_FANTAS_SRCDIR,
+                capture_output=True,
+            )
+        except subprocess.CalledProcessError:
+            pprint("pygame-ce for fantas 版本信息获取失败", Colors.RED)
+            sys.exit(1)
 
-def delete_directory(path: Path) -> None:
+    set_pygame_commit_hash(PYGAME_COMMIT_HASH_FILE, commit_hash)
+
+    pprint(
+        f"  # pygame-ce for fantas (版本: {commit_hash[:7] if commit_hash else '最新'})"
+        " 已安装",
+        Colors.GREEN,
+    )
+
+
+def delete_file_or_dir(path: Path) -> None:
     """
-    删除一个目录及其所有内容
+    删除指定路径的文件或目录，如果是目录则递归删除其中的内容
     """
     if path.is_dir():
         for item in path.iterdir():
             if item.is_dir():
-                delete_directory(item)
+                delete_file_or_dir(item)
             else:
                 item.unlink()
         path.rmdir()
+    else:
+        path.unlink()
 
 
 class Dev:
@@ -480,9 +461,9 @@ class Dev:
         )
 
         # update 命令
-        subparsers.add_parser(
-            "update", help="更新项目依赖和编译后端 (会清空大部分缓存)"
-        )
+        # subparsers.add_parser(
+        #     "update", help="更新项目依赖和编译后端 (会清空大部分缓存)"
+        # )
 
         # docs 命令
         docs_parser = subparsers.add_parser("docs", help="生成文档")
@@ -527,10 +508,10 @@ class Dev:
         subparsers.add_parser("clean", help="清理项目构建缓存和临时文件")
 
         # remove 命令
-        remove_parser = subparsers.add_parser("remove", help="移除整个项目")
-        remove_parser.add_argument(
-            "--include-venv", "-i-v", action="store_true", help="是否同时移除虚拟环境"
-        )
+        # remove_parser = subparsers.add_parser("remove", help="移除整个项目")
+        # remove_parser.add_argument(
+        #     "--include-venv", "-i-v", action="store_true", help="是否同时移除虚拟环境"
+        # )
 
         args = parser.parse_args()
         self.args = vars(args)
@@ -538,6 +519,20 @@ class Dev:
         # 如果没有指定子命令，则默认为 auto
         if not self.args["command"]:
             self.args["command"] = "auto"
+
+    def prep_poetry(self) -> None:
+        """
+        准备 Poetry，确保后续命令可以使用 Poetry 来管理依赖
+        """
+        pprint("准备 Poetry 中")
+
+        poetry_path = get_poetry_executable()
+        if poetry_path is None:
+            self.poetry_path = install_poetry()
+        else:
+            self.poetry_path = poetry_path
+
+        pprint(f"Poetry 已就绪 ({self.poetry_path})", Colors.GREEN)
 
     def prep_venv(self) -> None:
         """
@@ -553,6 +548,69 @@ class Dev:
             self.venv_py = Path(venv_py) / "Scripts" / "python.exe"
         else:
             self.venv_py = Path(venv_py) / "bin" / "python"
+
+        pprint(f"虚拟环境已就绪 ({self.venv_py})", Colors.GREEN)
+
+    def prep_pygame(self) -> None:
+        """
+        准备 pygame-ce (fantas 分支)，确保后续命令可以使用正确版本的 pygame
+        """
+        pprint("准备 pygame-ce for fantas 中")
+
+        pprint("- 检查 pygame-ce (fantas 分支) 安装状态")
+        status = PygameStatus.INSTALLED_CORRECTLY
+        try:
+            import fantas
+            pygame = fantas.pygame
+            pprint(f"  # pygame 已安装", Colors.GREEN)
+        except ImportError:
+            pprint("  # pygame 未安装", Colors.RED)
+            status = PygameStatus.NOT_INSTALLED
+        except RuntimeError:
+            pprint("  # pygame 安装不正确", Colors.RED)
+            status = PygameStatus.INSTALLED_INCORRECTLY
+
+        if status == PygameStatus.INSTALLED_CORRECTLY:
+            pprint("- 检查 pygame-ce (fantas 分支) 版本")
+            commit_hash = get_pygame_commit_hash(PYGAME_COMMIT_HASH_FILE)
+            lock_hash = get_pygame_commit_hash(PYGAME_LOCK_HASH_FILE)
+            if commit_hash is None:
+                pprint("  # 无法确定版本", Colors.RED)
+                install_pygame_ce_for_fantas(self.venv_py, lock_hash)
+            elif lock_hash is None:
+                pprint(f"  # 锁定版本: {commit_hash[:7]}", Colors.GREEN)
+                set_pygame_commit_hash(PYGAME_LOCK_HASH_FILE, commit_hash)
+            elif commit_hash != lock_hash:
+                pprint(
+                    f"  # 需要切换版本 {commit_hash[:7]} -> {lock_hash[:7]}", Colors.RED
+                )
+                install_pygame_ce_for_fantas(self.venv_py, lock_hash)
+            else:
+                pprint(f"  # 版本正确 {commit_hash[:7]}", Colors.GREEN)
+        else:
+            lock_hash = get_pygame_commit_hash(PYGAME_LOCK_HASH_FILE)
+            install_pygame_ce_for_fantas(self.venv_py, lock_hash)
+            if lock_hash is None:
+                set_pygame_commit_hash(
+                    PYGAME_LOCK_HASH_FILE,
+                    get_pygame_commit_hash(PYGAME_COMMIT_HASH_FILE),
+                )
+
+        pprint("pygame-ce for fantas 已就绪", Colors.GREEN)
+
+    def prep_deps(self) -> None:
+        """
+        使用 Poetry 安装项目依赖
+        """
+        pprint("安装开发环境依赖中 (使用 Poetry)")
+
+        try:
+            cmd_run([self.poetry_path, "install", "--no-root"])
+        except subprocess.CalledProcessError as e:
+            pprint("项目依赖安装失败", Colors.RED)
+            raise e
+
+        pprint("开发环境已就绪", Colors.GREEN)
 
     # def cmd_build(self):
     #     pass
@@ -576,6 +634,7 @@ class Dev:
             "html",
             "docs/source",
             "docs/build/html",
+            "--quiet",
         ]
         if full:
             cmd.append("-E")
@@ -584,6 +643,8 @@ class Dev:
         except subprocess.CalledProcessError:
             pprint("文档生成失败，请检查 Sphinx 输出的错误信息", Colors.RED)
             sys.exit(1)
+
+        pprint("文档已生成 (docs/build/html/index.html)", Colors.GREEN)
 
     def cmd_lint(self) -> None:
         """
@@ -598,8 +659,11 @@ class Dev:
                 "pylint",
                 "fantas",
                 "--output-format=colorized",
+                # "--rcfile=pyproject.toml",
             ]
         )
+
+        pprint("代码质量检查已通过", Colors.GREEN)
 
     def cmd_stubs(self) -> None:
         """
@@ -608,8 +672,17 @@ class Dev:
         pprint("执行静态类型检查中 (使用 mypy)")
 
         cmd_run(
-            [self.venv_py, "-m", "mypy", CWD, "--config-file", CWD / "pyproject.toml"]
+            [
+                self.venv_py,
+                "-m",
+                "mypy",
+                FANTAS_SOURCE_DIR,
+                "--config-file",
+                CWD / "pyproject.toml",
+            ]
         )
+
+        pprint("类型检查已通过", Colors.GREEN)
 
     def cmd_format(self) -> None:
         """
@@ -617,20 +690,24 @@ class Dev:
         """
         pprint("格式化代码中 (使用 black)")
 
-        cmd_run([self.venv_py, "-m", "black", "."])
+        cmd_run([self.venv_py, "-m", "black", "fantas", "tests", "dev.py"])
 
         # show_diff_and_help_commit("format")
 
-    # def cmd_test(self):
-    #     mod = self.args.get("mod", [])
+        pprint("代码已格式化", Colors.GREEN)
 
-    #     if mod:
-    #         pprint(f"测试模块 ({' '.join(mod)}) 中")
-    #         for i in mod:
-    #             cmd_run([self.py, "-m", f"fantas.tests.{i}_test"])
-    #     else:
-    #         pprint("测试所有模块中")
-    #         cmd_run([self.py, "-m", "fantas.tests"])
+    def cmd_test(self) -> None:
+        mod = [f"tests/test_{m}.py" for m in self.args.get("mod", [])]
+
+        if mod:
+            mods_arg = " ".join(mod)
+            pprint(f"测试模块 ({mods_arg}) 中 (使用 pytest)")
+            cmd_run([self.venv_py, "-m", "pytest", *mod])
+        else:
+            pprint("测试所有模块中 (使用 pytest)")
+            cmd_run([self.venv_py, "-m", "pytest"])
+
+        pprint("测试已通过", Colors.GREEN)
 
     def cmd_auto(self) -> None:
         """
@@ -640,11 +717,8 @@ class Dev:
         self.cmd_stubs()
         self.cmd_lint()
         self.cmd_docs()
-        # self.cmd_test()
-        # if self.args.install:
-        #     self.cmd_install()
-        # else:
-        #     self.cmd_build()
+        self.cmd_test()
+        # self.cmd_build()
 
     def cmd_clean(self) -> None:
         """
@@ -652,9 +726,9 @@ class Dev:
         """
         pprint("清理项目构建缓存和临时文件中")
 
-        for pattern in ("build", "tmp", ".mypy_cache", "__pycache__"):
+        for pattern in ("build", "tmp", ".mypy_cache", "__pycache__", ".pytest_cache", "pygame-ce-fantas", "_vendor/pygame", "_vendor/pygame**", ".coverage"):
             for path in CWD.glob(f"**/{pattern}"):
-                delete_directory(path)
+                delete_file_or_dir(path)
 
     def run(self) -> None:
         """
@@ -666,33 +740,22 @@ class Dev:
 
         pprint(f"运行子命令 '{self.args['command']}'")
 
-        try:
-            poetry_path = get_poetry_executable()
-            if poetry_path is None:
-                self.poetry_path = install_poetry()
-            else:
-                self.poetry_path = poetry_path
-
-            self.prep_venv()
-
-            pygame_status = get_pygame_ce_fantas_status(self.venv_py)
-            if pygame_status != PygameStatus.INSTALLED_CORRECTLY:
-                if pygame_status == PygameStatus.INSTALLED_INCORRECTLY:
-                    uninstall_pygame_ce_fantas(self.venv_py, pygame_status)
-                check_and_update_pygame_ce_fantas()
-                build_and_install_pygame_ce_fantas(self.venv_py)
-
-            poetry_install_dependencies(self.poetry_path)
-
-            func = getattr(self, f"cmd_{self.args['command']}")
-            func()
-
-        except subprocess.CalledProcessError as e:
-            pprint(f"程序异常退出，错误代码 {e.returncode}", Colors.RED)
-            sys.exit(e.returncode)
-        except KeyboardInterrupt:
-            pprint("程序被用户中断", Colors.RED)
-            sys.exit(1)
+        if self.args["command"] == "clean":
+            self.cmd_clean()
+        else:
+            try:
+                self.prep_poetry()
+                self.prep_venv()
+                self.prep_pygame()
+                self.prep_deps()
+                func = getattr(self, f"cmd_{self.args['command']}")
+                func()
+            except subprocess.CalledProcessError as e:
+                pprint(f"程序异常退出，错误代码 {e.returncode}", Colors.RED)
+                sys.exit(e.returncode)
+            except KeyboardInterrupt:
+                pprint("程序被用户中断", Colors.RED)
+                sys.exit(1)
 
         pprint(f"子命令 '{self.args['command']}' 执行成功", Colors.GREEN)
 

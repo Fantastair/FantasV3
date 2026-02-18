@@ -6,3 +6,6 @@ build/
 __pycache__
 .mypy_cache/
 pygame-ce-fantas/
+.pytest_cache/
+fantas/_vendor/pygame*
+.coverage

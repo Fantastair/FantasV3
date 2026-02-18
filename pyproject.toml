@@ -7,9 +7,13 @@ name = "fantas"
 version = "3.0.0"
 description = "A 2D graphics program framework based on pygame-ce"
 authors = ["Fantastair <Fantastair@qq.com>"]
-readme = "README.md"
-packages = [{include = "fantas"}]
+readme = "README.rst"
+packages = [
+    {include = "fantas"},
+]
 license = "MIT"
+repository = "https://github.com/Fantastair/FantasV3"
+classifiers = []
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -20,35 +24,27 @@ mypy = "^1.18.1"
 pylint = "^4.0.4"
 sphinx = "^9.1.0"
 furo = "^2025.12.19"
+pytest = "^9.0.2"
+pytest-cov = "^7.0.0"
+
+[tool.poetry.urls]
+Homepage = "https://fantastair.cn"
+Documentation = "https://fantastair.cn"
+AuthorPage = "https://fantastair.cn"
+GitHub = "https://github.com/Fantastair/FantasV3"
+issue = "https://github.com/Fantastair/FantasV3/issues"
 
 [tool.black]
 line-length = 88
-exclude = '''
-/(
-    \.git
-  | \.venv
-  | tmp
-  | tools
-  | build
-  | docs
-  | pygame-ce-fantas
-)/
-'''
 
 [tool.mypy]
 strict = true
-exclude = [
-    "^\\.venv",
-    "^\\.git",
-    "^tmp/",
-    "^tools/",
-    "^pygame-ce-fantas/",
-    "^docs/"
-]
+exclude = ["fantas/_vendor/"]
 
 [tool.pylint.main]
 jobs = 8
-extension-pkg-whitelist = ["pygame"]
+extension-pkg-allow-list = "fantas._vendor.pygame"
+ignore = "pygame"
 
 [tool.pylint.messages_control]
 disable = [
@@ -61,3 +57,6 @@ disable = [
 [tool.pylint.reports]
 fail-under = 9.5
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

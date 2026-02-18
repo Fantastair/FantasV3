@@ -42,21 +42,35 @@ os.environ.update(
     }
 )
 
+import sys
+
+VENDOR_DIR = os.path.join(os.path.dirname(__file__), "_vendor")
+sys.path.insert(0, VENDOR_DIR)
+
 # 初始化 Pygame
-import pygame
+from fantas._vendor import pygame
 
 if not getattr(pygame, "IS_FANTAS", False):
     raise RuntimeError(
         "使用的 Pygame 版本不兼容 Fantas，请确保安装了 pygame-ce 的 fantas 分支版本。"
     )
 
-import pygame.freetype
+from fantas._vendor.pygame import freetype
 
 pygame.init()
-pygame.freetype.init(cache_size=1024)
+freetype.init(cache_size=1024)
 
 # 导入 Pygame 的子模块以简化调用链
-from pygame import time, draw, math, event, mouse, image, display, transform
+from fantas._vendor.pygame import (
+    time,
+    draw,
+    math,
+    event,
+    mouse,
+    image,
+    display,
+    transform,
+)
 
 # 导入 fantas 包的各个子模块
 from fantas.version import *  # 版本信息
@@ -84,4 +98,4 @@ event.set_blocked(None)
 # 启用所有已分类事件
 event.set_allowed(list(event_category_dict.keys()))
 
-del pygame, os
+del os

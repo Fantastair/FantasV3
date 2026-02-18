@@ -7,8 +7,9 @@ from bisect import bisect_right
 from collections.abc import Sequence
 from typing import Any, Callable
 
-import pygame.freetype
-from pygame.sysfont import SysFont as _SysFont
+from fantas._vendor import pygame
+from fantas._vendor.pygame import freetype
+from fantas._vendor.pygame.sysfont import SysFont as _SysFont
 
 import fantas
 
@@ -16,10 +17,11 @@ __all__ = (
     "Font",
     "SysFont",
     "get_font_by_id",
+    "DEFAULTFONT",
 )
 
 
-class Font(pygame.freetype.Font):
+class Font(freetype.Font):
     """Fantas3 字体类，继承自 pygame.freetype.Font，添加唯一 ID 属性，并支持通过 ID 查找字体实例。"""
 
     def __init__(
@@ -40,18 +42,18 @@ class Font(pygame.freetype.Font):
             ucs4 (int): 是否使用 UCS4 编码，默认为 False。
         """
         super().__init__(file, size, font_index, resolution, ucs4)
-        self.FANTASID: int = fantas.generate_unique_id()
-        font_dict[self.FANTASID] = self
+        self.font_id: int = fantas.generate_unique_id()
+        font_dict[self.font_id] = self
 
     def __del__(self) -> None:
-        if self.FANTASID in font_dict:
-            del font_dict[self.FANTASID]
+        if self.font_id in font_dict:
+            del font_dict[self.font_id]
 
     def __hash__(self) -> int:
-        return hash(self.FANTASID)
+        return hash(self.font_id)
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, Font) and self.FANTASID == other.FANTASID
+        return isinstance(other, Font) and self.font_id == other.font_id
 
     get_rect: Callable[..., fantas.Rect] = fantas.lru_cache_typed(maxsize=65536)(
         pygame.freetype.Font.get_rect
@@ -144,7 +146,7 @@ class Font(pygame.freetype.Font):
         return tuple(results)
 
 
-pygame.freetype.Font = Font  # type: ignore[assignment, misc]
+pygame.freetype.Font = Font
 
 
 def SysFont(  # pylint: disable=invalid-name
@@ -180,3 +182,9 @@ def get_font_by_id(font_id: int) -> Font | None:
         Font | None: 对应 ID 的字体实例，如果不存在则返回 None。
     """
     return font_dict.get(font_id, None)
+
+
+DEFAULTFONT: fantas.Font = Font(None)
+""" 默认字体 """
+DEFAULTFONT.origin = True  # pylint: disable=attribute-defined-outside-init
+DEFAULTFONT.kerning = True  # pylint: disable=attribute-defined-outside-init

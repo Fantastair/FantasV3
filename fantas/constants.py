@@ -6,9 +6,7 @@ from __future__ import annotations
 from enum import Enum, IntEnum, auto
 from typing import Final
 
-import pygame
-import pygame.freetype
-from pygame.freetype import (
+from fantas._vendor.pygame.freetype import (
     STYLE_DEFAULT as TEXTSTYLEFLAG_DEFAULT,
     STYLE_NORMAL as TEXTSTYLEFLAG_NORMAL,
     STYLE_STRONG as TEXTSTYLEFLAG_STRONG,
@@ -16,7 +14,7 @@ from pygame.freetype import (
     STYLE_UNDERLINE as TEXTSTYLEFLAG_UNDERLINE,
     STYLE_WIDE as TEXTSTYLEFLAG_WIDE,
 )
-from pygame.constants import (
+from fantas._vendor.pygame.constants import (
     WINDOWPOS_UNDEFINED,
     WINDOWPOS_CENTERED,
     MOUSEWHEEL,
@@ -78,13 +76,12 @@ from pygame.constants import (
     SYSTEM_CURSOR_NO,
     SYSTEM_CURSOR_HAND,
 )
-from pygame import colordict
+from fantas._vendor.pygame import colordict
 
 import fantas
 
 __all__ = [
     "colordict",
-    "DEFAULTFONT",
     "Quadrant",
     "BoxMode",
     "FillMode",
@@ -167,12 +164,6 @@ __all__ = [
 ]
 
 
-DEFAULTFONT: fantas.Font = pygame.freetype.Font(None)  # type: ignore[assignment]
-""" 默认字体 """
-DEFAULTFONT.origin = True
-DEFAULTFONT.kerning = True
-
-
 class Quadrant(IntEnum):
     """
     象限枚举。
@@ -191,19 +182,16 @@ class Quadrant(IntEnum):
     ALL = TOPLEFT | TOPRIGHT | BOTTOMLEFT | BOTTOMRIGHT
     """ 全部象限。 """
 
-    @staticmethod
-    def has_point(quadrant: Quadrant, point: fantas.Point) -> bool:
+    def has_point(self, point: fantas.Point) -> bool:
         """
         检查给定点是否在当前象限中。
 
-        :param quadrant: 象限掩码。
-        :type quadrant: Quadrant
         :param point: 要检查的点。
         :type point: fantas.Point
         :return: 如果点在当前象限中则返回 True，否则返回 False。
         :rtype: bool
         """
-        return not (quadrant & 0b11) ^ ((point[0] >= 0) | ((point[1] >= 0) << 1))
+        return not (self & 0b11) ^ ((point[0] >= 0) | ((point[1] >= 0) << 1))
 
 
 class BoxMode(Enum):

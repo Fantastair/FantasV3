@@ -3,7 +3,6 @@
 """
 
 from typing import TypeAlias, Callable
-import pygame
 
 __all__ = (
     "Surface",
@@ -29,21 +28,18 @@ __all__ = (
     "Vector3",
 )
 
-from pygame import Surface  # 表面类
-from pygame import PixelArray  # 像素数组类
+from fantas._vendor.pygame import (
+    Surface,
+    PixelArray,
+    Rect,
+    FRect,
+    Color,
+    Event,
+    Vector2,
+    Vector3,
+)
 
-RectLike: TypeAlias = pygame.typing.RectLike  # 矩形类型
-from pygame import Rect, FRect  # 矩形类
-
-ColorLike: TypeAlias = pygame.typing.ColorLike  # 颜色类型
-from pygame import Color  # 颜色类
-
-Point: TypeAlias = pygame.typing.Point  # 点类
-IntPoint: TypeAlias = pygame.typing.IntPoint  # 整数点类
-
-FileLike: TypeAlias = pygame.typing.FileLike  # 文件类
-
-from pygame.event import Event  # 事件类
+from fantas._vendor.pygame.typing import RectLike, ColorLike, Point, IntPoint, FileLike
 
 EventType: TypeAlias = int  # 事件类型
 
@@ -59,6 +55,3 @@ TextStyleFlag: TypeAlias = (
 )
 
 BlendFlag: TypeAlias = int  # 混合标志类型，BLEND_* 常量
-
-Vector2 = pygame.math.Vector2  # 二维向量类
-Vector3 = pygame.math.Vector3  # 三维向量类

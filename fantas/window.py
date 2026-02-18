@@ -7,7 +7,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import cast
 
-from pygame.window import Window as PygameWindow
+from fantas._vendor.pygame.window import Window as PygameWindow
 
 import fantas
 

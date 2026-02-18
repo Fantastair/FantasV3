@@ -83,6 +83,7 @@ class Lpf:
 class EventLogWindow(fantas.Window):
     """事件日志窗口类。"""
 
+    size: tuple[int, int]
     min_size: ClassVar[tuple[int, int]] = (512, 288)
 
     def __init__(self) -> None:
@@ -175,6 +176,7 @@ class EventLogWindow(fantas.Window):
 class TimeRecordWindow(fantas.Window):
     """时间记录窗口类。"""
 
+    size: tuple[int, int]
     time_category: ClassVar[dict[str, str]] = {
         "Event": "事件处理",
         "FrameFunc": "帧函数",
