@@ -561,6 +561,7 @@ class Dev:
         status = PygameStatus.INSTALLED_CORRECTLY
         try:
             import fantas
+
             pygame = fantas.pygame
             pprint(f"  # pygame 已安装", Colors.GREEN)
         except ImportError:
@@ -726,7 +727,17 @@ class Dev:
         """
         pprint("清理项目构建缓存和临时文件中")
 
-        for pattern in ("build", "tmp", ".mypy_cache", "__pycache__", ".pytest_cache", "pygame-ce-fantas", "_vendor/pygame", "_vendor/pygame**", ".coverage"):
+        for pattern in (
+            "build",
+            "tmp",
+            ".mypy_cache",
+            "__pycache__",
+            ".pytest_cache",
+            "pygame-ce-fantas",
+            "_vendor/pygame",
+            "_vendor/pygame**",
+            ".coverage",
+        ):
             for path in CWD.glob(f"**/{pattern}"):
                 delete_file_or_dir(path)
 

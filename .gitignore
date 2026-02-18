@@ -9,3 +9,4 @@ pygame-ce-fantas/
 .pytest_cache/
 fantas/_vendor/pygame*
 .coverage
+dist/
