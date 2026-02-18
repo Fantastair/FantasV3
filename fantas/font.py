@@ -146,7 +146,7 @@ class Font(freetype.Font):
         return tuple(results)
 
 
-pygame.freetype.Font = Font
+pygame.freetype.Font = Font  # type: ignore[assignment, misc]
 
 
 def SysFont(  # pylint: disable=invalid-name
@@ -160,7 +160,7 @@ def SysFont(  # pylint: disable=invalid-name
     Returns:
         Font: 创建的字体实例。
     """
-    return _SysFont(name, size, constructor=constructor)  # type: ignore[no-untyped-call]
+    return _SysFont(name, size, constructor=constructor)
 
 
 def constructor(
