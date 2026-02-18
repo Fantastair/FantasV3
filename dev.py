@@ -470,11 +470,11 @@ class Dev:
 
         # build 命令
         build_parser = subparsers.add_parser(
-            "build", help="构建并安装项目 (默认为常规)"
+            "build", help="安装项目 (可编辑安装)"
         )
 
         # install 命令
-        subparsers.add_parser("install", help="安装项目 (可编辑安装)")
+        subparsers.add_parser("install", help="构建并安装项目 (常规安装)")
 
         # update 命令
         subparsers.add_parser("update", help="更新项目依赖")
@@ -620,7 +620,22 @@ class Dev:
 
     def cmd_build(self) -> None:
         """
-        执行 build 子命令，使用 Poetry 构建项目并安装生成的 wheel 包
+        执行 build 子命令，使用 Poetry 安装项目到虚拟环境中 (可编辑安装)
+        """
+        pprint("安装项目中 (可编辑安装)")
+
+        try:
+            cmd_run([self.poetry_path, "install"])
+        except subprocess.CalledProcessError:
+            pprint("项目安装失败", Colors.RED)
+            sys.exit(1)
+
+        pprint(f"项目已安装 (可编辑安装), 改动 {FANTAS_SOURCE_DIR} 中的代码实时生效", Colors.GREEN)
+
+
+    def cmd_install(self) -> None:
+        """
+        执行 install 子命令，使用 Poetry 构建项目并安装生成的 wheel 包 (常规安装)
         """
         pprint("构建项目中")
 
@@ -656,18 +671,6 @@ class Dev:
             sys.exit(1)
 
         pprint(f"项目已安装 ({wheel_files[0]})", Colors.GREEN)
-
-    def cmd_install(self) -> None:
-        """
-        执行 install 子命令，使用 Poetry 进行可编辑安装
-        """
-        pprint("安装项目中 (可编辑安装)")
-
-        try:
-            cmd_run([self.poetry_path, "install"])
-        except subprocess.CalledProcessError:
-            pprint("项目安装失败", Colors.RED)
-            sys.exit(1)
 
     def cmd_docs(self) -> None:
         """
