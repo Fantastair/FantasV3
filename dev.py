@@ -28,6 +28,7 @@ PYGAME_LOCK_HASH_FILE = CWD / "pygame.lock"
 
 DIST_DIR = CWD / "dist"
 
+
 class Colors(Enum):
     """
     Colors 枚举定义了用于终端输出的颜色代码。它提供了一种方便的方式来在终端中使用颜色，
@@ -624,7 +625,7 @@ class Dev:
         except subprocess.CalledProcessError:
             pprint("项目构建失败", Colors.RED)
             sys.exit(1)
-        
+
         pprint(f"项目已构建 ({DIST_DIR})", Colors.GREEN)
         pprint("安装项目中 (常规安装)")
 
@@ -640,7 +641,7 @@ class Dev:
             sys.exit(1)
 
         pprint(f"项目已安装 ({wheel_files[0]})", Colors.GREEN)
-    
+
     def cmd_install(self):
         pprint("安装项目中 (可编辑安装)")
 
