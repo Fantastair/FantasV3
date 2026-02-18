@@ -469,9 +469,7 @@ class Dev:
         )
 
         # build 命令
-        build_parser = subparsers.add_parser(
-            "build", help="安装项目 (可编辑安装)"
-        )
+        build_parser = subparsers.add_parser("build", help="安装项目 (可编辑安装)")
 
         # install 命令
         subparsers.add_parser("install", help="构建并安装项目 (常规安装)")
@@ -630,8 +628,10 @@ class Dev:
             pprint("项目安装失败", Colors.RED)
             sys.exit(1)
 
-        pprint(f"项目已安装 (可编辑安装), 改动 {FANTAS_SOURCE_DIR} 中的代码实时生效", Colors.GREEN)
-
+        pprint(
+            f"项目已安装 (可编辑安装), 改动 {FANTAS_SOURCE_DIR} 中的代码实时生效",
+            Colors.GREEN,
+        )
 
     def cmd_install(self) -> None:
         """
