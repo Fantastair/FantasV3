@@ -18,60 +18,59 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-      - uses: actions/checkout@v6.0.2
+    - uses: actions/checkout@v6.0.2
 
-      - name: Setup Python
-        uses: actions/setup-python@v6.2.0
-        with:
-          python-version: '3.13.5'
+    - name: Setup Python
+      uses: actions/setup-python@v6.2.0
+      with:
+        python-version: '3.13.5'
 
-      - name: Cache Python .venv
-        uses: actions/cache@v5.0.3
-        id: cache-python-venv
-        with:
-          path: .venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-venv
+    - name: Cache Python .venv
+      uses: actions/cache@v5.0.3
+      id: cache-python-venv
+      with:
+        path: .venv
+        key: ${{ runner.os }}-venv-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-venv
 
-      - name: Prepare Venv Python
-        if: steps.cache-python-venv.outputs.cache-hit != 'true'
-        run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
+    - name: Prepare Venv Python
+      if: steps.cache-python-venv.outputs.cache-hit != 'true'
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update --fix-missing
-          sudo apt-get install \
-            libsdl2-dev \
-            libsdl2-image-dev \
-            libsdl2-mixer-dev \
-            libsdl2-ttf-dev \
-            libfreetype6-dev \
-            libportmidi-dev
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update --fix-missing
+        sudo apt-get install \
+          libsdl2-dev \
+          libsdl2-image-dev \
+          libsdl2-mixer-dev \
+          libsdl2-ttf-dev \
+          libfreetype6-dev \
+          libportmidi-dev
 
-      - name: Build documentation
-        run: |
-          source .venv/bin/activate
-          python dev.py docs --full
+    - name: Build documentation
+      run: |
+        source .venv/bin/activate
+        python dev.py docs --full
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Add host to known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+    - name: Add host to known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Sync documentation
-        run: |
-          rsync -avz --delete \
-            -e "ssh -o StrictHostKeyChecking=no" \
-            docs/build/html/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/fantas-docs/
+    - name: Sync documentation
+      run: |
+        rsync -avz --delete \
+          -e "ssh -o StrictHostKeyChecking=no" \
+          docs/build/html/ \
+          ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/fantas-docs/
