@@ -62,8 +62,7 @@ jobs:
     - name: Deploy documentation
       uses: Burnett01/rsync-deployments@v8
       with:
-        switches: -avz --delete
-        rsh: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+        switches: -avzr --delete
         path: docs/build/html/
         remote_path: /var/www/fantas-docs/
         remote_host: ${{ secrets.SSH_HOST }}
