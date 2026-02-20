@@ -365,7 +365,7 @@ def install_pygame_ce_for_fantas(py: Path, commit_hash: str | None) -> str:
         pprint("- 尝试使用 dev.py 安装", Colors.YELLOW)
 
         delete_file_or_dir(PYGAME_DIST_DIR)
-        cmd_run([py, "dev.py", "build", "--wheel"], cwd=PYGAME_CE_FANTAS_SRCDIR)
+        cmd_run([py, "dev.py", "build", "--wheel"])
         wheel_files = list(PYGAME_DIST_DIR.glob("*.whl"))
         if not wheel_files:
             pprint("  未找到生成的 wheel 文件", Colors.RED)
