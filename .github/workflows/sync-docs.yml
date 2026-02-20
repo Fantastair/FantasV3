@@ -43,15 +43,16 @@ jobs:
         pip install -r requirements.txt
 
     - name: Install system dependencies
-      run: |
-        sudo apt-get update --fix-missing
-        sudo apt-get install \
-          libsdl2-dev \
-          libsdl2-image-dev \
-          libsdl2-mixer-dev \
-          libsdl2-ttf-dev \
-          libfreetype6-dev \
+      uses: awalsh128/cache-apt-pkgs-action@v1.6.0
+      with:
+        packages: |
+          libsdl2-dev
+          libsdl2-image-dev
+          libsdl2-mixer-dev
+          libsdl2-ttf-dev
+          libfreetype6-dev
           libportmidi-dev
+          rsync
 
     - name: Build documentation
       run: |
@@ -64,14 +65,9 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Add host to known_hosts
-      run: |
-        mkdir -p ~/.ssh
-        ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-
     - name: Sync documentation
       run: |
         rsync -avz --delete \
-          -e "ssh -o StrictHostKeyChecking=no" \
+          -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
           docs/build/html/ \
           ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/fantas-docs/
