@@ -20,14 +20,15 @@ CWD = Path(__file__).parent
 PYGAME_CE_FANTAS_SRCDIR = CWD / "pygame-ce-fantas"
 PYGAME_CE_FANTAS_REPO = "https://github.com/Fantastair/pygame-ce.git"
 PYGAME_CE_FANTAS_BRANCH = "fantas"
+PYGAME_DIST_DIR = PYGAME_CE_FANTAS_SRCDIR / "dist"
 
 FANTAS_SOURCE_DIR = CWD / "fantas"
+FANTAS_DIST_DIR = CWD / "dist"
 
 PYGAME_CE_FANTAS_INSTALL_DIR = FANTAS_SOURCE_DIR / "_vendor"
 PYGAME_COMMIT_HASH_FILE = FANTAS_SOURCE_DIR / "_vendor" / "pygame" / "commit_hash"
 PYGAME_LOCK_HASH_FILE = CWD / "pygame.lock"
 
-DIST_DIR = CWD / "dist"
 
 
 class Colors(Enum):
@@ -260,7 +261,7 @@ def delete_pygame_ce_for_fantas() -> None:
         delete_file_or_dir(path)
 
 
-def checkout_pygame_ce_for_fantas(commit_hash: str | None) -> None:
+def checkout_pygame_ce_for_fantas(commit_hash: str | None) -> str:
     """
     切换到指定版本的 pygame-ce for fantas
     """
@@ -306,6 +307,16 @@ def checkout_pygame_ce_for_fantas(commit_hash: str | None) -> None:
                 ["git", "-c", "advice.detachedHead=false", "checkout", commit_hash],
                 cwd=PYGAME_CE_FANTAS_SRCDIR,
             )
+        else:
+            try:
+                commit_hash = cmd_run(
+                    ["git", "rev-parse", "HEAD"],
+                    cwd=PYGAME_CE_FANTAS_SRCDIR,
+                    capture_output=True,
+                )
+            except subprocess.CalledProcessError:
+                pprint("pygame-ce for fantas 版本信息获取失败", Colors.RED)
+                sys.exit(1)
     except subprocess.CalledProcessError:
         pprint("  * 请检查网络连接，是否能访问 GitHub", Colors.MAGENTA)
         pprint("  * 或者手动执行命令：", Colors.MAGENTA)
@@ -322,19 +333,21 @@ def checkout_pygame_ce_for_fantas(commit_hash: str | None) -> None:
         sys.exit(1)
 
     pprint("  pygame-ce for fantas 源代码已就绪", Colors.GREEN)
+    return commit_hash
 
 
 def install_pygame_ce_for_fantas(py: Path, commit_hash: str | None) -> str:
     """
     安装 pygame-ce for fantas
     """
-    checkout_pygame_ce_for_fantas(commit_hash)
+    commit_hash = checkout_pygame_ce_for_fantas(commit_hash)
 
     pprint(
-        f"- 安装 pygame-ce for fantas ({commit_hash[:7] if commit_hash else '最新'})"
+        f"- 安装 pygame-ce for fantas ({commit_hash[:7]})"
     )
 
     delete_pygame_ce_for_fantas()
+    pip_installed = True
     try:
         cmd_run(
             [
@@ -347,25 +360,49 @@ def install_pygame_ce_for_fantas(py: Path, commit_hash: str | None) -> str:
                 PYGAME_CE_FANTAS_INSTALL_DIR,
             ]
         )
-    except subprocess.CalledProcessError as e:
-        pprint("pygame-ce for fantas 安装失败", Colors.RED)
-        raise e
+    except subprocess.CalledProcessError:
+        pprint("  pip 安装失败", Colors.RED)
+        pip_installed = False
 
-    if commit_hash is None:
+    if not pip_installed:
+        pprint("- 尝试使用 dev.py 安装", Colors.YELLOW)
+
+
+        delete_file_or_dir(PYGAME_DIST_DIR)
+        cmd_run(
+            [
+                py,
+                "dev.py",
+                "build",
+                "--wheel"
+            ]
+        )
+        wheel_files = list(PYGAME_DIST_DIR.glob("*.whl"))
+        if not wheel_files:
+            pprint("  未找到生成的 wheel 文件", Colors.RED)
+            pprint("  pygame-ce for fantas 安装失败，请检查构建日志", Colors.RED)
+            sys.exit(1)
         try:
-            commit_hash = cmd_run(
-                ["git", "rev-parse", "HEAD"],
-                cwd=PYGAME_CE_FANTAS_SRCDIR,
-                capture_output=True,
+            cmd_run(
+                [
+                    py,
+                    "-m",
+                    "pip",
+                    "install",
+                    wheel_files[0],
+                    "--target",
+                    PYGAME_CE_FANTAS_INSTALL_DIR,
+                ]
             )
         except subprocess.CalledProcessError:
-            pprint("pygame-ce for fantas 版本信息获取失败", Colors.RED)
+            pprint("  pip 安装失败", Colors.RED)
+            pprint("  pygame-ce for fantas 安装失败，请检查安装日志", Colors.RED)
             sys.exit(1)
 
     set_pygame_commit_hash(PYGAME_COMMIT_HASH_FILE, commit_hash)
 
     pprint(
-        f"  # pygame-ce for fantas (版本: {commit_hash[:7] if commit_hash else '最新'})"
+        f"  # pygame-ce for fantas (版本: {commit_hash[:7]})"
         " 已安装",
         Colors.GREEN,
     )
@@ -638,7 +675,7 @@ class Dev:
         """
         pprint("构建项目中")
 
-        delete_file_or_dir(DIST_DIR)
+        delete_file_or_dir(FANTAS_DIST_DIR)
 
         try:
             cmd_run([self.poetry_path, "build", "-f", "wheel"])
@@ -646,10 +683,10 @@ class Dev:
             pprint("项目构建失败", Colors.RED)
             sys.exit(1)
 
-        pprint(f"项目已构建 ({DIST_DIR})", Colors.GREEN)
+        pprint(f"项目已构建 ({FANTAS_DIST_DIR})", Colors.GREEN)
         pprint("安装项目中 (常规安装)")
 
-        wheel_files = list(DIST_DIR.glob("*.whl"))
+        wheel_files = list(FANTAS_DIST_DIR.glob("*.whl"))
         if not wheel_files:
             pprint("未找到生成的 wheel 文件", Colors.RED)
             sys.exit(1)
