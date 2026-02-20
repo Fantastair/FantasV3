@@ -2,63 +2,69 @@ name: Build and Sync Docs
 
 on:
   push:
-    branches: [master]
+    branches: master
     paths:
       - 'docs/**'
       - 'fantas/**'
       - '.github/workflows/sync-docs.yml'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-sync-docs
+  cancel-in-progress: true
+
 jobs:
   build-and-sync-docs:
-    runs-on: ubuntu-latest  
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v6.0.2
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+    - name: Setup Python
+      uses: actions/setup-python@v6.2.0
+      with:
+        python-version: '3.13.5'
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+    - name: Cache Python .venv
+      uses: actions/cache@v5.0.3
+      id: cache-python-venv
+      with:
+        path: .venv
+        key: ${{ runner.os }}-venv-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-venv
 
-      - name: Prepare Venv Python
-        run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install --upgrade pip
+    - name: Prepare Venv Python
+      if: steps.cache-python-venv.outputs.cache-hit != 'true'
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
 
-      - name: Build documentation
-        run: |
-          source .venv/bin/activate
-          python dev.py docs --full
-      
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Install system dependencies
+      uses: awalsh128/cache-apt-pkgs-action@v1.6.0
+      with:
+        packages: |
+          libsdl2-dev
+          libsdl2-image-dev
+          libsdl2-mixer-dev
+          libsdl2-ttf-dev
+          libfreetype6-dev
+          libportmidi-dev
 
-      - name: Add host to known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+    - name: Build documentation
+      run: |
+        source .venv/bin/activate
+        export AUDIODEV=null
+        python dev.py docs --full
 
-      - name: Sync documentation
-        run: |
-          rsync -avz --delete \
-            -e "ssh -o StrictHostKeyChecking=no" \
-            docs/build/html/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/fantas-docs/
+    - name: Deploy documentation
+      uses: Burnett01/rsync-deployments@v8
+      with:
+        switches: -avzr --delete
+        path: docs/build/html/
+        remote_path: /var/www/fantas-docs/
+        remote_host: ${{ secrets.SSH_HOST }}
+        remote_user: ${{ secrets.SSH_USER }}
+        remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
