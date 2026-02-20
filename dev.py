@@ -30,6 +30,7 @@ PYGAME_COMMIT_HASH_FILE = FANTAS_SOURCE_DIR / "_vendor" / "pygame" / "commit_has
 PYGAME_LOCK_HASH_FILE = CWD / "pygame.lock"
 
 
+
 class Colors(Enum):
     """
     Colors 枚举定义了用于终端输出的颜色代码。它提供了一种方便的方式来在终端中使用颜色，
@@ -341,7 +342,9 @@ def install_pygame_ce_for_fantas(py: Path, commit_hash: str | None) -> str:
     """
     commit_hash = checkout_pygame_ce_for_fantas(commit_hash)
 
-    pprint(f"- 安装 pygame-ce for fantas ({commit_hash[:7]})")
+    pprint(
+        f"- 安装 pygame-ce for fantas ({commit_hash[:7]})"
+    )
 
     delete_pygame_ce_for_fantas()
     pip_installed = True
@@ -364,8 +367,16 @@ def install_pygame_ce_for_fantas(py: Path, commit_hash: str | None) -> str:
     if not pip_installed:
         pprint("- 尝试使用 dev.py 安装", Colors.YELLOW)
 
+
         delete_file_or_dir(PYGAME_DIST_DIR)
-        cmd_run([py, "dev.py", "build", "--wheel"], cwd=PYGAME_CE_FANTAS_SRCDIR)
+        cmd_run(
+            [
+                py,
+                "dev.py",
+                "build",
+                "--wheel"
+            ]
+        )
         wheel_files = list(PYGAME_DIST_DIR.glob("*.whl"))
         if not wheel_files:
             pprint("  未找到生成的 wheel 文件", Colors.RED)
@@ -391,7 +402,8 @@ def install_pygame_ce_for_fantas(py: Path, commit_hash: str | None) -> str:
     set_pygame_commit_hash(PYGAME_COMMIT_HASH_FILE, commit_hash)
 
     pprint(
-        f"  # pygame-ce for fantas (版本: {commit_hash[:7]})" " 已安装",
+        f"  # pygame-ce for fantas (版本: {commit_hash[:7]})"
+        " 已安装",
         Colors.GREEN,
     )
 
