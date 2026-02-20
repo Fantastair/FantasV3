@@ -366,12 +366,7 @@ def install_pygame_ce_for_fantas(py: Path, commit_hash: str | None) -> str:
 
         delete_file_or_dir(PYGAME_DIST_DIR)
         cmd_run(
-            [
-                py,
-                "dev.py",
-                "build",
-                "--wheel"
-            ],
+            [py, "dev.py", "build", "--wheel"],
             cwd=PYGAME_CE_FANTAS_SRCDIR,
         )
         wheel_files = list(PYGAME_DIST_DIR.glob("*.whl"))
