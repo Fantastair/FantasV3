@@ -52,7 +52,6 @@ jobs:
           libsdl2-ttf-dev
           libfreetype6-dev
           libportmidi-dev
-          rsync
 
     - name: Build documentation
       run: |
@@ -65,9 +64,13 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Sync documentation
-      run: |
-        rsync -avz --delete \
-          -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
-          docs/build/html/ \
-          ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/fantas-docs/
+    - name: Deploy documentation
+      uses: Burnett01/rsync-deployments@v8
+      with:
+        switches: -avz --delete
+        rsh: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+        path: docs/build/html/
+        remote_path: /var/www/fantas-docs/
+        remote_host: ${{ secrets.SSH_HOST }}
+        remote_user: ${{ secrets.SSH_USER }}
+        remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
