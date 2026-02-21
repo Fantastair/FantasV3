@@ -52,7 +52,7 @@ from fantas._vendor import pygame
 
 if not getattr(pygame, "IS_FANTAS", False):
     raise RuntimeError(
-        "使用的 Pygame 版本不兼容 Fantas，请确保安装了 pygame-ce 的 fantas 分支版本。"
+        "使用的 Pygame 版本不兼容 Fantas，请确保安装了 pygame-ce for fantas 分支版本。"
     )
 
 from fantas._vendor.pygame import freetype

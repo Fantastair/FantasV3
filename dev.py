@@ -7,27 +7,31 @@
 import os
 import re
 import sys
+import json
+import zipfile
 import argparse
+import platform
 import subprocess
 import urllib.request
 from enum import Enum
-from typing import Any
+from typing import Any, Callable
 from pathlib import Path
 from time import perf_counter_ns as get_time_ns
 
 CWD = Path(__file__).parent
 
-PYGAME_CE_FANTAS_SRCDIR = CWD / "pygame-ce-fantas"
-PYGAME_CE_FANTAS_REPO = "https://github.com/Fantastair/pygame-ce.git"
-PYGAME_CE_FANTAS_BRANCH = "fantas"
-PYGAME_DIST_DIR = PYGAME_CE_FANTAS_SRCDIR / "dist"
+PYGAME_CE_FOR_FANTAS_OWNER = "Fantastair"  # pygame-ce for fantas 仓库的所有者
+PYGAME_CE_FOR_FANTAS_REPO = "pygame-ce"  # pygame-ce for fantas 仓库的名称
+PYGAME_SRCDIR_LIST: Callable[[], list[Path]] = lambda: list(
+    (CWD / "tmp").glob(f"{PYGAME_CE_FOR_FANTAS_OWNER}-{PYGAME_CE_FOR_FANTAS_REPO}-*")
+)  # 下载后的源代码目录列表，运行时获取
 
-FANTAS_SOURCE_DIR = CWD / "fantas"
-FANTAS_DIST_DIR = CWD / "dist"
+FANTAS_SOURCE_DIR = CWD / "fantas"  # fantas 项目的源代码目录
+FANTAS_DIST_DIR = CWD / "dist"  # fantas 项目的构建输出目录
 
-PYGAME_CE_FANTAS_INSTALL_DIR = FANTAS_SOURCE_DIR / "_vendor"
-PYGAME_COMMIT_HASH_FILE = FANTAS_SOURCE_DIR / "_vendor" / "pygame" / "commit_hash"
-PYGAME_LOCK_HASH_FILE = CWD / "pygame.lock"
+PYGAME_CE_FOR_FANTAS_INSTALL_DIR = (
+    FANTAS_SOURCE_DIR / "_vendor"
+)  # pygame-ce for fantas 的安装目录，安装后会在这个目录下生成一个 pygame 包
 
 
 class Colors(Enum):
@@ -80,16 +84,30 @@ def has_color() -> bool:
     return os.environ.get("TERM", "").strip().lower() != "dumb"
 
 
-def pprint(arg: str, col: Colors = Colors.YELLOW) -> None:
+def pprint(
+    arg: str, col: Colors = Colors.YELLOW, wrap: bool = True, restart: bool = False
+) -> None:
     """
     pprint 函数用于在终端中打印带有颜色的消息。它根据环境变量和参数决定是否使用颜色，
     并且在输出前添加 [dev.py] 前缀以标识消息来源。
+
+    Args:
+        arg: 要打印的消息内容
+        col: 消息的颜色，默认为黄色
+        wrap: 是否在消息末尾添加换行符，默认为 True
+        restart: 是否从头输出（此项为 True 时，wrap 自动强制为 False，会从头覆盖输出）
+            适合用于显示进度条等需要覆盖输出的场景
     """
     do_col = has_color()
     start = Colors.BLUE.value if do_col else ""
     mid = col.value if do_col else ""
     end = Colors.RESET.value if do_col else ""
-    print(f"{start}[dev.py] {mid}{arg}{end}", flush=True)
+    if restart:
+        print(f"\r{start}[dev.py] {mid}{arg}{end}", end="", flush=True)
+    elif wrap:
+        print(f"{start}[dev.py] {mid}{arg}{end}", flush=True)
+    else:
+        print(f"{start}[dev.py] {mid}{arg}{end}", end="", flush=True)
 
 
 def cmd_run(
@@ -260,120 +278,24 @@ def delete_pygame_ce_for_fantas() -> None:
         delete_file_or_dir(path)
 
 
-def checkout_pygame_ce_for_fantas(commit_hash: str | None) -> str:
-    """
-    切换到指定版本的 pygame-ce for fantas
-    """
-    pprint("- 检查 pygame-ce for fantas 源代码")
-
-    if not PYGAME_CE_FANTAS_SRCDIR.exists():
-        pprint("  # 下载源代码", Colors.RED)
-        try:
-            cmd_run(
-                [
-                    "git",
-                    "clone",
-                    "-b",
-                    PYGAME_CE_FANTAS_BRANCH,
-                    PYGAME_CE_FANTAS_REPO,
-                    PYGAME_CE_FANTAS_SRCDIR,
-                ]
-            )
-        except subprocess.CalledProcessError:
-            pprint("  * 请检查网络连接，是否能访问 GitHub", Colors.MAGENTA)
-            pprint("  * 或者手动执行命令：", Colors.MAGENTA)
-            pprint(
-                f"  > git clone -b {PYGAME_CE_FANTAS_BRANCH}"
-                f" {PYGAME_CE_FANTAS_REPO} {PYGAME_CE_FANTAS_SRCDIR}",
-                Colors.CYAN,
-            )
-            pprint(
-                "下载 pygame-ce-fantas 仓库失败，请执行上述检查后重新运行 dev.py",
-                Colors.RED,
-            )
-            sys.exit(1)
-    pprint(
-        f"  # 源代码已下载，切换到版本 {commit_hash[:7] if commit_hash else '最新'}",
-        Colors.GREEN,
-    )
-    try:
-        cmd_run(
-            ["git", "pull", "origin", PYGAME_CE_FANTAS_BRANCH],
-            cwd=PYGAME_CE_FANTAS_SRCDIR,
-        )
-        if commit_hash is not None:
-            cmd_run(
-                ["git", "-c", "advice.detachedHead=false", "checkout", commit_hash],
-                cwd=PYGAME_CE_FANTAS_SRCDIR,
-            )
-        else:
-            try:
-                commit_hash = cmd_run(
-                    ["git", "rev-parse", "HEAD"],
-                    cwd=PYGAME_CE_FANTAS_SRCDIR,
-                    capture_output=True,
-                )
-            except subprocess.CalledProcessError:
-                pprint("pygame-ce for fantas 版本信息获取失败", Colors.RED)
-                sys.exit(1)
-    except subprocess.CalledProcessError:
-        pprint("  * 请检查网络连接，是否能访问 GitHub", Colors.MAGENTA)
-        pprint("  * 或者手动执行命令：", Colors.MAGENTA)
-        pprint(
-            f"  > git -c advice.detachedHead=false checkout {commit_hash} && git pull"
-            f" origin {PYGAME_CE_FANTAS_BRANCH}",
-            Colors.CYAN,
-        )
-        pprint(
-            f"切换到版本 {commit_hash[:7] if commit_hash else '最新'} 失败，请执行上述"
-            "检查后重新运行 dev.py",
-            Colors.RED,
-        )
-        sys.exit(1)
-
-    pprint("  pygame-ce for fantas 源代码已就绪", Colors.GREEN)
-    return commit_hash
-
-
-def install_pygame_ce_for_fantas(py: Path, commit_hash: str | None) -> str:
+def install_pygame_ce_for_fantas(py: Path, tag: str | None = None) -> None:
     """
     安装 pygame-ce for fantas
-    """
-    commit_hash = checkout_pygame_ce_for_fantas(commit_hash)
 
-    pprint(f"- 安装 pygame-ce for fantas ({commit_hash[:7]})")
+    Args:
+        py: Python 可执行文件的路径，用于安装 pygame-ce for fantas
+        tag: 可选的 release tag，如果不指定则安装最新 release
+    """
+    pprint("安装 pygame-ce for fantas 中")
 
     delete_pygame_ce_for_fantas()
-    pip_installed = True
-    try:
-        cmd_run(
-            [
-                py,
-                "-m",
-                "pip",
-                "install",
-                PYGAME_CE_FANTAS_SRCDIR,
-                "--target",
-                PYGAME_CE_FANTAS_INSTALL_DIR,
-            ]
-        )
-    except subprocess.CalledProcessError:
-        pprint("  pip 安装失败", Colors.RED)
-        pip_installed = False
 
-    if not pip_installed:
-        pprint("- 尝试使用 dev.py 安装", Colors.YELLOW)
+    downloader = GithubReleaseDownloader(
+        PYGAME_CE_FOR_FANTAS_OWNER, PYGAME_CE_FOR_FANTAS_REPO
+    )
 
-        delete_file_or_dir(PYGAME_DIST_DIR)
-        cmd_run(
-            [py, "dev.py", "build", "--wheel"],
-            cwd=PYGAME_CE_FANTAS_SRCDIR,
-        )
-        wheel_files = list(PYGAME_DIST_DIR.glob("*.whl"))
-        if not wheel_files:
-            pprint("  未找到生成的 wheel 文件", Colors.RED)
-            pprint("  pygame-ce for fantas 安装失败，请检查构建日志", Colors.RED)
-            sys.exit(1)
+    downloaded_whl = downloader.auto_download_whl(tag)
+    if downloaded_whl is not None:
         try:
             cmd_run(
                 [
@@ -381,24 +303,65 @@ def install_pygame_ce_for_fantas(py: Path, commit_hash: str | None) -> str:
                     "-m",
                     "pip",
                     "install",
-                    wheel_files[0],
+                    downloaded_whl,
                     "--target",
-                    PYGAME_CE_FANTAS_INSTALL_DIR,
+                    PYGAME_CE_FOR_FANTAS_INSTALL_DIR,
                 ]
             )
+            return
         except subprocess.CalledProcessError:
-            pprint("  pip 安装失败", Colors.RED)
-            pprint("  pygame-ce for fantas 安装失败，请检查安装日志", Colors.RED)
-            sys.exit(1)
-
-    set_pygame_commit_hash(PYGAME_COMMIT_HASH_FILE, commit_hash)
+            pass
 
     pprint(
-        f"  # pygame-ce for fantas (版本: {commit_hash[:7]})" " 已安装",
-        Colors.GREEN,
+        "通过 whl 文件安装 pygame-ce for fantas 失败，尝试下载并安装源代码", Colors.RED
     )
 
-    return commit_hash
+    downloaded_source = downloader.download_source_code(tag)
+    if downloaded_source is not None:
+        try:
+            cmd_run(
+                [
+                    py,
+                    "-m",
+                    "pip",
+                    "install",
+                    downloaded_source,
+                    "--target",
+                    PYGAME_CE_FOR_FANTAS_INSTALL_DIR,
+                ]
+            )
+            return
+        except subprocess.CalledProcessError:
+            pass
+
+    pprint("通过 pip 安装 pygame-ce for fantas 失败，尝试使用 dev.py 安装", Colors.RED)
+
+    if downloaded_source is not None:
+        try:
+            delete_file_or_dir(downloaded_source / "dist")
+            cmd_run([py, "dev.py", "build", "--wheel"], cwd=downloaded_source)
+            wheel_files = list((downloaded_source / "dist").glob("*.whl"))
+            if wheel_files:
+                cmd_run(
+                    [
+                        py,
+                        "-m",
+                        "pip",
+                        "install",
+                        wheel_files[0],
+                        "--target",
+                        PYGAME_CE_FOR_FANTAS_INSTALL_DIR,
+                    ]
+                )
+                return
+        except subprocess.CalledProcessError:
+            pass
+
+    pprint(
+        "pygame-ce for fantas 安装失败，未找到兼容的 whl 文件，也无法下载并安装源代码",
+        Colors.RED,
+    )
+    sys.exit(1)
 
 
 def delete_file_or_dir(path: Path) -> None:
@@ -414,6 +377,282 @@ def delete_file_or_dir(path: Path) -> None:
         path.rmdir()
     elif path.exists():
         path.unlink()
+
+
+class GithubReleaseDownloader:
+    """
+    提供从 GitHub Release 下载 whl 文件的功能
+    """
+
+    HEADERS = {  # GitHub API 需要的请求头
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "WHL-Downloader/1.0",
+    }
+
+    def __init__(self, owner: str, repo: str):
+        """
+        初始化下载器，设置 GitHub 仓库的所有者和名称
+
+        Args:
+            owner: GitHub 用户名或组织名
+            repo: GitHub 仓库名
+        """
+
+        self.owner = owner
+        self.repo = repo
+        self.REPO_URL = f"https://api.github.com/repos/{owner}/{repo}"
+
+        pprint(f"初始化 GitHub Release 下载器 (仓库: {owner}/{repo})", Colors.GREEN)
+
+    def get_json(self, url: str) -> dict[str, Any]:
+        """
+        发送请求获取 JSON 数据
+
+        Args:
+            url: API URL
+        Returns:
+            返回解析后的 JSON 数据
+        Raises:
+            Exception: 如果请求失败或者返回非 200 状态码，则抛出异常
+        """
+        pprint(f"请求 URL: {url}")
+
+        req = urllib.request.Request(url, headers=self.HEADERS)
+        try:
+            with urllib.request.urlopen(req) as response:
+                return json.loads(response.read().decode("utf-8"))  # type: ignore[no-any-return]
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                pprint(f"Release 未找到，请检查仓库名和版本号是否正确", Colors.RED)
+            elif e.code == 403:
+                pprint(
+                    f"API 限制 exceeded. 建议使用 GitHub Token 或稍后再试", Colors.RED
+                )
+            else:
+                pprint(f"API 请求失败: {e}", Colors.RED)
+            sys.exit(1)
+
+    def get_release_by_tag(self, tag: str) -> dict[str, Any]:
+        """
+        通过 tag 获取 release 信息
+
+        Args:
+            tag: Release 的 tag 名称
+        Returns:
+            返回 release 的 JSON 数据
+        """
+        pprint(f"获取 release 信息 (tag: {tag})")
+
+        url = f"{self.REPO_URL}/releases/tags/{tag}"
+        return self.get_json(url)
+
+    def get_latest_release(self) -> dict[str, Any]:
+        """
+        获取最新 release 信息
+
+        Returns:
+            返回最新 release 的 JSON 数据
+        """
+        pprint("获取最新 release 信息")
+
+        url = f"{self.REPO_URL}/releases/latest"
+        result = self.get_json(url)
+        tsg = result["tag_name"]
+
+        pprint(f"最新 release tag: {tsg}", Colors.GREEN)
+
+        return result
+
+    def list_whl_assets(self, tag: str | None = None) -> list[dict[str, Any]]:
+        """
+        从 release 数据中筛选出所有 whl 文件
+
+        Args:
+            tag: 可选的 release tag，如果不指定则获取最新 release
+        Returns:
+            包含 whl 文件信息的列表，每个元素包含 name, browser_download_url, size 等
+        """
+        pprint("获取 whl 文件列表")
+
+        if tag is None:
+            release_data = self.get_latest_release()
+        else:
+            release_data = self.get_release_by_tag(tag)
+
+        assets = release_data.get("assets", [])
+        whl_assets = [asset for asset in assets if asset["name"].endswith(".whl")]
+        return whl_assets
+
+    def auto_select_whl(self, tag: str | None = None) -> dict[str, Any] | None:
+        """
+        自动选择与当前系统兼容的 whl 文件
+
+        Args:
+            tag: 可选的 release tag，如果不指定则获取最新 release
+        Returns:
+            返回与当前系统兼容的 whl 文件信息，如果没有找到兼容的文件则返回 None
+        """
+        arch_mapping = {
+            "x86_64": ["x86_64", "amd64"],
+            "amd64": ["x86_64", "amd64"],
+            "aarch64": ["aarch64"],
+            "arm64": ["aarch64"],
+            "i386": ["i686"],
+            "i686": ["i686"],
+        }
+        os_keywords = {"windows": ["win"], "linux": ["manylinux"], "darwin": ["macosx"]}
+
+        os_name = platform.system().lower()
+        machine = platform.machine().lower()
+        py_version = f"cp{sys.version_info.major}{sys.version_info.minor}"  # 例如 cp310
+        current_archs = arch_mapping.get(machine, [machine])
+        target_os_keywords = os_keywords.get(os_name, [])
+
+        assets_list = self.list_whl_assets(tag)
+
+        for asset in assets_list:
+            whl_name = asset["name"].lower()
+            # 检查 Python 版本匹配
+            if py_version not in whl_name:
+                continue
+            # 检查系统匹配
+            if not any(os_kw in whl_name for os_kw in target_os_keywords):
+                continue
+            # 检查架构匹配
+            if not any(arch in whl_name for arch in current_archs):
+                continue
+            # 找到匹配项，返回下载链接
+            return asset
+        return None
+
+    def download_file(self, url: str, target: Path, show_progress: bool = True) -> bool:
+        """
+        下载文件并保存到指定路径
+
+        Args:
+            url: 文件的下载链接
+            target: 文件保存的目标路径
+            show_progress: 是否显示下载进度条
+        Returns:
+            下载成功返回 True，失败返回 False
+        """
+        pprint(f"下载文件: {url} -> {target}")
+
+        try:
+            req = urllib.request.Request(url, headers=self.HEADERS)
+
+            with urllib.request.urlopen(req, timeout=60) as response:
+                total_size = int(response.headers.get("Content-Length", 0))
+                downloaded = 0
+                chunk_size = 64 * 1024
+
+                target.parent.mkdir(parents=True, exist_ok=True)
+
+                with target.open("wb") as f:
+                    while True:
+                        chunk = response.read(chunk_size)
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        downloaded += len(chunk)
+
+                        if show_progress:
+                            if total_size > 0:
+                                percent = (downloaded / total_size) * 100
+                                bar = (
+                                    "=" * int(percent / 2)
+                                    + ">"
+                                    + "." * (50 - int(percent / 2))
+                                )
+                                pprint(
+                                    f"[{bar}] {percent:.1f}% ({downloaded}/{total_size}"
+                                    " bytes)",
+                                    Colors.BLUE,
+                                    restart=True,
+                                )
+                            else:
+                                pprint(
+                                    f"下载中... {downloaded} bytes / (总大小未知)",
+                                    Colors.BLUE,
+                                    restart=True,
+                                )
+            if show_progress:
+                print()
+            return True
+
+        except Exception as e:
+            if target.exists():
+                target.unlink()
+            pprint(f"\n下载失败 {url}: {e}", Colors.RED)
+        return False
+
+    def download_source_code(
+        self, tag: str | None = None, target_dir: Path = CWD / "tmp"
+    ) -> Path | None:
+        """
+        下载 release 的源代码 zip 包并解压到指定目录
+
+        Args:
+            tag: 可选的 release tag，如果不指定则下载最新 release
+            target_dir: 解压后的文件保存目录
+        Returns:
+            下载并解压成功返回解压后的目录路径，失败返回 None
+        """
+
+        pprint("下载 release 的源代码压缩包 (zip)")
+
+        if tag is None:
+            release_data = self.get_latest_release()
+        else:
+            release_data = self.get_release_by_tag(tag)
+
+        source_url = release_data.get("zipball_url")
+        if source_url is None:
+            pprint("未找到源代码压缩包的下载链接", Colors.RED)
+            return None
+
+        file_name = f"{self.repo}-{release_data['tag_name']}-source.zip"
+
+        tmp_file = CWD / "tmp" / file_name
+        target_dir.mkdir(parents=True, exist_ok=True)
+
+        pre_src_dirs = set(PYGAME_SRCDIR_LIST())
+        if tmp_file.exists() or self.download_file(source_url, tmp_file):
+            with zipfile.ZipFile(tmp_file, "r") as zip_ref:
+                zip_ref.extractall(target_dir)
+            src_dirs = set(PYGAME_SRCDIR_LIST())
+            return list(src_dirs - pre_src_dirs)[0] if src_dirs - pre_src_dirs else None
+        return None
+
+    def auto_download_whl(
+        self, tag: str | None = None, target_dir: Path = CWD / "tmp"
+    ) -> Path | None:
+        """
+        自动下载 release 中系统对应的 whl 文件到指定目录
+
+        Args:
+            tag: 可选的 release tag，如果不指定则下载最新 release
+            target_dir: 下载的 whl 文件保存目录
+        Returns:
+            下载成功返回下载的 whl 文件路径，失败返回 None
+        """
+        pprint("自动选择匹配当前系统的 whl 文件并下载")
+
+        whl = self.auto_select_whl(tag)
+        if whl is None:
+            pprint("未找到与当前系统兼容的 whl 文件", Colors.RED)
+            return None
+
+        pprint(f"找到匹配的 whl 文件: {whl['name']}", Colors.GREEN)
+
+        url = whl["browser_download_url"]
+
+        target_file: Path = target_dir / whl["name"]
+
+        if target_file.exists():
+            return target_file
+        else:
+            return target_file if self.download_file(url, target_file) else None
 
 
 class Dev:
@@ -589,43 +828,36 @@ class Dev:
         """
         准备 pygame-ce (fantas 分支)，确保后续命令可以使用正确版本的 pygame
         """
-        pprint("准备 pygame-ce for fantas 中")
+        from tools.get_version import get_version
 
-        pprint("- 检查 pygame-ce (fantas 分支) 安装状态")
-        status = PygameStatus.INSTALLED_CORRECTLY
+        required_version = get_version()
+
+        pprint(f"准备 pygame-ce for fantas ({required_version}) 中")
+
+        pprint("检查安装状态")
+        status = PygameStatus.NOT_INSTALLED
         try:
             import fantas  # pylint: disable=import-outside-toplevel
 
-            pygame = fantas.pygame  # pylint: disable=unused-variable
-            pprint("  # pygame 已安装", Colors.GREEN)
+            version = fantas.pygame.__version__  # pylint: disable=unused-variable
+            if version == required_version:
+                pprint("已安装", Colors.GREEN)
+                status = PygameStatus.INSTALLED_CORRECTLY
+            else:
+                pprint(
+                    f"版本不匹配 (安装的版本: {version}, 需要的版本: "
+                    f"{required_version})",
+                    Colors.RED,
+                )
+                status = PygameStatus.INSTALLED_INCORRECTLY
         except ImportError:
-            pprint("  # pygame 未安装", Colors.RED)
-            status = PygameStatus.NOT_INSTALLED
+            pprint("pygame 未安装", Colors.RED)
         except RuntimeError:
-            pprint("  # pygame 安装不正确", Colors.RED)
+            pprint("版本不匹配 (可能安装了 pygame 或 pygame-ce)", Colors.RED)
             status = PygameStatus.INSTALLED_INCORRECTLY
 
-        if status == PygameStatus.INSTALLED_CORRECTLY:
-            pprint("- 检查 pygame-ce (fantas 分支) 版本")
-            commit_hash = get_pygame_commit_hash(PYGAME_COMMIT_HASH_FILE)
-            lock_hash = get_pygame_commit_hash(PYGAME_LOCK_HASH_FILE)
-            if commit_hash is None:
-                pprint("  # 无法确定版本", Colors.RED)
-                install_pygame_ce_for_fantas(self.venv_py, lock_hash)
-            elif lock_hash is None:
-                pprint(f"  # 锁定版本: {commit_hash[:7]}", Colors.GREEN)
-                set_pygame_commit_hash(PYGAME_LOCK_HASH_FILE, commit_hash)
-            elif commit_hash != lock_hash:
-                pprint(
-                    f"  # 需要切换版本 {commit_hash[:7]} -> {lock_hash[:7]}", Colors.RED
-                )
-                install_pygame_ce_for_fantas(self.venv_py, lock_hash)
-            else:
-                pprint(f"  # 版本正确 {commit_hash[:7]}", Colors.GREEN)
-        else:
-            lock_hash = get_pygame_commit_hash(PYGAME_LOCK_HASH_FILE)
-            commit_hash = install_pygame_ce_for_fantas(self.venv_py, lock_hash)
-            set_pygame_commit_hash(PYGAME_LOCK_HASH_FILE, commit_hash)
+        if status != PygameStatus.INSTALLED_CORRECTLY:
+            install_pygame_ce_for_fantas(self.venv_py)
 
         pprint("pygame-ce for fantas 已就绪", Colors.GREEN)
 
@@ -837,10 +1069,15 @@ class Dev:
 
         pprint("更新 pygame-ce for fantas 中")
 
-        delete_file_or_dir(PYGAME_LOCK_HASH_FILE)
-        delete_file_or_dir(PYGAME_COMMIT_HASH_FILE)
-
         self.prep_pygame()
+
+        try:
+            cmd_run(
+                [self.venv_py, "-m", "pip", "freeze", ">", CWD / "requirements.txt"]
+            )
+        except subprocess.CalledProcessError:
+            pprint("生成 requirements.txt 失败", Colors.RED)
+            sys.exit(1)
 
         pprint("项目依赖已更新", Colors.GREEN)
 
