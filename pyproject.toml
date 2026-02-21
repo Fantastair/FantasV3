@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "fantas"
-version = "3.0.0"
+version = "3.0.0.dev1"
 description = "A 2D graphics program framework based on pygame-ce"
 authors = ["Fantastair <Fantastair@qq.com>"]
 readme = "README.rst"
@@ -16,7 +16,32 @@ include = [
 ]
 license = "MIT"
 repository = "https://github.com/Fantastair/FantasV3"
-classifiers = []
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Assembly",
+    "Programming Language :: Cython",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Games/Entertainment",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Sound/Audio :: MIDI",
+    "Topic :: Multimedia :: Sound/Audio :: Players",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Multimedia :: Graphics :: Capture :: Digital Camera",
+    "Topic :: Multimedia :: Graphics :: Capture :: Screen Capture",
+    "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+    "Topic :: Multimedia :: Graphics :: Viewers",
+    "Topic :: Software Development :: Libraries :: fantas",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Linux",
+    "Operating System :: MacOS",
+    "Typing :: Typed"
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -76,3 +101,6 @@ fail-under = 9.5
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.pygame.metadata]
+version = "2.5.7.dev1"
