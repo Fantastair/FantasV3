@@ -25,8 +25,12 @@ CWD = Path(__file__).parent
 
 PYGAME_CE_FOR_FANTAS_OWNER = "Fantastair"  # pygame-ce for fantas 仓库的所有者
 PYGAME_CE_FOR_FANTAS_REPO = "pygame-ce"  # pygame-ce for fantas 仓库的名称
-PYGAME_SRCDIR_LIST: Callable[[], list[Path]] = lambda: list(  # pylint: disable=invalid-name
-    (CWD / "tmp").glob(f"{PYGAME_CE_FOR_FANTAS_OWNER}-{PYGAME_CE_FOR_FANTAS_REPO}-*")
+PYGAME_SRCDIR_LIST: Callable[[], list[Path]] = (  # pylint: disable=invalid-name
+    lambda: list(
+        (CWD / "tmp").glob(
+            f"{PYGAME_CE_FOR_FANTAS_OWNER}-{PYGAME_CE_FOR_FANTAS_REPO}-*"
+        )
+    )
 )  # 下载后的源代码目录列表，运行时获取
 
 FANTAS_SOURCE_DIR = CWD / "fantas"  # fantas 项目的源代码目录
@@ -403,7 +407,8 @@ class GithubReleaseDownloader:
 
         self.owner = owner
         self.repo = repo
-        self.REPO_URL = f"https://api.github.com/repos/{owner}/{repo}"  # pylint: disable=invalid-name
+        self.REPO_URL = "https://api.github.com/repos/"\
+            f"{owner}/{repo}"  # pylint: disable=invalid-name
 
         pprint(f"初始化 GitHub Release 下载器 (仓库: {owner}/{repo})", Colors.GREEN)
 
