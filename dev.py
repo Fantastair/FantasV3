@@ -2,6 +2,7 @@
 这个脚本旨在集成所有可能使用的项目开发指令
 
 本脚本很大程度上学习于 pygame-ce 的 dev.py。感谢 pygame-ce 团队的辛勤工作！
+我做了很多现代化修改，使脚本可维护性更强。
 """
 
 import os
@@ -14,16 +15,22 @@ import platform
 import subprocess
 import urllib.request
 from enum import Enum
-from typing import Any, Callable
 from pathlib import Path
+from typing import Any, Callable
 from time import perf_counter_ns as get_time_ns
+
+from tools.get_version import get_version
 
 CWD = Path(__file__).parent
 
 PYGAME_CE_FOR_FANTAS_OWNER = "Fantastair"  # pygame-ce for fantas 仓库的所有者
 PYGAME_CE_FOR_FANTAS_REPO = "pygame-ce"  # pygame-ce for fantas 仓库的名称
-PYGAME_SRCDIR_LIST: Callable[[], list[Path]] = lambda: list(
-    (CWD / "tmp").glob(f"{PYGAME_CE_FOR_FANTAS_OWNER}-{PYGAME_CE_FOR_FANTAS_REPO}-*")
+PYGAME_SRCDIR_LIST: Callable[[], list[Path]] = (  # pylint: disable=invalid-name
+    lambda: list(
+        (CWD / "tmp").glob(
+            f"{PYGAME_CE_FOR_FANTAS_OWNER}-{PYGAME_CE_FOR_FANTAS_REPO}-*"
+        )
+    )
 )  # 下载后的源代码目录列表，运行时获取
 
 FANTAS_SOURCE_DIR = CWD / "fantas"  # fantas 项目的源代码目录
@@ -400,7 +407,9 @@ class GithubReleaseDownloader:
 
         self.owner = owner
         self.repo = repo
-        self.REPO_URL = f"https://api.github.com/repos/{owner}/{repo}"
+        self.REPO_URL = (  # pylint: disable=invalid-name
+            f"https://api.github.com/repos/{owner}/{repo}"
+        )
 
         pprint(f"初始化 GitHub Release 下载器 (仓库: {owner}/{repo})", Colors.GREEN)
 
@@ -420,13 +429,15 @@ class GithubReleaseDownloader:
         req = urllib.request.Request(url, headers=self.HEADERS)
         try:
             with urllib.request.urlopen(req) as response:
-                return json.loads(response.read().decode("utf-8"))  # type: ignore[no-any-return]
+                return json.loads(  # type: ignore[no-any-return]
+                    response.read().decode("utf-8")
+                )
         except urllib.error.HTTPError as e:
             if e.code == 404:
-                pprint(f"Release 未找到，请检查仓库名和版本号是否正确", Colors.RED)
+                pprint("Release 未找到，请检查仓库名和版本号是否正确", Colors.RED)
             elif e.code == 403:
                 pprint(
-                    f"API 限制 exceeded. 建议使用 GitHub Token 或稍后再试", Colors.RED
+                    "API 限制 exceeded. 建议使用 GitHub Token 或稍后再试", Colors.RED
                 )
             else:
                 pprint(f"API 请求失败: {e}", Colors.RED)
@@ -504,7 +515,7 @@ class GithubReleaseDownloader:
 
         os_name = platform.system().lower()
         machine = platform.machine().lower()
-        py_version = f"cp{sys.version_info.major}{sys.version_info.minor}"  # 例如 cp310
+        py_version = f"cp{sys.version_info.major}{sys.version_info.minor}"
         current_archs = arch_mapping.get(machine, [machine])
         target_os_keywords = os_keywords.get(os_name, [])
 
@@ -516,10 +527,12 @@ class GithubReleaseDownloader:
             if py_version not in whl_name:
                 continue
             # 检查系统匹配
-            if not any(os_kw in whl_name for os_kw in target_os_keywords):
+            if all(os_kw not in whl_name for os_kw in target_os_keywords):
                 continue
             # 检查架构匹配
-            if not any(arch in whl_name for arch in current_archs):
+            if "macosx" not in whl_name and all(
+                arch not in whl_name for arch in current_archs
+            ):
                 continue
             # 找到匹配项，返回下载链接
             return asset
@@ -559,14 +572,14 @@ class GithubReleaseDownloader:
                         if show_progress:
                             if total_size > 0:
                                 percent = (downloaded / total_size) * 100
-                                bar = (
+                                process_bar = (
                                     "=" * int(percent / 2)
                                     + ">"
                                     + "." * (50 - int(percent / 2))
                                 )
                                 pprint(
-                                    f"[{bar}] {percent:.1f}% ({downloaded}/{total_size}"
-                                    " bytes)",
+                                    f"[{process_bar}] {percent:.1f}% ({downloaded}/"
+                                    f"{total_size} bytes)",
                                     Colors.BLUE,
                                     restart=True,
                                 )
@@ -580,7 +593,7 @@ class GithubReleaseDownloader:
                 print()
             return True
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             if target.exists():
                 target.unlink()
             pprint(f"\n下载失败 {url}: {e}", Colors.RED)
@@ -651,8 +664,7 @@ class GithubReleaseDownloader:
 
         if target_file.exists():
             return target_file
-        else:
-            return target_file if self.download_file(url, target_file) else None
+        return target_file if self.download_file(url, target_file) else None
 
 
 class Dev:
@@ -828,8 +840,6 @@ class Dev:
         """
         准备 pygame-ce (fantas 分支)，确保后续命令可以使用正确版本的 pygame
         """
-        from tools.get_version import get_version
-
         required_version = get_version()
 
         pprint(f"准备 pygame-ce for fantas ({required_version}) 中")
@@ -851,7 +861,7 @@ class Dev:
                 )
                 status = PygameStatus.INSTALLED_INCORRECTLY
         except ImportError:
-            pprint("pygame 未安装", Colors.RED)
+            pprint("pygame-ce for fantas 未安装", Colors.RED)
         except RuntimeError:
             pprint("版本不匹配 (可能安装了 pygame 或 pygame-ce)", Colors.RED)
             status = PygameStatus.INSTALLED_INCORRECTLY
