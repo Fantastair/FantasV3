@@ -2,6 +2,7 @@
 这个脚本旨在集成所有可能使用的项目开发指令
 
 本脚本很大程度上学习于 pygame-ce 的 dev.py。感谢 pygame-ce 团队的辛勤工作！
+我做了很多现代化修改，使脚本可维护性更强。
 """
 
 import os
@@ -504,7 +505,7 @@ class GithubReleaseDownloader:
 
         os_name = platform.system().lower()
         machine = platform.machine().lower()
-        py_version = f"cp{sys.version_info.major}{sys.version_info.minor}"  # 例如 cp310
+        py_version = f"cp{sys.version_info.major}{sys.version_info.minor}"
         current_archs = arch_mapping.get(machine, [machine])
         target_os_keywords = os_keywords.get(os_name, [])
 
@@ -519,7 +520,7 @@ class GithubReleaseDownloader:
             if not any(os_kw in whl_name for os_kw in target_os_keywords):
                 continue
             # 检查架构匹配
-            if not any(arch in whl_name for arch in current_archs):
+            if "macosx" in whl_name or not any(arch in whl_name for arch in current_archs):
                 continue
             # 找到匹配项，返回下载链接
             return asset
