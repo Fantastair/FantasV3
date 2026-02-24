@@ -407,8 +407,9 @@ class GithubReleaseDownloader:
 
         self.owner = owner
         self.repo = repo
-        self.REPO_URL = "https://api.github.com/repos/"\
-            f"{owner}/{repo}"  # pylint: disable=invalid-name
+        self.REPO_URL = (  # pylint: disable=invalid-name
+            f"https://api.github.com/repos/{owner}/{repo}"
+        )
 
         pprint(f"初始化 GitHub Release 下载器 (仓库: {owner}/{repo})", Colors.GREEN)
 
