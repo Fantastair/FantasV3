@@ -421,9 +421,9 @@ class GithubReleaseDownloader:
         req = urllib.request.Request(url, headers=self.HEADERS)
         try:
             with urllib.request.urlopen(req) as response:
-                return json.loads(
+                return json.loads(  # type: ignore[no-any-return]
                     response.read().decode("utf-8")
-                )  # type: ignore[no-any-return]
+                )
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 pprint(f"Release 未找到，请检查仓库名和版本号是否正确", Colors.RED)

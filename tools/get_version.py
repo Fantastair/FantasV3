@@ -12,7 +12,7 @@ config_file = base_dir / "pyproject.toml"
 config_text = config_file.read_text()
 
 conf = tomllib.loads(config_text)
-version = conf["tool"]["pygame"]["metadata"]["version"]
+version: str = conf["tool"]["pygame"]["metadata"]["version"]
 
 _splits = version.split(".")
 
@@ -32,7 +32,7 @@ version_macros = tuple(
     )
 )
 
-def get_version(macros=False) -> str | list[str]:
+def get_version(macros: bool = False) -> str | list[str]:
     """
     获取项目版本字符串，或者如果传入了 macros=True，则返回宏定义列表。
     """
