@@ -517,10 +517,10 @@ class GithubReleaseDownloader:
             if py_version not in whl_name:
                 continue
             # 检查系统匹配
-            if not any(os_kw in whl_name for os_kw in target_os_keywords):
+            if all(os_kw not in whl_name for os_kw in target_os_keywords):
                 continue
             # 检查架构匹配
-            if "macosx" in whl_name or not any(arch in whl_name for arch in current_archs):
+            if "macosx" not in whl_name and all(arch not in whl_name for arch in current_archs):
                 continue
             # 找到匹配项，返回下载链接
             return asset
@@ -852,7 +852,7 @@ class Dev:
                 )
                 status = PygameStatus.INSTALLED_INCORRECTLY
         except ImportError:
-            pprint("pygame 未安装", Colors.RED)
+            pprint("pygame-ce for fantas 未安装", Colors.RED)
         except RuntimeError:
             pprint("版本不匹配 (可能安装了 pygame 或 pygame-ce)", Colors.RED)
             status = PygameStatus.INSTALLED_INCORRECTLY
