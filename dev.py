@@ -421,7 +421,9 @@ class GithubReleaseDownloader:
         req = urllib.request.Request(url, headers=self.HEADERS)
         try:
             with urllib.request.urlopen(req) as response:
-                return json.loads(response.read().decode("utf-8"))  # type: ignore[no-any-return]
+                return json.loads(
+                    response.read().decode("utf-8")
+                )  # type: ignore[no-any-return]
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 pprint(f"Release 未找到，请检查仓库名和版本号是否正确", Colors.RED)
@@ -520,7 +522,9 @@ class GithubReleaseDownloader:
             if all(os_kw not in whl_name for os_kw in target_os_keywords):
                 continue
             # 检查架构匹配
-            if "macosx" not in whl_name and all(arch not in whl_name for arch in current_archs):
+            if "macosx" not in whl_name and all(
+                arch not in whl_name for arch in current_archs
+            ):
                 continue
             # 找到匹配项，返回下载链接
             return asset
