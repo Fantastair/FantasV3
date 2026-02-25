@@ -179,21 +179,6 @@ def prep_deps(poetry_path: Path) -> None:
     pprint("开发环境已就绪", prompt="dev", col=Colors.SUCCESS)
 
 
-def prep_all() -> tuple[Path, Path]:
-    """
-    执行所有准备工作
-
-    Returns:
-        一个元组，包含 Poetry 可执行文件的路径和虚拟环境中 Python 可执行文件的路径
-    """
-    poetry_path = prep_poetry()
-    venv_py = prep_venv(poetry_path, sys.executable)
-    prep_pygame(venv_py)
-    prep_deps(poetry_path)
-
-    return poetry_path, venv_py
-
-
 def show_time_spent(start_time: int, end_time: int, command: str) -> None:
     units = ("ns", "µs", "ms", "s")
     unit_index = 0
@@ -412,6 +397,19 @@ def command(func):
         return result
 
     return command_func
+
+
+@command
+def prep_all() -> tuple[Path, Path]:
+    """
+    执行所有准备工作
+    """
+    poetry_path = prep_poetry()
+    venv_py = prep_venv(poetry_path, sys.executable)
+    prep_pygame(venv_py)
+    prep_deps(poetry_path)
+
+    return poetry_path, venv_py
 
 
 @command
