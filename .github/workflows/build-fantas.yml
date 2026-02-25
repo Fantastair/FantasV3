@@ -18,12 +18,12 @@ concurrency:
 
 jobs:
   build-wheels:
-    name: Build ${{ matrix.platform }}-${{ matrix.arch }} (Python ${{ matrix.python }})
-    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.config.platform }}-${{ matrix.config.arch }} (Python ${{ matrix.python }})
+    runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
+        config:
           # Linux
           - { os: ubuntu-latest, platform: linux, arch: x86_64, cibw_arch: x86_64 }
           - { os: ubuntu-latest, platform: linux, arch: i686, cibw_arch: i686 }
@@ -41,7 +41,7 @@ jobs:
 
     # Linux ARM64 架构需要 QEMU 来模拟运行
     - name: Set up QEMU (for Linux ARM64)
-      if: matrix.arch == 'aarch64'
+      if: matrix.config.arch == 'aarch64'
       uses: docker/setup-qemu-action@v3.7.0
       with:
         platforms: arm64
@@ -57,12 +57,12 @@ jobs:
       id: cache-python-venv
       with:
         path: .venv
-        key: ${{ matrix.os }}-${{ matrix.arch }}-py${{ matrix.python }}-venv-${{ hashFiles('requirements.txt') }}
+        key: ${{ matrix.config.os }}-${{ matrix.config.arch }}-py${{ matrix.python }}-venv-${{ hashFiles('requirements.txt') }}
         restore-keys: |
-          ${{ matrix.os }}-${{ matrix.arch }}-py${{ matrix.python }}-venv
+          ${{ matrix.config.os }}-${{ matrix.config.arch }}-py${{ matrix.python }}-venv
 
     - name: Prepare Venv Python (Unix)
-      if: steps.cache-python-venv.outputs.cache-hit != 'true' && matrix.platform != 'Windows'
+      if: steps.cache-python-venv.outputs.cache-hit != 'true' && matrix.config.platform != 'Windows'
       run: |
         python -m venv .venv
         source .venv/bin/activate
@@ -70,7 +70,7 @@ jobs:
         pip install -r requirements.txt
     
     - name: Prepare Venv Python (Windows)
-      if: steps.cache-python-venv.outputs.cache-hit != 'true' && matrix.platform == 'Windows'
+      if: steps.cache-python-venv.outputs.cache-hit != 'true' && matrix.config.platform == 'Windows'
       run: |
         python -m venv .venv
         .venv\Scripts\activate
@@ -78,14 +78,14 @@ jobs:
         pip install -r requirements.txt
 
     - name: Build wheel (Unix)
-      if: matrix.platform != 'Windows'
+      if: matrix.config.platform != 'Windows'
       run: |
         source .venv/bin/activate
         export AUDIODEV=null
         python dev.py build
     
     - name: Build wheel (Windows)
-      if: matrix.platform == 'Windows'
+      if: matrix.config.platform == 'Windows'
       run: |
         .venv\Scripts\activate
         set AUDIODEV=null
@@ -97,6 +97,6 @@ jobs:
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v6.0.0
       with:
-        name: fantas-wheel-${{ matrix.platform }}-${{ matrix.arch }}-py${{ matrix.python }}
+        name: fantas-wheel-${{ matrix.config.platform }}-${{ matrix.config.arch }}-py${{ matrix.python }}
         path: ./dist/*.whl
         compression-level: 0
