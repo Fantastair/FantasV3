@@ -61,11 +61,19 @@ jobs:
         restore-keys: |
           ${{ matrix.os }}-${{ matrix.arch }}-py${{ matrix.python }}-venv
 
-    - name: Prepare Venv Python
-      if: steps.cache-python-venv.outputs.cache-hit != 'true'
+    - name: Prepare Venv Python (Unix)
+      if: steps.cache-python-venv.outputs.cache-hit != 'true' && matrix.platform != 'Windows'
       run: |
         python -m venv .venv
         source .venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Prepare Venv Python (Windows)
+      if: steps.cache-python-venv.outputs.cache-hit != 'true' && matrix.platform == 'Windows'
+      run: |
+        python -m venv .venv
+        .venv\Scripts\activate
         pip install --upgrade pip
         pip install -r requirements.txt
 
