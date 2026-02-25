@@ -32,6 +32,7 @@ version_macros = tuple(
     )
 )
 
+
 def get_version(macros: bool = False) -> str | list[str]:
     """
     获取项目版本字符串，或者如果传入了 macros=True，则返回宏定义列表。
@@ -39,6 +40,7 @@ def get_version(macros: bool = False) -> str | list[str]:
     if macros:
         return [f"-D{key}={value}" for key, value in version_macros]
     return version
+
 
 if __name__ == "__main__":
     print(

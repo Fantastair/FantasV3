@@ -47,6 +47,7 @@ classifiers = [
 python = "^3.12"
 
 [tool.poetry.group.dev.dependencies]
+typer = "^0.24.1"
 black = "^24.8.0"
 mypy = "^1.18.1"
 pylint = "^4.0.4"
@@ -69,7 +70,6 @@ line-length = 88
 strict = true
 files = [
     "fantas",
-    "dev.py",
 ]
 exclude = [
     "fantas/_vendor",
