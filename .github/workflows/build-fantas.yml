@@ -90,6 +90,8 @@ jobs:
         .venv\Scripts\activate
         set AUDIODEV=null
         python dev.py build
+      env:
+        PYTHONIOENCODING: utf-8
 
     # 上传构建好的 wheel 文件作为构建产物，供后续工作流使用
     - name: Upload a Build Artifact
