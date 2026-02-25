@@ -46,17 +46,6 @@ jobs:
         pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Install system dependencies
-      uses: awalsh128/cache-apt-pkgs-action@v1.6.0
-      with:
-        packages: |
-          libsdl2-dev
-          libsdl2-image-dev
-          libsdl2-mixer-dev
-          libsdl2-ttf-dev
-          libfreetype6-dev
-          libportmidi-dev
-
     # 使用 dev.py 脚本来构建文档
     - name: Build documentation
       run: |
