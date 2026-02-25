@@ -22,6 +22,8 @@ installs, or use of pipx as alternatives to executing arbitrary, unversioned cod
 script to alternatives, consider maintaining a local copy as part of your infrastructure.
 
 For full documentation, visit https://python-poetry.org/docs/#installation.
+
+这个脚本改编自 poetry 官方提供的安装脚本。
 """
 import sys
 
@@ -638,7 +640,7 @@ class Installer:
         )
 
     @contextmanager
-    def make_env(self, version: str) -> VirtualEnvironment:
+    def make_env(self, version: str):
         env_path = self.data_dir.joinpath("venv")
         env_path_saved = env_path.with_suffix(".save")
 
@@ -957,3 +959,82 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
+from .pprint import pprint, Colors
+from .cmd import cmd_run
+
+__all__ = ["get_poetry_executable", "install_poetry"]
+
+
+def get_poetry_executable() -> Path | None:
+    """
+    查找 Poetry 可执行文件的路径，首先尝试通过命令行查找，如果失败则遍历常见安装路径
+    """
+    pprint("查找 Poetry 可执行文件", prompt="install_poetry")
+    try:
+        # 命令行查找
+        subprocess.run(
+            ["poetry", "--version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+        )
+        if sys.platform == "win32":
+            poetry_path = cmd_run(["where", "poetry"], capture_output=True)
+        else:
+            poetry_path = cmd_run(["which", "poetry"], capture_output=True)
+        if poetry_path and Path(poetry_path).exists():
+            return Path(poetry_path)
+        else:
+            raise FileNotFoundError("Poetry executable not found in PATH")
+
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # 命令行查找失败，遍历常见路径
+        poetry_paths = [
+            Path.home() / ".local/bin/poetry",
+            Path.home() / ".local/share/pypoetry/venv/bin/poetry",
+            Path.home() / ".local/share/pypoetry/venv/Scripts/poetry",
+            Path(os.environ.get("APPDATA", Path.home())) / "Python/Scripts/poetry.exe",
+            Path("/usr/local/bin/poetry"),
+            Path("/usr/bin/poetry"),
+        ]
+
+        for path in poetry_paths:
+            if path.exists() and os.access(path, os.X_OK):
+                pprint(
+                    f"找到 Poetry 可执行文件：{path}",
+                    prompt="install_poetry",
+                    col=Colors.SUCCESS,
+                )
+                return path
+    pprint("未找到 Poetry 可执行文件", prompt="install_poetry", col=Colors.ERROR)
+    return None
+
+
+def install_poetry() -> Path:
+    """
+    安装 Poetry，并返回 Poetry 可执行文件的路径
+    """
+    pprint("安装 Poetry 中", prompt="install_poetry")
+
+    install_poetry_script_path = Path(__file__)
+
+    error = False
+    try:
+        cmd_run([sys.executable, install_poetry_script_path, "-y"])
+    except subprocess.CalledProcessError:
+        error = True
+
+    path = get_poetry_executable()
+
+    if error or path is None:
+        pprint(
+            "Poetry 安装失败，请手动安装 Poetry 后重试",
+            prompt="install_poetry",
+            col=Colors.ERROR,
+        )
+        sys.exit(1)
+    pprint("Poetry 安装成功", prompt="install_poetry", col=Colors.SUCCESS)
+
+    return path
