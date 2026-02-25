@@ -104,3 +104,30 @@ pythonpath = ["."]
 
 [tool.pygame.metadata]
 version = "2.5.7.dev1"
+
+[tool.cibuildwheel]
+build-frontend = "build"
+build = "cp3{12,13,14}-*"
+
+before-build = "python dev.py prep-all"
+test-command = "python dev.py test"
+
+[tool.cibuildwheel.macos]
+repair-wheel-command = [
+    "wheel tags --platform-tag {delocate_arch} --remove {wheel}",
+    "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} {wheel}"
+]
+
+[tool.cibuildwheel.linux]
+repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
+
+[tool.cibuildwheel.config-settings]
+setup-args = [
+    "-Derror_on_warns=true",
+    "-Dvsenv=true",
+    "-Derror_docs_missing=true",
+]
+
+[[tool.cibuildwheel.overrides]]
+select = "{*-manylinux_i686,pp*-*{arm64,aarch64},pp311-manylinux_x86_64,cp314-manylinux_*}"
+test-requires = []
