@@ -1,0 +1,55 @@
+# 这个工作流会在每次推送到 release/** 分支时触发
+# 会编译好各个平台的 whl 文件，并自动创建一个 GitHub Release 草稿
+# 本脚本学习于 pygame-ce 的 release 工作流，感谢 pygame-ce 团队的辛勤付出！
+
+name: Draft a Github Release
+
+on:
+  push:
+    branches: 'release/**'
+
+jobs:
+  build-wheels:
+    uses: ./.github/workflows/build-fantas.yml
+  
+  check-sdist:
+    uses: ./.github/workflows/dev-check.yml
+
+  draft-release:
+    needs: [build-wheels, check-sdist]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+      contents: write
+    
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v7.0.0
+        with:
+          path: ./dist
+          pattern: fantas-*
+          merge-multiple: true
+
+      # 获得版本号，去掉 'release/' 前缀，存储在 steps.ver.outputs.VER 中
+      - name: Get version
+        id: ver
+        run: echo "VER=${GITHUB_REF_NAME#'release/'}" >> $GITHUB_OUTPUT
+
+      - name: Generate release attestation
+        uses: actions/attest-build-provenance@v3.2.0
+        with:
+          subject-path: "dist/*"
+      
+      - name: Draft a release
+        uses: softprops/action-gh-release@v2.5.0
+        with:
+          draft: true
+          prerelease: ${{ contains(steps.ver.outputs.VER, 'dev') }}
+          files: dist/*
+          name: '${{ steps.ver.outputs.VER }} - {TODO put a title here} [DRAFTED BY CI]'
+          tag_name: ${{ steps.ver.outputs.VER }}
+          target_commitish: ${{ github.ref_name }}
+          generate_release_notes: true
