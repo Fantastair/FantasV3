@@ -44,7 +44,7 @@ fantas V3
 |Docs| |License| |Python| |pygame| |Code style: black|
 
 .. |Docs| image:: https://img.shields.io/badge/docs-online-green
-   :target: #
+   :target: https://fantas.fantastair.cn/docs/
 .. |License| image:: https://img.shields.io/badge/License-MIT-lightgray
    :target: `MIT License`_
 .. |Python| image:: https://img.shields.io/badge/python-3-blue?logo=python
@@ -69,19 +69,8 @@ fantas 可以通过 :code:`pip` 轻松安装：
 
 .. code-block:: bash
 
-    pip install fantas  # 最简单
+    pip install fantas
 
-    pip3 install fantas  # 兼容性更好
-
-    python -m pip install fantas  # 兼容性最好
-
-.. admonition:: 暂时未发布到 PyPI
-    :class: warning
-
-    目前 fantas 还没有发布到 PyPI 上，你可能需要从 GitHub 仓库下载并自行编译安装。
-
-    别担心，fantas 提供了开发用的一键安装脚本 :code:`python dev.py install`，
-    希望你不会碰到未知的错误。
 
 小试牛刀
 ~~~~~~~~
