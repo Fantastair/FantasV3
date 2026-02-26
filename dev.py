@@ -638,8 +638,8 @@ def _release(py: Path, tag: str | None, yes: bool = False) -> None:
         sys.exit(1)
 
     try:
-        cmd_run(["git", "tag", f"v{tag}"])
-        cmd_run(["git", "push", "origin", f"v{tag}"])
+        cmd_run(["git", "tag", tag])
+        cmd_run(["git", "push", "origin", tag])
     except subprocess.CalledProcessError:
         pprint("创建或推送 tag 失败，请检查", prompt="dev", col=Colors.ERROR)
         sys.exit(1)
