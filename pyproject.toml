@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "fantas"
-version = "3.0.0"
+version = "3.0.1.dev1"
 description = "A 2D graphics program framework based on pygame-ce"
 authors = ["Fantastair <Fantastair@qq.com>"]
 readme = "README.rst"
