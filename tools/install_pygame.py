@@ -16,6 +16,7 @@ __all__ = [
     "install_pygame_ce_for_fantas",
     "PygameStatus",
     "delete_pygame_ce_for_fantas",
+    "download_all_pygame_ce_for_fantas",
 ]
 
 CWD = Path(__file__).parent.parent
@@ -70,8 +71,7 @@ def install_pygame_ce_for_fantas(py: Path, tag: str | None = None) -> None:
     """
     pprint("安装 pygame-ce for fantas 中", prompt="dev")
 
-    for path in FANTAS_SOURCE_DIR.glob("pygame*/"):
-        delete_file_or_dir(path)
+    delete_pygame_ce_for_fantas()
 
     downloader = GithubReleaseDownloader(
         PYGAME_CE_FOR_FANTAS_OWNER, PYGAME_CE_FOR_FANTAS_REPO
@@ -93,7 +93,7 @@ def install_pygame_ce_for_fantas(py: Path, tag: str | None = None) -> None:
             )
             return
         except subprocess.CalledProcessError:
-            pass
+            delete_file_or_dir(downloaded_whl)
 
     pprint(
         "通过 whl 文件安装 pygame-ce for fantas 失败，尝试下载并安装源代码",
@@ -117,6 +117,7 @@ def install_pygame_ce_for_fantas(py: Path, tag: str | None = None) -> None:
             )
             return
         except subprocess.CalledProcessError:
+            delete_file_or_dir(downloaded_source)
             pass
 
     pprint(
@@ -160,3 +161,12 @@ def delete_pygame_ce_for_fantas() -> None:
     """
     for path in PYGAME_CE_FOR_FANTAS_INSTALL_DIR.glob("pygame*/"):
         delete_file_or_dir(path)
+
+def download_all_pygame_ce_for_fantas(tag: str | None, target_dir: Path) -> list[Path]:
+    """
+    下载 pygame-ce for fantas 的所有版本的 whl 文件
+    """
+    downloader = GithubReleaseDownloader(
+        PYGAME_CE_FOR_FANTAS_OWNER, PYGAME_CE_FOR_FANTAS_REPO
+    )
+    return downloader.download_all_whl(tag, target_dir)

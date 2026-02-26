@@ -1,7 +1,7 @@
 """
 下载 GitHub Release 的封装
 """
-
+import os
 import sys
 import json
 import zipfile
@@ -203,6 +203,9 @@ class GithubReleaseDownloader:
         Returns:
             下载成功返回 True，失败返回 False
         """
+        if "CI" in os.environ:
+            show_progress = False
+        
         pprint(f"下载文件: {url} -> {target}", prompt="GithubReleaseDownloader")
 
         try:
@@ -313,7 +316,7 @@ class GithubReleaseDownloader:
         Returns:
             下载成功返回下载的 whl 文件路径，失败返回 None
         """
-        pprint("自动选择匹配当前系统的 whl 文件并下载")
+        pprint("自动选择匹配当前系统的 whl 文件并下载", prompt="GithubReleaseDownloader")
 
         whl = self.auto_select_whl(tag)
         if whl is None:
@@ -333,7 +336,39 @@ class GithubReleaseDownloader:
         url = whl["browser_download_url"]
 
         target_file: Path = target_dir / whl["name"]
+        pprint(str(target_file), prompt="GithubReleaseDownloader", col=Colors.INFO)
 
         if target_file.exists():
             return target_file
         return target_file if self.download_file(url, target_file) else None
+    
+    def download_all_whl(self, tag: str | None = None, target_dir: Path = CWD / "tmp") -> list[Path]:
+        """
+        下载 release 中的所有 whl 文件到指定目录
+
+        Args:
+            tag: 可选的 release tag，如果不指定则下载最新 release
+            target_dir: 下载的 whl 文件保存目录
+        Returns:
+            下载成功返回下载的 whl 文件路径列表，失败返回空列表
+        """
+        pprint("下载 release 中的所有 whl 文件", prompt="GithubReleaseDownloader")
+
+        whl_assets = self.list_whl_assets(tag)
+        downloaded_files = []
+
+        for whl in whl_assets:
+            url = whl["browser_download_url"]
+            target_file: Path = target_dir / whl["name"]
+
+            if target_file.exists() or self.download_file(url, target_file):
+                downloaded_files.append(target_file)
+            else:
+                pprint(
+                    f"下载失败: {whl['name']}",
+                    prompt="GithubReleaseDownloader",
+                    col=Colors.ERROR,
+                )
+                sys.exit(1)
+
+        return downloaded_files
