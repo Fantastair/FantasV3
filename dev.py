@@ -71,34 +71,46 @@ def show_diff_and_help_commit(command: str) -> None:
         cmd_run(["git", "--no-pager", "status", "--porcelain"], error_on_output=True)
     except subprocess.CalledProcessError:
         pprint(f"运行 {command} 命令时产生了上述更改", prompt="dev", col=Colors.WARNING)
-        pprint(
-            "是否需要自动添加这些修改并提交一次commit？ (y/n)",
-            prompt="dev",
-            col=Colors.TIP,
-        )
-
-        answer = input().strip().lower()
-        while answer not in ("y", "n"):
-            pprint("请输入 y 或 n", prompt="dev", col=Colors.TIP)
-            answer = input().strip().lower()
-
-        if answer == "y":
-            try:
-                cmd_run(["git", "add", "."])
-                cmd_run(["git", "commit", "-m", f"保存 {command} 命令产生的更改"])
-                pprint(
-                    "更改已提交，请重新运行 dev.py", prompt="dev", col=Colors.SUCCESS
-                )
-            except subprocess.CalledProcessError:
-                pprint(
-                    "自动提交失败，请手动检查更改并提交", prompt="dev", col=Colors.ERROR
-                )
+        if "CI" in os.environ:
+            pprint(
+                "代码格式化检查未通过，请执行 python dev.py format 格式化代码后重新提交",
+                prompt="dev",
+                col=Colors.ERROR,
+            )
+            sys.exit(1)
         else:
             pprint(
-                "请手动检查更改并提交，然后重新运行 dev.py",
+                "是否需要自动添加这些修改并提交一次commit？ (y/n)",
                 prompt="dev",
-                col=Colors.WARNING,
+                col=Colors.TIP,
             )
+
+            answer = input().strip().lower()
+            while answer not in ("y", "n"):
+                pprint("请输入 y 或 n", prompt="dev", col=Colors.TIP)
+                answer = input().strip().lower()
+
+            if answer == "y":
+                try:
+                    cmd_run(["git", "add", "."])
+                    cmd_run(["git", "commit", "-m", f"保存 {command} 命令产生的更改"])
+                    pprint(
+                        "更改已提交，请重新运行 dev.py",
+                        prompt="dev",
+                        col=Colors.SUCCESS,
+                    )
+                except subprocess.CalledProcessError:
+                    pprint(
+                        "自动提交失败，请手动检查更改并提交",
+                        prompt="dev",
+                        col=Colors.ERROR,
+                    )
+            else:
+                pprint(
+                    "请手动检查更改并提交，然后重新运行 dev.py",
+                    prompt="dev",
+                    col=Colors.WARNING,
+                )
         sys.exit(1)
 
 
