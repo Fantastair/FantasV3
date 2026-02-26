@@ -1,0 +1,42 @@
+# 这个工作流会在发布新版本时自动将包上传到 PyPI
+# 本脚本学习于 pygame-ce 的 release-pypi.yml，感谢 pygame-ce 团队的贡献！
+
+name: Publish PyPI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Pull all release assets
+        uses: robinraju/release-downloader@v1.12
+        with:
+          releaseId: ${{ github.event.release.id }}
+          fileName: "*"
+          tarBall: true
+          zipBall: false
+          out-file-path: dist
+
+      - name: Verify release attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for fname in dist/*; do
+            if gh attestation verify $fname -R ${{ github.repository }}; then
+              echo "[ALLOWED] $fname"
+            else
+              rm $fname
+              echo "[DELETED] $fname"
+            fi
+          done
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
