@@ -412,12 +412,12 @@ def _build(poetry_path: Path, py: Path, target: Path, install: bool) -> None:
     pprint("安装项目中 (常规安装)", prompt="dev")
 
     try:
-        cmd_run([py, "-m", "pip", "install", wheel_files[0], "--force-reinstall"])
+        cmd_run([py, "-m", "pip", "install", new_file, "--force-reinstall"])
     except subprocess.CalledProcessError:
         pprint("项目安装失败", prompt="dev", col=Colors.ERROR)
         sys.exit(1)
 
-    pprint(f"项目已安装 ({wheel_files[0]})", prompt="dev", col=Colors.SUCCESS)
+    pprint(f"项目已安装 ({new_file})", prompt="dev", col=Colors.SUCCESS)
 
 
 def _install(poetry_path: Path) -> None:
