@@ -7,6 +7,9 @@ import os
 import sys
 import fnmatch
 
+sys.path.insert(0, os.path.abspath('../../..'))  # 向上三级到 FantasV3 根目录
+from tools.get_version import get_version
+
 sys.path.insert(0, os.path.abspath('../../fantas'))
 
 extensions = [
@@ -36,7 +39,7 @@ language = "zh_CN"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"
-html_title = "fantas 文档"
+html_title = f"fantas {get_version()} 文档"
 html_static_path = ["_static"]
 html_extra_path = [
     '../../LICENSE',
@@ -52,14 +55,14 @@ hidden_objects = [
 
 def setup(app):
     app.add_config_value('hidden_objects', [], 'env')
-    
+
     def hide_docstring(app, what, name, obj, options, lines):
         # 通过 name 判断，而不是自定义参数
         hidden_patterns = app.config.hidden_objects
-        
+
         for pattern in hidden_patterns:
             if name.startswith(pattern) or fnmatch.fnmatch(name, pattern):
                 lines.clear()
                 return
-    
+
     app.connect('autodoc-process-docstring', hide_docstring)
