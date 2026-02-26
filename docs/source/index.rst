@@ -39,7 +39,7 @@ fantas V3
     :hidden:
 
     关于 fantas 使用的 pygame-ce <ref/others/pygame-ce-for-fantas>
-    致谢🎉🎉🎉 <ref/others/thanks>
+    致谢💖💖💖 <ref/others/thanks>
 
 |Docs| |License| |Python| |pygame| |Code style: black|
 
@@ -50,7 +50,7 @@ fantas V3
 .. |Python| image:: https://img.shields.io/badge/python-3-blue?logo=python
    :target: https://www.python.org/
 .. |pygame| image:: https://img.shields.io/badge/pygame_ce-2.5.7_for_fantas-blue
-   :target: `pygame-ce-for-fantas`_
+   :target: `pygame-ce for fantas`_
 .. |Code style: black| image:: https://img.shields.io/badge/code%20style-black-black
    :target: https://github.com/psf/black
 
@@ -100,14 +100,14 @@ fantas 可以通过 :code:`pip` 轻松安装：
 
 fantas 中有些类是直接复用的 pygame-ce 中的类，如 :class:`fantas.Rect` 和
 :class:`fantas.color.Color` 等，
-关于这些类的详细信息可以在 pygame 的文档中找到，本教程则会介绍一些常用的用法和技巧。
+关于这些类的详细信息可以在 `pygame 文档`_ 中找到，本教程则会介绍一些常用的用法和技巧。
 
 有些类是继承自 pygame-ce 中的类，如 :class:`~fantas.window.Window` 和
 :class:`~fantas.font.Font` 等，在保留了原有接口的基础上，添加了一些新的功能和属性，
-新增的部分可以在 fantas 的文档中找到。
+新增的部分可以在本文档中找到。
 
 还有一些类是 fantas 独有的，如 :class:`~fantas.ui.UI` 和 :class:`~fantas.curve.Curve`
-等，这些类决定了 fantas 的核心逻辑和设计理念，有关详细信息也可以在 fantas 的文档中找到。
+等，这些类决定了 fantas 的核心逻辑和设计理念，有关详细信息也可以在本文档中找到。
 
 - :doc:`ref/tutorials/color`
 - :doc:`ref/tutorials/rect`
@@ -165,7 +165,7 @@ fantas 中有些类是直接复用的 pygame-ce 中的类，如 :class:`fantas.R
 `GitHub`_
     这是 fantas 的代码仓库，欢迎访问、使用和贡献。
 
-    在此也一并提供 `pygame-ce-for-fantas`_ 的仓库链接。fantas 使用的是其 fantas
+    在此也一并提供 `pygame-ce for fantas`_ 的仓库链接。fantas 使用的是其 fantas
     分支编译的版本。
 
 `MIT License`_
@@ -185,4 +185,6 @@ fantas 中有些类是直接复用的 pygame-ce 中的类，如 :class:`fantas.R
 
 .. _pygame-ce: https://pyga.me/
 
-.. _pygame-ce-for-fantas: https://github.com/Fantastair/pygame-ce/tree/fantas
+.. _pygame 文档: https://pyga.me/docs/
+
+.. _pygame-ce for fantas: https://github.com/Fantastair/pygame-ce/tree/fantas
