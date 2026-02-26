@@ -139,6 +139,6 @@ def get_tag_from_items(items: list[list[str]]) -> str:
     从 key-value 对列表中获取 tag 字段，并进行处理
     """
     tag = ".".join([i[1] for i in reversed(items) if i[0] == "Tag"])
-    pattern = r'\.cp.+?-cp.+?-'
-    tag = re.sub(pattern, '.', tag)
+    pattern = r"\.cp.+?-cp.+?-"
+    tag = re.sub(pattern, ".", tag)
     return tag
