@@ -4,6 +4,7 @@
 本脚本最初很大程度上学习于 pygame-ce 的 dev.py。感谢 pygame-ce 团队的辛勤工作！
 在此基础上做了很多现代化修改和功能解耦，增强脚本的可维护性和可复用性。
 """
+
 import os
 import sys
 import shutil
@@ -415,6 +416,7 @@ def _install(poetry_path: Path) -> None:
         col=Colors.SUCCESS,
     )
 
+
 def _build_all(poetry_path: Path, py: Path, target: Path) -> None:
     """
     构建所有支持平台和架构的 whl 文件
@@ -437,7 +439,9 @@ def _build_all(poetry_path: Path, py: Path, target: Path) -> None:
     for file in (CWD / "tmp").glob("*.whl"):
         delete_file_or_dir(file)
 
-    whl_files = download_all_pygame_ce_for_fantas(get_version(package="pygame-ce"), CWD / "tmp")
+    whl_files = download_all_pygame_ce_for_fantas(
+        get_version(package="pygame-ce"), CWD / "tmp"
+    )
 
     for whl in whl_files:
         pprint(f"安装 pygame-ce for fantas ({whl.stem}) 中", prompt="dev")
@@ -530,7 +534,7 @@ def _build_all(poetry_path: Path, py: Path, target: Path) -> None:
 
         pprint("元数据已更新", prompt="dev", col=Colors.SUCCESS)
         pprint(f"项目已构建: {new_file}", prompt="dev", col=Colors.SUCCESS)
-    
+
     pprint("所有 whl 文件已构建", prompt="dev", col=Colors.SUCCESS)
 
     if "CI" not in os.environ:
@@ -685,6 +689,7 @@ def install(ignore_git: IgnoreGitOption = False) -> None:
     poetry_path, _ = prep_all(ignore_git=ignore_git)
     _install(poetry_path)
 
+
 @command
 def build_all(
     target: Annotated[Path, typer.Argument(help="whl 文件输出目录")] = FANTAS_DIST_DIR,
@@ -695,7 +700,11 @@ def build_all(
     构建所有支持平台和架构的 whl 文件
     """
     if not yes and "CI" not in os.environ:
-        pprint("此命令建议在 CI 环境中运行，因为有可能污染开发环境，确定要继续吗?", prompt="dev", col=Colors.WARNING)
+        pprint(
+            "此命令建议在 CI 环境中运行，因为有可能污染开发环境，确定要继续吗?",
+            prompt="dev",
+            col=Colors.WARNING,
+        )
         answer = input("(y/n): ").strip().lower()
         while answer not in ("y", "n"):
             pprint("请输入 y 或 n", prompt="dev", col=Colors.TIP)
@@ -705,6 +714,7 @@ def build_all(
 
     poetry_path, venv_py = prep_all(ignore_git=ignore_git)
     _build_all(poetry_path, venv_py, target)
+
 
 if __name__ == "__main__":
     app()

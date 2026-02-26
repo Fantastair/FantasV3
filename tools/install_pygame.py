@@ -162,6 +162,7 @@ def delete_pygame_ce_for_fantas() -> None:
     for path in PYGAME_CE_FOR_FANTAS_INSTALL_DIR.glob("pygame*/"):
         delete_file_or_dir(path)
 
+
 def download_all_pygame_ce_for_fantas(tag: str | None, target_dir: Path) -> list[Path]:
     """
     下载 pygame-ce for fantas 的所有版本的 whl 文件

@@ -1,6 +1,7 @@
 """
 下载 GitHub Release 的封装
 """
+
 import os
 import sys
 import json
@@ -205,7 +206,7 @@ class GithubReleaseDownloader:
         """
         if "CI" in os.environ:
             show_progress = False
-        
+
         pprint(f"下载文件: {url} -> {target}", prompt="GithubReleaseDownloader")
 
         try:
@@ -316,7 +317,9 @@ class GithubReleaseDownloader:
         Returns:
             下载成功返回下载的 whl 文件路径，失败返回 None
         """
-        pprint("自动选择匹配当前系统的 whl 文件并下载", prompt="GithubReleaseDownloader")
+        pprint(
+            "自动选择匹配当前系统的 whl 文件并下载", prompt="GithubReleaseDownloader"
+        )
 
         whl = self.auto_select_whl(tag)
         if whl is None:
@@ -341,8 +344,10 @@ class GithubReleaseDownloader:
         if target_file.exists():
             return target_file
         return target_file if self.download_file(url, target_file) else None
-    
-    def download_all_whl(self, tag: str | None = None, target_dir: Path = CWD / "tmp") -> list[Path]:
+
+    def download_all_whl(
+        self, tag: str | None = None, target_dir: Path = CWD / "tmp"
+    ) -> list[Path]:
         """
         下载 release 中的所有 whl 文件到指定目录
 
