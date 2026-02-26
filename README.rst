@@ -26,7 +26,7 @@ fantas is an open-source project distributed under the MIT License. You are free
 .. _LICENSE: LICENSE
 
 依赖许可（Dependency Licensing）
--------------------------------
+--------------------------------
 
 fantas 的核心依赖是 pygame-ce，这是一个基于 LGPL-2.1 许可证分发的库。我们对 pygame-ce 进行了特殊修改以修复一些问题并添加新功能。请参阅 `DEPENDENCIES.md`_ 文件以获取详细的依赖声明和许可说明。
 

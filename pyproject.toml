@@ -28,8 +28,8 @@ classifiers = [
     "Topic :: Multimedia :: Sound/Audio",
     "Topic :: Multimedia :: Graphics",
     "Operating System :: Microsoft :: Windows",
-    "Operating System :: Linux",
-    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
     "Typing :: Typed"
 ]
 
