@@ -57,9 +57,8 @@ pytest = "^9.0.2"
 pytest-cov = "^7.0.0"
 
 [tool.poetry.urls]
-Homepage = "https://fantastair.cn"
-Documentation = "https://fantastair.cn"
-AuthorPage = "https://fantastair.cn"
+Homepage = "https://fantas.fantastair.cn"
+Documentation = "https://fantas.fantastair.cn/docs"
 GitHub = "https://github.com/Fantastair/FantasV3"
 issue = "https://github.com/Fantastair/FantasV3/issues"
 
