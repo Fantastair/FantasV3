@@ -798,7 +798,7 @@ def pre_PR(ignore_git: IgnoreGitOption = False) -> None:
     本地检查是否可以提交 PR
     """
 
-    poetry_path, venv_py = _prep_all()
+    _, venv_py = _prep_all()
     _format(venv_py, False)
     _stubs(venv_py)
     _lint(venv_py)
