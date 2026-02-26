@@ -12,7 +12,11 @@ from .pprint import Colors, pprint
 from .github_downloader import GithubReleaseDownloader
 from .cmd import cmd_run
 
-__all__ = ["install_pygame_ce_for_fantas", "PygameStatus"]
+__all__ = [
+    "install_pygame_ce_for_fantas",
+    "PygameStatus",
+    "delete_pygame_ce_for_fantas",
+]
 
 CWD = Path(__file__).parent.parent
 
@@ -148,3 +152,11 @@ def install_pygame_ce_for_fantas(py: Path, tag: str | None = None) -> None:
         col=Colors.ERROR,
     )
     sys.exit(1)
+
+
+def delete_pygame_ce_for_fantas() -> None:
+    """
+    删除已安装的 pygame-ce for fantas
+    """
+    for path in PYGAME_CE_FOR_FANTAS_INSTALL_DIR.glob("pygame*/"):
+        delete_file_or_dir(path)

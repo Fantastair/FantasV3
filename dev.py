@@ -19,7 +19,20 @@ from tools.pprint import pprint, Colors
 from tools.cmd import cmd_run
 from tools.install_poetry import get_poetry_executable, install_poetry
 from tools.get_version import get_version
-from tools.install_pygame import install_pygame_ce_for_fantas, PygameStatus
+from tools.install_pygame import (
+    install_pygame_ce_for_fantas,
+    PygameStatus,
+    delete_file_or_dir,
+    delete_pygame_ce_for_fantas,
+)
+from tools.whl_helper import (
+    unzip_file,
+    zip_dir,
+    get_wheel_content,
+    set_wheel_content,
+    content_to_items,
+    items_to_content,
+)
 
 CWD = Path(__file__).parent
 
@@ -127,7 +140,7 @@ def prep_pygame(py: Path) -> None:
     """
     准备 pygame-ce (fantas 分支)，确保后续命令可以使用正确版本的 pygame
     """
-    required_version = get_version()
+    required_version = get_version(package="pygame-ce")
 
     pprint(f"准备 pygame-ce for fantas ({required_version}) 中", prompt="dev")
 
@@ -332,7 +345,40 @@ def _build(poetry_path: Path, py: Path, target: Path, install: bool) -> None:
         pprint("未找到生成的 wheel 文件", prompt="dev", col=Colors.ERROR)
         sys.exit(1)
 
-    pprint(f"项目已构建 ({wheel_files[0]})", prompt="dev", col=Colors.SUCCESS)
+    pprint("更新元数据中", prompt="dev")
+
+    fantas_dir = unzip_file(wheel_files[0])
+    fantas_wheel_content = get_wheel_content(fantas_dir)
+    fantas_wheel_items = content_to_items(fantas_wheel_content)
+    pygame_dir = FANTAS_SOURCE_DIR / "_vendor"
+    pygame_wheel_content = get_wheel_content(pygame_dir)
+    pygame_wheel_items = content_to_items(pygame_wheel_content)
+
+    new_items: list[list[str]] = []
+    for i in fantas_wheel_items:
+        if i[0] == "Root-Is-Purelib":
+            i[1] = "false"
+        if i[0] != "Tag":
+            new_items.append(i)
+    for i in pygame_wheel_items:
+        if i[0] == "Tag":
+            new_items.append(i)
+
+    version = get_version()
+    tag = ".".join([i[1] for i in reversed(new_items) if i[0] == "Tag"])
+    new_file = FANTAS_DIST_DIR / f"fantas-{version}-{tag}.whl"
+
+    pprint(f"更新 WHEEL 元数据：{new_items}", prompt="dev", col=Colors.INFO)
+
+    new_content = items_to_content(new_items)
+    set_wheel_content(fantas_dir, new_content)
+    zip_dir(fantas_dir, new_file)
+
+    delete_file_or_dir(wheel_files[0])
+    delete_file_or_dir(fantas_dir)
+
+    pprint("元数据已更新", prompt="dev", col=Colors.SUCCESS)
+    pprint(f"项目已构建: {new_file}", prompt="dev", col=Colors.SUCCESS)
 
     if not install:
         return
@@ -400,7 +446,7 @@ def command(func):
 
 
 @command
-def prep_all() -> tuple[Path, Path]:
+def prep_all(ignore_git: IgnoreGitOption = False) -> tuple[Path, Path]:
     """
     执行所有准备工作
     """
@@ -417,7 +463,7 @@ def format(ignore_git: IgnoreGitOption = False) -> None:
     """
     格式化代码
     """
-    _, venv_py = prep_all()
+    _, venv_py = prep_all(ignore_git=ignore_git)
     _format(venv_py, ignore_git)
 
 
@@ -426,10 +472,7 @@ def stubs(ignore_git: IgnoreGitOption = False) -> None:
     """
     静态类型检查
     """
-    if not ignore_git:
-        check_git_clean()
-
-    _, venv_py = prep_all()
+    _, venv_py = prep_all(ignore_git=ignore_git)
     _stubs(venv_py)
 
 
@@ -438,10 +481,7 @@ def lint(ignore_git: IgnoreGitOption = False) -> None:
     """
     代码质量检查
     """
-    if not ignore_git:
-        check_git_clean()
-
-    _, venv_py = prep_all()
+    _, venv_py = prep_all(ignore_git=ignore_git)
     _lint(venv_py)
 
 
@@ -455,10 +495,7 @@ def docs(
     """
     生成文档
     """
-    if not ignore_git:
-        check_git_clean()
-
-    _, venv_py = prep_all()
+    _, venv_py = prep_all(ignore_git=ignore_git)
     _docs(venv_py, full)
 
 
@@ -473,10 +510,7 @@ def test(
     """
     运行测试
     """
-    if not ignore_git:
-        check_git_clean()
-
-    _, venv_py = prep_all()
+    _, venv_py = prep_all(ignore_git=ignore_git)
     _test(venv_py, mod)
 
 
@@ -491,10 +525,7 @@ def build(
     """
     构建项目
     """
-    if not ignore_git:
-        check_git_clean()
-
-    poetry_path, venv_py = prep_all()
+    poetry_path, venv_py = prep_all(ignore_git=ignore_git)
     _build(poetry_path, venv_py, target, install)
 
 
@@ -503,10 +534,7 @@ def install(ignore_git: IgnoreGitOption = False) -> None:
     """
     安装项目 (可编辑安装)
     """
-    if not ignore_git:
-        check_git_clean()
-
-    poetry_path, _ = prep_all()
+    poetry_path, _ = prep_all(ignore_git=ignore_git)
     _install(poetry_path)
 
 

@@ -30,8 +30,6 @@ def unzip_file(file: Path) -> Path:
     """
     if not file.exists():
         raise FileNotFoundError(f"解压文件不存在: {file}")
-    if file.suffix.lower() != ".zip":
-        raise ValueError(f"文件不是 ZIP 格式: {file}")
 
     TARGET_DIR = CWD / "tmp" / file.stem
     TARGET_DIR.parent.mkdir(parents=True, exist_ok=True)
@@ -48,7 +46,7 @@ def unzip_file(file: Path) -> Path:
         raise RuntimeError(f"解压失败：{file} 不是有效的 ZIP 文件") from e
     except Exception as e:
         raise RuntimeError(f"解压文件 {file} 时出错：{str(e)}") from e
-    
+
     return TARGET_DIR
 
 
@@ -105,7 +103,7 @@ def set_wheel_content(file_dir: Path, content: str) -> None:
     WHEEL_FILE.write_text(content, encoding="utf-8")
 
 
-def content_to_items(content: str) -> list[list[str, str]]:
+def content_to_items(content: str) -> list[list[str]]:
     """
     从 whl 文件的 WHEEL 文件中获取所有 key-value 对
 
@@ -132,4 +130,3 @@ def items_to_content(items: list[list[str, str]]) -> str:
         WHEEL 文件内容
     """
     return "\n".join(f"{key}: {value}" for key, value in items) + "\n\n"
-
