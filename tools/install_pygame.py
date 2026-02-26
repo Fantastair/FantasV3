@@ -32,7 +32,6 @@ def delete_file_or_dir(path: Path) -> None:
     """
     abs_path = path.resolve()
 
-    # 先判断路径是否存在，避免无意义的操作
     if not abs_path.exists():
         return
 
