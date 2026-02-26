@@ -550,6 +550,63 @@ def _build_all(poetry_path: Path, py: Path, target: Path) -> None:
         delete_file_or_dir(tmp_pygame_dir)
 
 
+def _release(py: Path, tag: str | None, yes: bool = False) -> None:
+    """
+    执行 release 子命令，使用 Git 创建 release/* 分支
+
+    Args:
+        py: Python 可执行文件的路径，用于获取版本信息
+        tag: 指定版本标签，如果为 None 则自动获取当前版本作为标签
+    """
+    if tag is None:
+        tag = get_version()
+
+    try:
+        branch_name = cmd_run(["git", "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True)
+    except subprocess.CalledProcessError:
+        pprint("获取当前 git 分支失败，请检查", prompt="dev", col=Colors.ERROR)
+        sys.exit(1)
+
+    try:
+        commit_hash = cmd_run(["git", "rev-parse", "--short", "HEAD"], capture_output=True)
+    except subprocess.CalledProcessError:
+        pprint("获取当前 git 提交哈希失败，请检查", prompt="dev", col=Colors.ERROR)
+        sys.exit(1)
+
+    pprint(f"当前分支: {branch_name}, 当前提交: {commit_hash}", prompt="dev", col=Colors.INFO)
+    if not yes:
+        answer = input(f"是否从此创建 release/{tag} 分支? (y/n): ").strip().lower()
+        while answer not in ("y", "n"):
+            pprint("请输入 y 或 n", prompt="dev", col=Colors.TIP)
+            answer = input(f"是否从此创建 release/{tag} 分支? (y/n): ").strip().lower()
+        if answer == "n":
+            pprint("操作已取消", prompt="dev", col=Colors.WARNING)
+            return
+
+    try:
+        cmd_run(["git", "checkout", "-b", f"release/{tag}"])
+    except subprocess.CalledProcessError:
+        pprint("创建 release 分支失败，请检查", prompt="dev", col=Colors.ERROR)
+        sys.exit(1)
+    
+    pprint(f"release/{tag} 分支已创建", prompt="dev", col=Colors.SUCCESS)
+    if not yes:
+        answer = input(f"是否立即推送 release/{tag} 分支到远程? (y/n): ").strip().lower()
+        while answer not in ("y", "n"):
+            pprint("请输入 y 或 n", prompt="dev", col=Colors.TIP)
+            answer = input(f"是否立即推送 release/{tag} 分支到远程? (y/n): ").strip().lower()
+        if answer == "n":
+            return
+    
+    try:
+        cmd_run(["git", "push", "-u", "origin", f"release/{tag}"])
+    except subprocess.CalledProcessError:
+        pprint("推送 release 分支失败，请检查", prompt="dev", col=Colors.ERROR)
+        sys.exit(1)
+    
+    pprint(f"版本 {tag} 已推送，可以前往 https://github.com/Fantastair/FantasV3/actions 检查 CI 构建状态", prompt="dev", col=Colors.SUCCESS)
+
+
 app = typer.Typer(
     help="""
 项目开发命令集成。你可以在子命令后添加 --help 来获取每个子命令的使用帮助。
@@ -714,6 +771,31 @@ def build_all(
 
     poetry_path, venv_py = prep_all(ignore_git=ignore_git)
     _build_all(poetry_path, venv_py, target)
+
+
+@command
+def pre_PR(ignore_git: IgnoreGitOption = False) -> None:
+    """
+    本地检查是否可以提交 PR
+    """
+    format(ignore_git=ignore_git)
+    stubs(ignore_git=ignore_git)
+    lint(ignore_git=ignore_git)
+    test(ignore_git=ignore_git)
+    docs(ignore_git=ignore_git, full=True)
+
+
+@command
+def release(
+    tag: Annotated[str | None, typer.Argument(help="指定版本标签")] = None,
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="跳过确认提示")] = False,
+    ignore_git: IgnoreGitOption = False
+) -> None:
+    """
+    创建 release/* 分支
+    """
+    _, venv_py = prep_all(ignore_git=ignore_git)
+    _release(venv_py, tag, yes)
 
 
 if __name__ == "__main__":
