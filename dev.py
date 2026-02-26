@@ -5,7 +5,10 @@
 在此基础上做了很多现代化修改和功能解耦，增强脚本的可维护性和可复用性。
 """
 
+import os
 import sys
+import shutil
+import zipfile
 import subprocess
 from pathlib import Path
 from functools import wraps
@@ -19,7 +22,21 @@ from tools.pprint import pprint, Colors
 from tools.cmd import cmd_run
 from tools.install_poetry import get_poetry_executable, install_poetry
 from tools.get_version import get_version
-from tools.install_pygame import install_pygame_ce_for_fantas, PygameStatus
+from tools.install_pygame import (
+    install_pygame_ce_for_fantas,
+    PygameStatus,
+    delete_file_or_dir,
+    delete_pygame_ce_for_fantas,
+    download_all_pygame_ce_for_fantas,
+)
+from tools.whl_helper import (
+    unzip_file,
+    zip_dir,
+    get_wheel_content,
+    set_wheel_content,
+    content_to_items,
+    items_to_content,
+)
 
 CWD = Path(__file__).parent
 
@@ -127,7 +144,7 @@ def prep_pygame(py: Path) -> None:
     """
     准备 pygame-ce (fantas 分支)，确保后续命令可以使用正确版本的 pygame
     """
-    required_version = get_version()
+    required_version = get_version(package="pygame-ce")
 
     pprint(f"准备 pygame-ce for fantas ({required_version}) 中", prompt="dev")
 
@@ -159,7 +176,7 @@ def prep_pygame(py: Path) -> None:
         status = PygameStatus.INSTALLED_INCORRECTLY
 
     if status != PygameStatus.INSTALLED_CORRECTLY:
-        install_pygame_ce_for_fantas(py)
+        install_pygame_ce_for_fantas(py, required_version)
 
     pprint("pygame-ce for fantas 已就绪", prompt="dev", col=Colors.SUCCESS)
 
@@ -177,21 +194,6 @@ def prep_deps(poetry_path: Path) -> None:
         raise e
 
     pprint("开发环境已就绪", prompt="dev", col=Colors.SUCCESS)
-
-
-def prep_all() -> tuple[Path, Path]:
-    """
-    执行所有准备工作
-
-    Returns:
-        一个元组，包含 Poetry 可执行文件的路径和虚拟环境中 Python 可执行文件的路径
-    """
-    poetry_path = prep_poetry()
-    venv_py = prep_venv(poetry_path, sys.executable)
-    prep_pygame(venv_py)
-    prep_deps(poetry_path)
-
-    return poetry_path, venv_py
 
 
 def show_time_spent(start_time: int, end_time: int, command: str) -> None:
@@ -347,7 +349,40 @@ def _build(poetry_path: Path, py: Path, target: Path, install: bool) -> None:
         pprint("未找到生成的 wheel 文件", prompt="dev", col=Colors.ERROR)
         sys.exit(1)
 
-    pprint(f"项目已构建 ({wheel_files[0]})", prompt="dev", col=Colors.SUCCESS)
+    pprint("更新元数据中", prompt="dev")
+
+    fantas_dir = unzip_file(wheel_files[0])
+    fantas_wheel_content = get_wheel_content(fantas_dir)
+    fantas_wheel_items = content_to_items(fantas_wheel_content)
+    pygame_dir = FANTAS_SOURCE_DIR / "_vendor"
+    pygame_wheel_content = get_wheel_content(pygame_dir)
+    pygame_wheel_items = content_to_items(pygame_wheel_content)
+
+    new_items: list[list[str]] = []
+    for i in fantas_wheel_items:
+        if i[0] == "Root-Is-Purelib":
+            i[1] = "false"
+        if i[0] != "Tag":
+            new_items.append(i)
+    for i in pygame_wheel_items:
+        if i[0] == "Tag":
+            new_items.append(i)
+
+    version = get_version()
+    tag = ".".join([i[1] for i in reversed(new_items) if i[0] == "Tag"])
+    new_file = FANTAS_DIST_DIR / f"fantas-{version}-{tag}.whl"
+
+    pprint(f"更新 WHEEL 元数据：{new_items}", prompt="dev", col=Colors.INFO)
+
+    new_content = items_to_content(new_items)
+    set_wheel_content(fantas_dir, new_content)
+    zip_dir(fantas_dir, new_file)
+
+    delete_file_or_dir(wheel_files[0])
+    delete_file_or_dir(fantas_dir)
+
+    pprint("元数据已更新", prompt="dev", col=Colors.SUCCESS)
+    pprint(f"项目已构建: {new_file}", prompt="dev", col=Colors.SUCCESS)
 
     if not install:
         return
@@ -382,6 +417,139 @@ def _install(poetry_path: Path) -> None:
     )
 
 
+def _build_all(poetry_path: Path, py: Path, target: Path) -> None:
+    """
+    构建所有支持平台和架构的 whl 文件
+    """
+    pprint("构建所有支持平台和架构的 whl 文件中", prompt="dev")
+
+    pprint("清理残留文件中", prompt="dev")
+
+    tmp_pygame_dir = CWD / "tmp" / "_vendor"
+    delete_file_or_dir(tmp_pygame_dir)
+    tmp_pygame_dir.mkdir(parents=True, exist_ok=True)
+    for item in (FANTAS_SOURCE_DIR / "_vendor").glob("pygame*/"):
+        if item.is_dir():
+            shutil.copytree(item, tmp_pygame_dir / item.name)
+        else:
+            shutil.copy2(item, tmp_pygame_dir / item.name)
+
+    for file in target.glob("*.whl"):
+        delete_file_or_dir(file)
+    for file in (CWD / "tmp").glob("*.whl"):
+        delete_file_or_dir(file)
+
+    whl_files = download_all_pygame_ce_for_fantas(
+        get_version(package="pygame-ce"), CWD / "tmp"
+    )
+
+    for whl in whl_files:
+        pprint(f"安装 pygame-ce for fantas ({whl.stem}) 中", prompt="dev")
+
+        delete_pygame_ce_for_fantas()
+        try:
+            with zipfile.ZipFile(whl, "r") as zip_ref:
+                zip_ref.testzip()
+                zip_ref.extractall(FANTAS_SOURCE_DIR / "_vendor")
+        except zipfile.BadZipFile:
+            pprint(f"安装 {whl} 失败：文件无效", prompt="dev", col=Colors.ERROR)
+            if "CI" not in os.environ:
+                pprint("恢复本地开发环境中", prompt="dev")
+
+                delete_pygame_ce_for_fantas()
+
+                for item in tmp_pygame_dir.glob("pygame*/"):
+                    if item.is_dir():
+                        shutil.copytree(item, FANTAS_SOURCE_DIR / "_vendor" / item.name)
+                    else:
+                        shutil.copy2(item, FANTAS_SOURCE_DIR / "_vendor" / item.name)
+                delete_file_or_dir(tmp_pygame_dir)
+            sys.exit(1)
+
+        pprint(f"构建项目 {"-".join(whl.stem.split('-')[2:])} 中", prompt="dev")
+
+        try:
+            cmd_run(
+                [
+                    poetry_path,
+                    "build",
+                    "-f",
+                    "wheel",
+                    "--output",
+                    target,
+                    "--no-interaction",
+                ]
+            )
+        except subprocess.CalledProcessError:
+            pprint("项目构建失败", prompt="dev", col=Colors.ERROR)
+            if "CI" not in os.environ:
+                pprint("恢复本地开发环境中", prompt="dev")
+
+                delete_pygame_ce_for_fantas()
+
+                for item in tmp_pygame_dir.glob("pygame*/"):
+                    if item.is_dir():
+                        shutil.copytree(item, FANTAS_SOURCE_DIR / "_vendor" / item.name)
+                    else:
+                        shutil.copy2(item, FANTAS_SOURCE_DIR / "_vendor" / item.name)
+                delete_file_or_dir(tmp_pygame_dir)
+            sys.exit(1)
+
+        wheel_files = list(target.glob("fantas-*-py3-none-any.whl"))
+        if not wheel_files:
+            pprint("未找到生成的 wheel 文件", prompt="dev", col=Colors.ERROR)
+            sys.exit(1)
+
+        pprint("更新元数据中", prompt="dev")
+
+        fantas_dir = unzip_file(wheel_files[0])
+        fantas_wheel_content = get_wheel_content(fantas_dir)
+        fantas_wheel_items = content_to_items(fantas_wheel_content)
+        pygame_dir = FANTAS_SOURCE_DIR / "_vendor"
+        pygame_wheel_content = get_wheel_content(pygame_dir)
+        pygame_wheel_items = content_to_items(pygame_wheel_content)
+
+        new_items: list[list[str]] = []
+        for i in fantas_wheel_items:
+            if i[0] == "Root-Is-Purelib":
+                i[1] = "false"
+            if i[0] != "Tag":
+                new_items.append(i)
+        for i in pygame_wheel_items:
+            if i[0] == "Tag":
+                new_items.append(i)
+
+        version = get_version()
+        tag = ".".join([i[1] for i in reversed(new_items) if i[0] == "Tag"])
+        new_file = FANTAS_DIST_DIR / f"fantas-{version}-{tag}.whl"
+
+        pprint(f"更新 WHEEL 元数据：{new_items}", prompt="dev", col=Colors.INFO)
+
+        new_content = items_to_content(new_items)
+        set_wheel_content(fantas_dir, new_content)
+        zip_dir(fantas_dir, new_file)
+
+        delete_file_or_dir(wheel_files[0])
+        delete_file_or_dir(fantas_dir)
+
+        pprint("元数据已更新", prompt="dev", col=Colors.SUCCESS)
+        pprint(f"项目已构建: {new_file}", prompt="dev", col=Colors.SUCCESS)
+
+    pprint("所有 whl 文件已构建", prompt="dev", col=Colors.SUCCESS)
+
+    if "CI" not in os.environ:
+        pprint("恢复本地开发环境中", prompt="dev")
+
+        delete_pygame_ce_for_fantas()
+
+        for item in tmp_pygame_dir.glob("pygame*/"):
+            if item.is_dir():
+                shutil.copytree(item, FANTAS_SOURCE_DIR / "_vendor" / item.name)
+            else:
+                shutil.copy2(item, FANTAS_SOURCE_DIR / "_vendor" / item.name)
+        delete_file_or_dir(tmp_pygame_dir)
+
+
 app = typer.Typer(
     help="""
 项目开发命令集成。你可以在子命令后添加 --help 来获取每个子命令的使用帮助。
@@ -405,7 +573,22 @@ def command(func):
         if not ignore_git:
             check_git_clean()
 
-        result = func(*args, ignore_git=ignore_git, **kwargs)
+        try:
+            result = func(*args, ignore_git=ignore_git, **kwargs)
+        except subprocess.CalledProcessError as e:
+            pprint(
+                f"\n命令 '{func.__name__}' 运行失败，请检查错误信息",
+                prompt="dev",
+                col=Colors.ERROR,
+            )
+            raise e
+        except KeyboardInterrupt:
+            pprint(
+                f"\n命令 '{func.__name__}' 被用户中断",
+                prompt="dev",
+                col=Colors.WARNING,
+            )
+            sys.exit(1)
 
         end_time = get_time_ns()
         show_time_spent(start_time, end_time, func.__name__)
@@ -415,11 +598,24 @@ def command(func):
 
 
 @command
+def prep_all(ignore_git: IgnoreGitOption = False) -> tuple[Path, Path]:
+    """
+    执行所有准备工作
+    """
+    poetry_path = prep_poetry()
+    venv_py = prep_venv(poetry_path, sys.executable)
+    prep_pygame(venv_py)
+    prep_deps(poetry_path)
+
+    return poetry_path, venv_py
+
+
+@command
 def format(ignore_git: IgnoreGitOption = False) -> None:
     """
     格式化代码
     """
-    _, venv_py = prep_all()
+    _, venv_py = prep_all(ignore_git=ignore_git)
     _format(venv_py, ignore_git)
 
 
@@ -428,10 +624,7 @@ def stubs(ignore_git: IgnoreGitOption = False) -> None:
     """
     静态类型检查
     """
-    if not ignore_git:
-        check_git_clean()
-
-    _, venv_py = prep_all()
+    _, venv_py = prep_all(ignore_git=ignore_git)
     _stubs(venv_py)
 
 
@@ -440,10 +633,7 @@ def lint(ignore_git: IgnoreGitOption = False) -> None:
     """
     代码质量检查
     """
-    if not ignore_git:
-        check_git_clean()
-
-    _, venv_py = prep_all()
+    _, venv_py = prep_all(ignore_git=ignore_git)
     _lint(venv_py)
 
 
@@ -457,10 +647,7 @@ def docs(
     """
     生成文档
     """
-    if not ignore_git:
-        check_git_clean()
-
-    _, venv_py = prep_all()
+    _, venv_py = prep_all(ignore_git=ignore_git)
     _docs(venv_py, full)
 
 
@@ -475,10 +662,7 @@ def test(
     """
     运行测试
     """
-    if not ignore_git:
-        check_git_clean()
-
-    _, venv_py = prep_all()
+    _, venv_py = prep_all(ignore_git=ignore_git)
     _test(venv_py, mod)
 
 
@@ -493,10 +677,7 @@ def build(
     """
     构建项目
     """
-    if not ignore_git:
-        check_git_clean()
-
-    poetry_path, venv_py = prep_all()
+    poetry_path, venv_py = prep_all(ignore_git=ignore_git)
     _build(poetry_path, venv_py, target, install)
 
 
@@ -505,11 +686,34 @@ def install(ignore_git: IgnoreGitOption = False) -> None:
     """
     安装项目 (可编辑安装)
     """
-    if not ignore_git:
-        check_git_clean()
-
-    poetry_path, _ = prep_all()
+    poetry_path, _ = prep_all(ignore_git=ignore_git)
     _install(poetry_path)
+
+
+@command
+def build_all(
+    target: Annotated[Path, typer.Argument(help="whl 文件输出目录")] = FANTAS_DIST_DIR,
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="跳过确认提示")] = False,
+    ignore_git: IgnoreGitOption = False,
+) -> None:
+    """
+    构建所有支持平台和架构的 whl 文件
+    """
+    if not yes and "CI" not in os.environ:
+        pprint(
+            "此命令建议在 CI 环境中运行，因为有可能污染开发环境，确定要继续吗?",
+            prompt="dev",
+            col=Colors.WARNING,
+        )
+        answer = input("(y/n): ").strip().lower()
+        while answer not in ("y", "n"):
+            pprint("请输入 y 或 n", prompt="dev", col=Colors.TIP)
+            answer = input("(y/n): ").strip().lower()
+        if answer != "y":
+            return
+
+    poetry_path, venv_py = prep_all(ignore_git=ignore_git)
+    _build_all(poetry_path, venv_py, target)
 
 
 if __name__ == "__main__":

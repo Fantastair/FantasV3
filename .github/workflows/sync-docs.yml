@@ -1,3 +1,6 @@
+# 这个工作流会在 master 分支的 docs/ 或 fantas/ 目录下有更改时触发，或者通过手动触发。
+# 它会构建文档并将生成的 HTML 文件部署到远程服务器上
+
 name: Build and Sync Docs
 
 on:
@@ -25,6 +28,7 @@ jobs:
       with:
         python-version: '3.13.5'
 
+    # 缓存 Python 虚拟环境
     - name: Cache Python .venv
       uses: actions/cache@v5.0.3
       id: cache-python-venv
@@ -34,25 +38,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-venv
 
-    - name: Prepare Venv Python
-      if: steps.cache-python-venv.outputs.cache-hit != 'true'
-      run: |
-        python -m venv .venv
-        source .venv/bin/activate
-        pip install --upgrade pip
-        pip install -r requirements.txt
-
-    - name: Install system dependencies
-      uses: awalsh128/cache-apt-pkgs-action@v1.6.0
-      with:
-        packages: |
-          libsdl2-dev
-          libsdl2-image-dev
-          libsdl2-mixer-dev
-          libsdl2-ttf-dev
-          libfreetype6-dev
-          libportmidi-dev
-
+    # 使用 dev.py 脚本来构建文档
     - name: Build documentation
       run: |
         source .venv/bin/activate

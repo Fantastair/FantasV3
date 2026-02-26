@@ -1,0 +1,44 @@
+# 这个工作流支持手动触发和被其他工作流调用
+# 会构建全部支持平台和架构的 Fantas 版本，并将构建结果上传为工作流产物
+
+name: Build Fantas
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build-fantas:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6.0.2
+
+    - name: Setup Python
+      uses: actions/setup-python@v6.2.0
+      with:
+        python-version: '3.13.5'
+
+    # 缓存 Python 虚拟环境
+    - name: Cache Python .venv
+      uses: actions/cache@v5.0.3
+      id: cache-python-venv
+      with:
+        path: .venv
+        key: ${{ runner.os }}-venv-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-venv
+
+    # 使用 dev.py 脚本来构建 Fantas
+    - name: Build Fantas
+      run: |
+        source .venv/bin/activate
+        export AUDIODEV=null
+        python dev.py build-all
+    
+    - name: Upload Fantas artifacts
+      uses: actions/upload-artifact@v6.0.0
+      with:
+        name: fantas-wheels
+        path: dist/fantas-*.whl
+        compression-level: 0
