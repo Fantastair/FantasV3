@@ -624,12 +624,18 @@ def _release(py: Path, tag: str | None, yes: bool = False) -> None:
         pprint("推送 release 分支失败，请检查", prompt="dev", col=Colors.ERROR)
         sys.exit(1)
 
+    try:
+        cmd_run(["git", "tag", f"v{tag}"])
+        cmd_run(["git", "push", "origin", f"v{tag}"])
+    except subprocess.CalledProcessError:
+        pprint("创建或推送 tag 失败，请检查", prompt="dev", col=Colors.ERROR)
+        sys.exit(1)
+
     pprint(
         f"版本 {tag} 已推送，可以前往 https://github.com/Fantastair/FantasV3/actions 检查 CI 构建状态",
         prompt="dev",
         col=Colors.SUCCESS,
     )
-
 
 app = typer.Typer(
     help="""
