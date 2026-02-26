@@ -3,6 +3,7 @@
 """
 
 import os
+import re
 import shutil
 import zipfile
 from pathlib import Path
@@ -14,6 +15,7 @@ __all__ = [
     "set_wheel_content",
     "content_to_items",
     "items_to_content",
+    "get_tag_from_items",
 ]
 
 CWD = Path(__file__).parent.parent
@@ -130,3 +132,13 @@ def items_to_content(items: list[list[str, str]]) -> str:
         WHEEL 文件内容
     """
     return "\n".join(f"{key}: {value}" for key, value in items) + "\n\n"
+
+
+def get_tag_from_items(items: list[list[str]]) -> str:
+    """
+    从 key-value 对列表中获取 tag 字段，并进行处理
+    """
+    tag = ".".join([i[1] for i in reversed(items) if i[0] == "Tag"])
+    pattern = r'\.cp.+?-cp.+?-'
+    tag = re.sub(pattern, '.', tag)
+    return tag

@@ -36,6 +36,7 @@ from tools.whl_helper import (
     set_wheel_content,
     content_to_items,
     items_to_content,
+    get_tag_from_items,
 )
 
 CWD = Path(__file__).parent
@@ -390,7 +391,7 @@ def _build(poetry_path: Path, py: Path, target: Path, install: bool) -> None:
             new_items.append(i)
 
     version = get_version()
-    tag = ".".join([i[1] for i in reversed(new_items) if i[0] == "Tag"])
+    tag = get_tag_from_items(new_items)
     new_file = FANTAS_DIST_DIR / f"fantas-{version}-{tag}.whl"
 
     pprint(f"更新 WHEEL 元数据：{new_items}", prompt="dev", col=Colors.INFO)
@@ -541,7 +542,7 @@ def _build_all(poetry_path: Path, py: Path, target: Path) -> None:
                 new_items.append(i)
 
         version = get_version()
-        tag = ".".join([i[1] for i in reversed(new_items) if i[0] == "Tag"])
+        tag = get_tag_from_items(new_items)
         new_file = FANTAS_DIST_DIR / f"fantas-{version}-{tag}.whl"
 
         pprint(f"更新 WHEEL 元数据：{new_items}", prompt="dev", col=Colors.INFO)
