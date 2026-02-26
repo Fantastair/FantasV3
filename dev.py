@@ -71,34 +71,46 @@ def show_diff_and_help_commit(command: str) -> None:
         cmd_run(["git", "--no-pager", "status", "--porcelain"], error_on_output=True)
     except subprocess.CalledProcessError:
         pprint(f"运行 {command} 命令时产生了上述更改", prompt="dev", col=Colors.WARNING)
-        pprint(
-            "是否需要自动添加这些修改并提交一次commit？ (y/n)",
-            prompt="dev",
-            col=Colors.TIP,
-        )
-
-        answer = input().strip().lower()
-        while answer not in ("y", "n"):
-            pprint("请输入 y 或 n", prompt="dev", col=Colors.TIP)
-            answer = input().strip().lower()
-
-        if answer == "y":
-            try:
-                cmd_run(["git", "add", "."])
-                cmd_run(["git", "commit", "-m", f"保存 {command} 命令产生的更改"])
-                pprint(
-                    "更改已提交，请重新运行 dev.py", prompt="dev", col=Colors.SUCCESS
-                )
-            except subprocess.CalledProcessError:
-                pprint(
-                    "自动提交失败，请手动检查更改并提交", prompt="dev", col=Colors.ERROR
-                )
+        if "CI" in os.environ:
+            pprint(
+                "代码格式化检查未通过，请执行 python dev.py format 格式化代码后重新提交",
+                prompt="dev",
+                col=Colors.ERROR,
+            )
+            sys.exit(1)
         else:
             pprint(
-                "请手动检查更改并提交，然后重新运行 dev.py",
+                "是否需要自动添加这些修改并提交一次commit？ (y/n)",
                 prompt="dev",
-                col=Colors.WARNING,
+                col=Colors.TIP,
             )
+
+            answer = input().strip().lower()
+            while answer not in ("y", "n"):
+                pprint("请输入 y 或 n", prompt="dev", col=Colors.TIP)
+                answer = input().strip().lower()
+
+            if answer == "y":
+                try:
+                    cmd_run(["git", "add", "."])
+                    cmd_run(["git", "commit", "-m", f"保存 {command} 命令产生的更改"])
+                    pprint(
+                        "更改已提交，请重新运行 dev.py",
+                        prompt="dev",
+                        col=Colors.SUCCESS,
+                    )
+                except subprocess.CalledProcessError:
+                    pprint(
+                        "自动提交失败，请手动检查更改并提交",
+                        prompt="dev",
+                        col=Colors.ERROR,
+                    )
+            else:
+                pprint(
+                    "请手动检查更改并提交，然后重新运行 dev.py",
+                    prompt="dev",
+                    col=Colors.WARNING,
+                )
         sys.exit(1)
 
 
@@ -208,6 +220,15 @@ def show_time_spent(start_time: int, end_time: int, command: str) -> None:
         prompt="dev",
         col=Colors.SUCCESS,
     )
+
+
+def _prep_all() -> tuple[Path, Path]:
+    poetry_path = prep_poetry()
+    venv_py = prep_venv(poetry_path, sys.executable)
+    prep_pygame(venv_py)
+    prep_deps(poetry_path)
+
+    return poetry_path, venv_py
 
 
 def _format(py: Path, ignore_git: bool) -> None:
@@ -550,6 +571,85 @@ def _build_all(poetry_path: Path, py: Path, target: Path) -> None:
         delete_file_or_dir(tmp_pygame_dir)
 
 
+def _release(py: Path, tag: str | None, yes: bool = False) -> None:
+    """
+    执行 release 子命令，使用 Git 创建 release/* 分支
+
+    Args:
+        py: Python 可执行文件的路径，用于获取版本信息
+        tag: 指定版本标签，如果为 None 则自动获取当前版本作为标签
+    """
+    if tag is None:
+        tag = get_version()
+
+    try:
+        branch_name = cmd_run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True
+        )
+    except subprocess.CalledProcessError:
+        pprint("获取当前 git 分支失败，请检查", prompt="dev", col=Colors.ERROR)
+        sys.exit(1)
+
+    try:
+        commit_hash = cmd_run(
+            ["git", "rev-parse", "--short", "HEAD"], capture_output=True
+        )
+    except subprocess.CalledProcessError:
+        pprint("获取当前 git 提交哈希失败，请检查", prompt="dev", col=Colors.ERROR)
+        sys.exit(1)
+
+    pprint(
+        f"当前分支: {branch_name}, 当前提交: {commit_hash}",
+        prompt="dev",
+        col=Colors.INFO,
+    )
+    if not yes:
+        answer = input(f"是否从此创建 release/{tag} 分支? (y/n): ").strip().lower()
+        while answer not in ("y", "n"):
+            pprint("请输入 y 或 n", prompt="dev", col=Colors.TIP)
+            answer = input(f"是否从此创建 release/{tag} 分支? (y/n): ").strip().lower()
+        if answer == "n":
+            return
+
+    try:
+        cmd_run(["git", "checkout", "-b", f"release/{tag}"])
+    except subprocess.CalledProcessError:
+        pprint("创建 release 分支失败，请检查", prompt="dev", col=Colors.ERROR)
+        sys.exit(1)
+
+    pprint(f"release/{tag} 分支已创建", prompt="dev", col=Colors.SUCCESS)
+    if not yes:
+        answer = (
+            input(f"是否立即推送 release/{tag} 分支到远程? (y/n): ").strip().lower()
+        )
+        while answer not in ("y", "n"):
+            pprint("请输入 y 或 n", prompt="dev", col=Colors.TIP)
+            answer = (
+                input(f"是否立即推送 release/{tag} 分支到远程? (y/n): ").strip().lower()
+            )
+        if answer == "n":
+            return
+
+    try:
+        cmd_run(["git", "push", "-u", "origin", f"release/{tag}"])
+    except subprocess.CalledProcessError:
+        pprint("推送 release 分支失败，请检查", prompt="dev", col=Colors.ERROR)
+        sys.exit(1)
+
+    try:
+        cmd_run(["git", "tag", f"v{tag}"])
+        cmd_run(["git", "push", "origin", f"v{tag}"])
+    except subprocess.CalledProcessError:
+        pprint("创建或推送 tag 失败，请检查", prompt="dev", col=Colors.ERROR)
+        sys.exit(1)
+
+    pprint(
+        f"版本 {tag} 已推送，可以前往 https://github.com/Fantastair/FantasV3/actions 检查 CI 构建状态",
+        prompt="dev",
+        col=Colors.SUCCESS,
+    )
+
+
 app = typer.Typer(
     help="""
 项目开发命令集成。你可以在子命令后添加 --help 来获取每个子命令的使用帮助。
@@ -598,16 +698,11 @@ def command(func):
 
 
 @command
-def prep_all(ignore_git: IgnoreGitOption = False) -> tuple[Path, Path]:
+def prep_all(ignore_git: IgnoreGitOption = False):
     """
     执行所有准备工作
     """
-    poetry_path = prep_poetry()
-    venv_py = prep_venv(poetry_path, sys.executable)
-    prep_pygame(venv_py)
-    prep_deps(poetry_path)
-
-    return poetry_path, venv_py
+    _prep_all()
 
 
 @command
@@ -615,7 +710,7 @@ def format(ignore_git: IgnoreGitOption = False) -> None:
     """
     格式化代码
     """
-    _, venv_py = prep_all(ignore_git=ignore_git)
+    _, venv_py = _prep_all()
     _format(venv_py, ignore_git)
 
 
@@ -624,7 +719,7 @@ def stubs(ignore_git: IgnoreGitOption = False) -> None:
     """
     静态类型检查
     """
-    _, venv_py = prep_all(ignore_git=ignore_git)
+    _, venv_py = _prep_all()
     _stubs(venv_py)
 
 
@@ -633,7 +728,7 @@ def lint(ignore_git: IgnoreGitOption = False) -> None:
     """
     代码质量检查
     """
-    _, venv_py = prep_all(ignore_git=ignore_git)
+    _, venv_py = _prep_all()
     _lint(venv_py)
 
 
@@ -647,7 +742,7 @@ def docs(
     """
     生成文档
     """
-    _, venv_py = prep_all(ignore_git=ignore_git)
+    _, venv_py = _prep_all()
     _docs(venv_py, full)
 
 
@@ -662,7 +757,7 @@ def test(
     """
     运行测试
     """
-    _, venv_py = prep_all(ignore_git=ignore_git)
+    _, venv_py = _prep_all()
     _test(venv_py, mod)
 
 
@@ -677,7 +772,7 @@ def build(
     """
     构建项目
     """
-    poetry_path, venv_py = prep_all(ignore_git=ignore_git)
+    poetry_path, venv_py = _prep_all()
     _build(poetry_path, venv_py, target, install)
 
 
@@ -686,7 +781,7 @@ def install(ignore_git: IgnoreGitOption = False) -> None:
     """
     安装项目 (可编辑安装)
     """
-    poetry_path, _ = prep_all(ignore_git=ignore_git)
+    poetry_path, _ = _prep_all()
     _install(poetry_path)
 
 
@@ -712,8 +807,35 @@ def build_all(
         if answer != "y":
             return
 
-    poetry_path, venv_py = prep_all(ignore_git=ignore_git)
+    poetry_path, venv_py = _prep_all()
     _build_all(poetry_path, venv_py, target)
+
+
+@command
+def pre_PR(ignore_git: IgnoreGitOption = False) -> None:
+    """
+    本地检查是否可以提交 PR
+    """
+
+    _, venv_py = _prep_all()
+    _format(venv_py, False)
+    _stubs(venv_py)
+    _lint(venv_py)
+    _test(venv_py, [])
+    _docs(venv_py, full=True)
+
+
+@command
+def release(
+    tag: Annotated[str | None, typer.Argument(help="指定版本标签")] = None,
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="跳过确认提示")] = False,
+    ignore_git: IgnoreGitOption = False,
+) -> None:
+    """
+    创建 release/* 分支
+    """
+    _, venv_py = _prep_all()
+    _release(venv_py, tag, yes)
 
 
 if __name__ == "__main__":
