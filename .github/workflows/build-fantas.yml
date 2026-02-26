@@ -1,55 +1,23 @@
-# 这个工作流会在 push 和 pull request 到 master 分支时触发，也可以被其他工作流调用
-# 用于构建 fantas 轮子
+# 这个工作流支持手动触发和被其他工作流调用
+# 会构建全部支持平台和架构的 Fantas 版本，并将构建结果上传为工作流产物
 
-name: Build Fantas Wheels
+name: Build Fantas
 
 on:
-  push:
-    branches: master
-
-  pull_request:
-    branches: master
-
   workflow_call:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-fantas
-  cancel-in-progress: true
+  workflow_dispatch:
 
 jobs:
-  build-wheels:
-    name: Build ${{ matrix.config.platform }}-${{ matrix.config.arch }} (Python ${{ matrix.python }})
-    runs-on: ${{ matrix.config.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          # Linux
-          - { os: ubuntu-latest, platform: linux, arch: x86_64, cibw_arch: x86_64 }
-          - { os: ubuntu-latest, platform: linux, arch: i686, cibw_arch: i686 }
-          - { os: ubuntu-latest, platform: linux, arch: aarch64, cibw_arch: aarch64 }
-          # MacOS
-          - { os: macos-15, platform: macos, arch: x86_64, cibw_arch: x86_64 }
-          - { os: macos-15, platform: macos, arch: arm64, cibw_arch: arm64 }
-          # Windows
-          - { os: windows-latest, platform: windows, arch: x86, cibw_arch: x86 }
-          - { os: windows-latest, platform: windows, arch: AMD64, cibw_arch: AMD64 }
-        python: ["3.12", "3.13", "3.14"]
+  build-fantas:
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v6.0.2
 
-    # Linux ARM64 架构需要 QEMU 来模拟运行
-    - name: Set up QEMU (for Linux ARM64)
-      if: matrix.config.arch == 'aarch64'
-      uses: docker/setup-qemu-action@v3.7.0
-      with:
-        platforms: arm64
-
     - name: Setup Python
       uses: actions/setup-python@v6.2.0
       with:
-        python-version: ${{ matrix.python }}
+        python-version: '3.13.5'
 
     # 缓存 Python 虚拟环境
     - name: Cache Python .venv
@@ -57,46 +25,20 @@ jobs:
       id: cache-python-venv
       with:
         path: .venv
-        key: ${{ matrix.config.os }}-${{ matrix.config.arch }}-py${{ matrix.python }}-venv-${{ hashFiles('requirements.txt') }}
+        key: ${{ runner.os }}-venv-${{ hashFiles('requirements.txt') }}
         restore-keys: |
-          ${{ matrix.config.os }}-${{ matrix.config.arch }}-py${{ matrix.python }}-venv
+          ${{ runner.os }}-venv
 
-    - name: Prepare Venv Python (Unix)
-      if: steps.cache-python-venv.outputs.cache-hit != 'true' && matrix.config.platform != 'Windows'
-      run: |
-        python -m venv .venv
-        source .venv/bin/activate
-        pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Prepare Venv Python (Windows)
-      if: steps.cache-python-venv.outputs.cache-hit != 'true' && matrix.config.platform == 'Windows'
-      run: |
-        python -m venv .venv
-        .venv\Scripts\activate
-        pip install --upgrade pip
-        pip install -r requirements.txt
-
-    - name: Build wheel (Unix)
-      if: matrix.config.platform != 'Windows'
+    # 使用 dev.py 脚本来构建 Fantas
+    - name: Build Fantas
       run: |
         source .venv/bin/activate
         export AUDIODEV=null
-        python dev.py build
+        python dev.py build-all
     
-    - name: Build wheel (Windows)
-      if: matrix.config.platform == 'Windows'
-      run: |
-        .venv\Scripts\activate
-        set AUDIODEV=null
-        python dev.py build
-      env:
-        PYTHONIOENCODING: utf-8
-
-    # 上传构建好的 wheel 文件作为构建产物，供后续工作流使用
-    - name: Upload a Build Artifact
+    - name: Upload Fantas artifacts
       uses: actions/upload-artifact@v6.0.0
       with:
-        name: fantas-wheel-${{ matrix.config.platform }}-${{ matrix.config.arch }}-py${{ matrix.python }}
-        path: ./dist/*.whl
+        name: fantas-wheels
+        path: dist/fantas-*.whl
         compression-level: 0

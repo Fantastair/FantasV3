@@ -9,47 +9,47 @@ on:
     branches: 'release/**'
 
 jobs:
-  build-wheels:
-    uses: ./.github/workflows/build-fantas.yml
-  
-  check-sdist:
+  dev-check:
     uses: ./.github/workflows/dev-check.yml
 
+  build-fantas:
+    uses: ./.github/workflows/build-fantas.yml
+
   draft-release:
-    needs: [build-wheels, check-sdist]
+    needs: [dev-check, build-fantas]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       attestations: write
       contents: write
-    
+
     steps:
-      - uses: actions/checkout@v6.0.2
+    - uses: actions/checkout@v6.0.2
 
-      - name: Download all artifacts
-        uses: actions/download-artifact@v7.0.0
-        with:
-          path: ./dist
-          pattern: fantas-*
-          merge-multiple: true
+    - name: Download all artifacts
+      uses: actions/download-artifact@v7.0.0
+      with:
+        path: ./dist
+        pattern: fantas-wheels
+        merge-multiple: true
 
-      # 获得版本号，去掉 'release/' 前缀，存储在 steps.ver.outputs.VER 中
-      - name: Get version
-        id: ver
-        run: echo "VER=${GITHUB_REF_NAME#'release/'}" >> $GITHUB_OUTPUT
+    # 获得版本号，去掉 'release/' 前缀，存储在 steps.ver.outputs.VER 中
+    - name: Get version
+      id: ver
+      run: echo "VER=${GITHUB_REF_NAME#'release/'}" >> $GITHUB_OUTPUT
 
-      - name: Generate release attestation
-        uses: actions/attest-build-provenance@v3.2.0
-        with:
-          subject-path: "dist/*"
-      
-      - name: Draft a release
-        uses: softprops/action-gh-release@v2.5.0
-        with:
-          draft: true
-          prerelease: ${{ contains(steps.ver.outputs.VER, 'dev') }}
-          files: dist/*
-          name: '${{ steps.ver.outputs.VER }} - {TODO put a title here} [DRAFTED BY CI]'
-          tag_name: ${{ steps.ver.outputs.VER }}
-          target_commitish: ${{ github.ref_name }}
-          generate_release_notes: true
+    - name: Generate release attestation
+      uses: actions/attest-build-provenance@v3.2.0
+      with:
+        subject-path: "dist/*"
+
+    - name: Draft a release
+      uses: softprops/action-gh-release@v2.5.0
+      with:
+        draft: true
+        prerelease: ${{ contains(steps.ver.outputs.VER, 'dev') }}
+        files: dist/*
+        name: '${{ steps.ver.outputs.VER }} - {TODO put a title here} [DRAFTED BY CI]'
+        tag_name: ${{ steps.ver.outputs.VER }}
+        target_commitish: ${{ github.ref_name }}
+        generate_release_notes: true

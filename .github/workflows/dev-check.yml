@@ -9,7 +9,7 @@ on:
 
   pull_request:
     branches: master
-  
+
   workflow_call:
 
 concurrency:
@@ -45,7 +45,7 @@ jobs:
         source .venv/bin/activate
         pip install --upgrade pip
         pip install -r requirements.txt
-    
+
     - name: Check dev.py all
       run: |
         source .venv/bin/activate
