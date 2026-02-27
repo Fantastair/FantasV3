@@ -38,8 +38,9 @@ fantas V3
     :caption: 其他
     :hidden:
 
-    关于 fantas 使用的 pygame-ce <ref/others/pygame-ce-for-fantas>
-    致谢💖💖💖 <ref/others/thanks>
+    ref/others/pygame-ce-for-fantas
+    ref/others/thanks
+    ref/others/q_and_a
 
 |Docs| |License| |Python| |pygame| |Code style: black|
 

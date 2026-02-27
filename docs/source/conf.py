@@ -41,6 +41,7 @@ language = "zh_CN"
 html_theme = "furo"
 html_title = f"fantas {get_version()} 文档"
 html_static_path = ["_static"]
+html_css_files = ["qa_style.css"]
 html_extra_path = [
     '../../LICENSE',
 ]

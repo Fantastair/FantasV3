@@ -1,0 +1,101 @@
+/* custom.css - Furo 主题 Q&A 样式 */
+
+/* 问题样式 - 使用 Furo 的 CSS 变量确保主题兼容 */
+.question {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--color-brand-primary);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-background-border);
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+/* Q 前缀样式 */
+.question::before {
+    content: "Q:";
+    font-weight: 700;
+    color: var(--color-brand-primary);
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+/* 回答容器 */
+.answer {
+    margin-left: 0;
+    margin-bottom: 2rem;
+    padding: 1rem 1.25rem;
+    background-color: var(--color-background-secondary);
+    border-radius: 8px;
+    border-left: 4px solid var(--color-brand-primary);
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+/* A 前缀 */
+.answer::before {
+    content: "A:";
+    font-weight: 700;
+    color: var(--color-brand-primary);
+    opacity: 0.8;
+    margin: 0 0.5rem;
+    font-size: 0.9em;
+}
+
+/* 回答中的段落间距 */
+.answer p {
+    margin: 0.5rem 0;
+    margin-right: 0.5rem;
+}
+
+.answer p:first-child {
+    margin-top: 0;
+}
+
+.answer p:last-child {
+    margin-bottom: 0;
+}
+
+/* 代码块在回答中的样式微调 */
+.answer pre {
+    margin: 0.75rem 0;
+    border-radius: 6px;
+}
+
+/* 暗色模式特殊调整（Furo 会自动切换变量，但可做细节优化） */
+[data-theme="dark"] .answer {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-left-color: var(--color-brand-primary);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .question {
+        font-size: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .answer {
+        padding: 0.875rem 1rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* 打印样式优化 */
+@media print {
+    .answer {
+        break-inside: avoid;
+        border-left: 2px solid #333;
+        background-color: #f5f5f5 !important;
+    }
+    
+    .question {
+        color: #333 !important;
+        border-bottom-color: #ccc;
+    }
+}
