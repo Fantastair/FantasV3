@@ -17,7 +17,7 @@ fantas V3
 
 .. toctree::
     :maxdepth: 2
-    :caption: 模块
+    :caption: 参考
     :hidden:
 
     ref/modules/color
@@ -98,62 +98,24 @@ fantas 可以通过 :code:`pip` 轻松安装：
 教程
 ----
 
-基础概念
-~~~~~~~~
+介绍 fantas 的核心概念和使用方法，适合初学者入门。
 
-fantas 中有些类是直接复用的 pygame-ce 中的类，如 :class:`fantas.Rect` 和
-:class:`fantas.color.Color` 等，
-关于这些类的详细信息可以在 `pygame 文档`_ 中找到，本教程则会介绍一些常用的用法和技巧。
+.. admonition:: 未完成
+    :class: note
 
-有些类是继承自 pygame-ce 中的类，如 :class:`~fantas.window.Window` 和
-:class:`~fantas.font.Font` 等，在保留了原有接口的基础上，添加了一些新的功能和属性，
-新增的部分可以在本文档中找到。
-
-还有一些类是 fantas 独有的，如 :class:`~fantas.ui.UI` 和 :class:`~fantas.curve.Curve`
-等，这些类决定了 fantas 的核心逻辑和设计理念，有关详细信息也可以在本文档中找到。
-
-- :doc:`ref/tutorials/color`
-- :doc:`ref/tutorials/rect`
-- :doc:`ref/tutorials/animation`
+    TODO: 编写教程内容。
 
 .. _references-reference-label:
 
 参考
 ----
 
-.. important::
+详细介绍 fantas 的各个模块和函数的功能和参数，适合有一定基础的用户查阅。
 
-    所有模块的接口都是在 fantas 包的顶层导出的，你不需要使用任何子模块的名字来访问它们。
+.. admonition:: 未完成
+    :class: note
 
-- :doc:`color <ref/modules/color>`
-    .. automodule:: fantas.color
-        :no-members:
-        :no-index:
-- :doc:`constants <ref/modules/constants>`: 
-    .. automodule:: fantas.constants
-        :no-members:
-        :no-index:
-- :doc:`curve <ref/modules/curve>`
-    .. automodule:: fantas.curve
-        :no-members:
-        :no-index:
-- :doc:`debug <ref/modules/debug>`
-    .. automodule:: fantas.debug
-        :no-members:
-        :no-index:
-- :doc:`event_handler <ref/modules/event_handler>`
-    .. automodule:: fantas.event_handler
-        :no-members:
-        :no-index:
-- :doc:`fantas_typing <ref/modules/fantas_typing>`
-    .. automodule:: fantas.fantas_typing
-        :no-members:
-        :no-index:
-- :doc:`fantas <ref/modules/fantas>`
-    .. automodule:: fantas
-        :no-members:
-        :no-index:
-- :ref:`rect-documentatioin` 
+    TODO: 编写参考内容。
 
 开发帮助
 --------
