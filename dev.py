@@ -236,9 +236,7 @@ def remind_switch_venv(venv_py: Path) -> None:
             col=Colors.WARNING,
         )
         if platform.system() == "Windows":
-            pprint(
-                f"{venv_py.parent / 'activate'}", prompt="dev", col=Colors.COMMAND
-            )
+            pprint(f"{venv_py.parent / 'activate'}", prompt="dev", col=Colors.COMMAND)
         else:
             pprint(
                 f"source {venv_py.parent / 'activate'}",
