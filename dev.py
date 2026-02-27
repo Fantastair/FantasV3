@@ -7,8 +7,10 @@
 
 import os
 import sys
+import atexit
 import shutil
 import zipfile
+import platform
 import subprocess
 from pathlib import Path
 from functools import wraps
@@ -148,6 +150,8 @@ def prep_venv(poetry_path: Path, py: Path) -> Path:
     else:
         venv_py = Path(venv_py) / "bin" / "python"
 
+    atexit.register(remind_switch_venv, venv_py)
+
     pprint(f"虚拟环境已就绪 ({venv_py})", prompt="dev", col=Colors.SUCCESS)
 
     return venv_py
@@ -221,6 +225,20 @@ def show_time_spent(start_time: int, end_time: int, command: str) -> None:
         prompt="dev",
         col=Colors.SUCCESS,
     )
+
+
+def remind_switch_venv(venv_py: Path) -> None:
+    if sys.executable != venv_py:
+        pprint(
+            f"当前 Python 解释器是 {sys.executable}，"
+            f"建议使用虚拟环境 {venv_py} 来运行后续命令以确保依赖隔离：",
+            prompt="dev",
+            col=Colors.WARNING,
+        )
+        if platform.system() == "Windows":
+            pprint(f"{venv_py.parent}\\Scripts\\activate", prompt="dev", col=Colors.COMMAND)
+        else:
+            pprint(f"source {venv_py.parent}/bin/activate", prompt="dev", col=Colors.COMMAND)
 
 
 def _prep_all() -> tuple[Path, Path]:
