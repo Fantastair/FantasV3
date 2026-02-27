@@ -228,7 +228,7 @@ def show_time_spent(start_time: int, end_time: int, command: str) -> None:
 
 
 def remind_switch_venv(venv_py: Path) -> None:
-    if sys.executable != venv_py:
+    if sys.executable != str(venv_py):
         pprint(
             f"当前 Python 解释器是 {sys.executable}，"
             f"建议使用虚拟环境 {venv_py} 来运行后续命令以确保依赖隔离：",
@@ -237,11 +237,11 @@ def remind_switch_venv(venv_py: Path) -> None:
         )
         if platform.system() == "Windows":
             pprint(
-                f"{venv_py.parent}\\Scripts\\activate", prompt="dev", col=Colors.COMMAND
+                f"{venv_py.parent / 'activate'}", prompt="dev", col=Colors.COMMAND
             )
         else:
             pprint(
-                f"source {venv_py.parent}/bin/activate",
+                f"source {venv_py.parent / 'activate'}",
                 prompt="dev",
                 col=Colors.COMMAND,
             )
