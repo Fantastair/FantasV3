@@ -33,6 +33,8 @@ fantas V3
     :caption: 开发帮助
     :hidden:
 
+    ref/dev_help/dev.py
+
 .. toctree::
     :maxdepth: 2
     :caption: 其他
@@ -156,9 +158,19 @@ fantas 中有些类是直接复用的 pygame-ce 中的类，如 :class:`fantas.R
 开发帮助
 --------
 
-.. admonition:: 未完成
+如果你想要参与 fantas 的开发，或者想要自己编译一个版本，那么你需要了解一些关于 fantas
+的开发指南：
 
-    TODO: 编写开发帮助文档。
+fantas 源代码托管在 `GitHub`_ 上，欢迎访问、使用和贡献。
+
+首先，你需要克隆 fantas 的代码仓库（当然，也可以是你自己 fork 后的仓库）：
+
+.. code-block:: bash
+
+    git clone https://github.com/Fantastair/FantasV3.git
+
+fantas 提供了一个开发脚本 :code:`dev.py`，集成了所有开发过程中可能需要用到的命令，查看
+:doc:`/ref/dev_help/dev.py` 
 
 其他
 ----
@@ -174,8 +186,8 @@ fantas 中有些类是直接复用的 pygame-ce 中的类，如 :class:`fantas.R
     但必须保留原作者的版权声明和许可声明。
 
 .. [1] pygame-ce_ 是 pygame_ 的一个社区维护版本，提供了更好的性能和更多的功能支持。
-    fantas 使用的 pygame-ce 是从 pygame-ce 2.5.7 的 main 分支 fork 后进行了修改的版本。
-    有关具体的修改内容，请参阅
+    fantas 使用的 pygame-ce 是从 pygame-ce 2.5.7.dev1 的 main 分支 fork 后进行了修改的版
+    本。有关具体的修改内容，请参阅
     :doc:`关于 fantas 使用的 pygame-ce <ref/others/pygame-ce-for-fantas>` 。
 
 .. _GitHub: https://github.com/fantastair/FantasV3
