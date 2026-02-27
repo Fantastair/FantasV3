@@ -304,11 +304,16 @@ def _lint(py: Path) -> None:
     pprint("代码质量检查已通过", prompt="dev", col=Colors.SUCCESS)
 
 
-def _docs(py: Path, full: bool) -> None:
+def _docs(py: Path, full: bool, quiet: bool) -> None:
     """
     执行 docs 子命令，使用 Sphinx 生成文档
+
+    Args:
+        py: Python 可执行文件的路径，用于运行 Sphinx
+        full: 是否使用 -E 参数强制重新生成所有文档
+        quiet: 是否在生成文档时静默输出 Sphinx 的日志
     """
-    pprint(f"生成文档中 (参数 {full=})", prompt="dev")
+    pprint(f"生成文档中 (参数 {full=}, quiet={quiet})", prompt="dev")
 
     _static_dir = CWD / "docs" / "source" / "_static"
     _static_dir.mkdir(parents=True, exist_ok=True)
@@ -323,12 +328,13 @@ def _docs(py: Path, full: bool) -> None:
         "html",
         "docs/source",
         "docs/build/html",
-        "--quiet",
     ]
     if full:
         cmd.append("-E")
+    if quiet:
+        cmd.append("--quiet")
     try:
-        cmd_run(cmd, error_on_output=True)
+        cmd_run(cmd, error_on_output=quiet)
     except subprocess.CalledProcessError:
         pprint(
             "文档生成失败，请检查 Sphinx 输出的错误信息", prompt="dev", col=Colors.ERROR
@@ -760,13 +766,14 @@ def docs(
     full: Annotated[
         bool, typer.Option("--full", "-f", help="重新生成完整文档，忽略之前的缓存")
     ] = False,
+    quiet: Annotated[bool, typer.Option(help="生成文档时不输出 Sphinx 的日志")] = True,
     ignore_git: IgnoreGitOption = False,
 ) -> None:
     """
     生成文档
     """
     _, venv_py = _prep_all()
-    _docs(venv_py, full)
+    _docs(venv_py, full, quiet)
 
 
 @command
@@ -841,11 +848,11 @@ def pre_PR(ignore_git: IgnoreGitOption = False) -> None:
     """
 
     _, venv_py = _prep_all()
-    _format(venv_py, False)
+    _format(venv_py, ignore_git)
     _stubs(venv_py)
     _lint(venv_py)
     _test(venv_py, [])
-    _docs(venv_py, full=True)
+    _docs(venv_py, full=True, quiet=True)
 
 
 @command

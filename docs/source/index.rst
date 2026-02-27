@@ -17,7 +17,7 @@ fantas V3
 
 .. toctree::
     :maxdepth: 2
-    :caption: 模块
+    :caption: 参考
     :hidden:
 
     ref/modules/color
@@ -33,24 +33,27 @@ fantas V3
     :caption: 开发帮助
     :hidden:
 
+    ref/dev_help/dev.py
+
 .. toctree::
     :maxdepth: 2
     :caption: 其他
     :hidden:
 
-    关于 fantas 使用的 pygame-ce <ref/others/pygame-ce-for-fantas>
-    致谢🎉🎉🎉 <ref/others/thanks>
+    ref/others/pygame-ce-for-fantas
+    ref/others/thanks
+    ref/others/q_and_a
 
 |Docs| |License| |Python| |pygame| |Code style: black|
 
 .. |Docs| image:: https://img.shields.io/badge/docs-online-green
-   :target: #
+   :target: https://fantas.fantastair.cn/docs/
 .. |License| image:: https://img.shields.io/badge/License-MIT-lightgray
    :target: `MIT License`_
 .. |Python| image:: https://img.shields.io/badge/python-3-blue?logo=python
    :target: https://www.python.org/
 .. |pygame| image:: https://img.shields.io/badge/pygame_ce-2.5.7_for_fantas-blue
-   :target: `pygame-ce-for-fantas`_
+   :target: `pygame-ce for fantas`_
 .. |Code style: black| image:: https://img.shields.io/badge/code%20style-black-black
    :target: https://github.com/psf/black
 
@@ -69,19 +72,8 @@ fantas 可以通过 :code:`pip` 轻松安装：
 
 .. code-block:: bash
 
-    pip install fantas  # 最简单
+    pip install fantas
 
-    pip3 install fantas  # 兼容性更好
-
-    python -m pip install fantas  # 兼容性最好
-
-.. admonition:: 暂时未发布到 PyPI
-    :class: warning
-
-    目前 fantas 还没有发布到 PyPI 上，你可能需要从 GitHub 仓库下载并自行编译安装。
-
-    别担心，fantas 提供了开发用的一键安装脚本 :code:`python dev.py install`，
-    希望你不会碰到未知的错误。
 
 小试牛刀
 ~~~~~~~~
@@ -106,69 +98,41 @@ fantas 可以通过 :code:`pip` 轻松安装：
 教程
 ----
 
-基础概念
-~~~~~~~~
+介绍 fantas 的核心概念和使用方法，适合初学者入门。
 
-fantas 中有些类是直接复用的 pygame-ce 中的类，如 :class:`fantas.Rect` 和
-:class:`fantas.color.Color` 等，
-关于这些类的详细信息可以在 pygame 的文档中找到，本教程则会介绍一些常用的用法和技巧。
+.. admonition:: 未完成
+    :class: note
 
-有些类是继承自 pygame-ce 中的类，如 :class:`~fantas.window.Window` 和
-:class:`~fantas.font.Font` 等，在保留了原有接口的基础上，添加了一些新的功能和属性，
-新增的部分可以在 fantas 的文档中找到。
-
-还有一些类是 fantas 独有的，如 :class:`~fantas.ui.UI` 和 :class:`~fantas.curve.Curve`
-等，这些类决定了 fantas 的核心逻辑和设计理念，有关详细信息也可以在 fantas 的文档中找到。
-
-- :doc:`ref/tutorials/color`
-- :doc:`ref/tutorials/rect`
-- :doc:`ref/tutorials/animation`
+    TODO: 编写教程内容。
 
 .. _references-reference-label:
 
 参考
 ----
 
-.. important::
+详细介绍 fantas 的各个模块和函数的功能和参数，适合有一定基础的用户查阅。
 
-    所有模块的接口都是在 fantas 包的顶层导出的，你不需要使用任何子模块的名字来访问它们。
+.. admonition:: 未完成
+    :class: note
 
-- :doc:`color <ref/modules/color>`
-    .. automodule:: fantas.color
-        :no-members:
-        :no-index:
-- :doc:`constants <ref/modules/constants>`: 
-    .. automodule:: fantas.constants
-        :no-members:
-        :no-index:
-- :doc:`curve <ref/modules/curve>`
-    .. automodule:: fantas.curve
-        :no-members:
-        :no-index:
-- :doc:`debug <ref/modules/debug>`
-    .. automodule:: fantas.debug
-        :no-members:
-        :no-index:
-- :doc:`event_handler <ref/modules/event_handler>`
-    .. automodule:: fantas.event_handler
-        :no-members:
-        :no-index:
-- :doc:`fantas_typing <ref/modules/fantas_typing>`
-    .. automodule:: fantas.fantas_typing
-        :no-members:
-        :no-index:
-- :doc:`fantas <ref/modules/fantas>`
-    .. automodule:: fantas
-        :no-members:
-        :no-index:
-- :ref:`rect-documentatioin` 
+    TODO: 编写参考内容。
 
 开发帮助
 --------
 
-.. admonition:: 未完成
+如果你想要参与 fantas 的开发，或者想要自己编译一个版本，那么你需要了解一些关于 fantas
+的开发指南：
 
-    TODO: 编写开发帮助文档。
+fantas 源代码托管在 `GitHub`_ 上，欢迎访问、使用和贡献。
+
+首先，你需要克隆 fantas 的代码仓库（当然，也可以是你自己 fork 后的仓库）：
+
+.. code-block:: bash
+
+    git clone https://github.com/Fantastair/FantasV3.git
+
+fantas 提供了一个开发脚本 :code:`dev.py`，集成了所有开发过程中可能需要用到的命令，查看
+:doc:`/ref/dev_help/dev.py` 
 
 其他
 ----
@@ -176,7 +140,7 @@ fantas 中有些类是直接复用的 pygame-ce 中的类，如 :class:`fantas.R
 `GitHub`_
     这是 fantas 的代码仓库，欢迎访问、使用和贡献。
 
-    在此也一并提供 `pygame-ce-for-fantas`_ 的仓库链接。fantas 使用的是其 fantas
+    在此也一并提供 `pygame-ce for fantas`_ 的仓库链接。fantas 使用的是其 fantas
     分支编译的版本。
 
 `MIT License`_
@@ -184,8 +148,8 @@ fantas 中有些类是直接复用的 pygame-ce 中的类，如 :class:`fantas.R
     但必须保留原作者的版权声明和许可声明。
 
 .. [1] pygame-ce_ 是 pygame_ 的一个社区维护版本，提供了更好的性能和更多的功能支持。
-    fantas 使用的 pygame-ce 是从 pygame-ce 2.5.7 的 main 分支 fork 后进行了修改的版本。
-    有关具体的修改内容，请参阅
+    fantas 使用的 pygame-ce 是从 pygame-ce 2.5.7.dev1 的 main 分支 fork 后进行了修改的版
+    本。有关具体的修改内容，请参阅
     :doc:`关于 fantas 使用的 pygame-ce <ref/others/pygame-ce-for-fantas>` 。
 
 .. _GitHub: https://github.com/fantastair/FantasV3
@@ -196,4 +160,6 @@ fantas 中有些类是直接复用的 pygame-ce 中的类，如 :class:`fantas.R
 
 .. _pygame-ce: https://pyga.me/
 
-.. _pygame-ce-for-fantas: https://github.com/Fantastair/pygame-ce/tree/fantas
+.. _pygame 文档: https://pyga.me/docs/
+
+.. _pygame-ce for fantas: https://github.com/Fantastair/pygame-ce/tree/fantas

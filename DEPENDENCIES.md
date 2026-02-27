@@ -9,10 +9,7 @@
   - 本项目使用修改过的版本，地址（Modified Version）：[https://github.com/Fantastair/pygame-ce](https://github.com/Fantastair/pygame-ce)。
   - 使用的分支（Branch）：`fantas`。
   - 修改说明（Modification Notes）：
-    - 修复了`pygame.draw.aacircle`的`width`参数的计算问题。
-      Fixed the calculation issue of the `width` parameter in `pygame.draw.aacircle`.
-    - 新增`pygame.draw.aarect`函数，支持绘制抗锯齿圆角矩形矩形。
-      Added `pygame.draw.aarect` function to support drawing anti-aliased rounded rectangles.
+    查看 [pygame-ce for fantas](docs/source/ref/others/pygame-ce-for-fantas.rst) 文档以获取详细信息。
 
 ## 依赖许可说明（Dependency License Notice）
 
