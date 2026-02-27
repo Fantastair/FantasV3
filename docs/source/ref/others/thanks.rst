@@ -46,8 +46,8 @@ GitHub 仓库：https://github.com/pradyunsg/furo
 typer
 -----
 
-fantas 的开发命令集成脚本 dev.py 由 typer 驱动，typer 提供了简单、直观和强大的命令行接口，
-使得 fantas 的开发命令易于使用和扩展。
+fantas 的开发命令集成脚本 dev.py 由 typer 驱动，typer 提供了简单、
+直观和强大的命令行接口，使得 fantas 的开发命令易于使用和扩展。
 
 主页：https://typer.tiangolo.com/
 
@@ -86,8 +86,8 @@ GitHub 仓库：https://github.com/pylint-dev/pylint
 pytest
 ------
 
-fantas 使用 pytest 进行测试，pytest 提供了简洁、灵活和强大的测试框架，使得 fantas 的测试
-编写和运行更加高效和便捷。
+fantas 使用 pytest 进行测试，pytest 提供了简洁、灵活和强大的测试框架，使得 fantas
+的测试编写和运行更加高效和便捷。
 
 主页：https://docs.pytest.org
 

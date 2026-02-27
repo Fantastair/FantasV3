@@ -41,8 +41,8 @@ fantas V3
     :hidden:
 
     ref/others/pygame-ce-for-fantas
-    ref/others/thanks
     ref/others/q_and_a
+    ref/others/thanks
 
 |Docs| |License| |Python| |pygame| |Code style: black|
 
