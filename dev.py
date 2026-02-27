@@ -848,11 +848,11 @@ def pre_PR(ignore_git: IgnoreGitOption = False) -> None:
     """
 
     _, venv_py = _prep_all()
-    _format(venv_py, False)
+    _format(venv_py, ignore_git)
     _stubs(venv_py)
     _lint(venv_py)
     _test(venv_py, [])
-    _docs(venv_py, full=True)
+    _docs(venv_py, full=True, quiet=True)
 
 
 @command
