@@ -14,6 +14,7 @@ __all__ = ["ensure_typer_installed"]
 
 CWD = Path(__file__).parent.parent
 
+
 def ensure_typer_installed():
     """
     确保 typer 已经安装，如果没有安装则安装它

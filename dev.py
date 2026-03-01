@@ -18,6 +18,7 @@ from typing import TypeAlias
 from time import perf_counter_ns as get_time_ns
 
 from tools.install_typer import ensure_typer_installed
+
 ensure_typer_installed()
 
 import typer
