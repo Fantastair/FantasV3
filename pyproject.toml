@@ -58,10 +58,10 @@ line-length = 88
 [tool.mypy]
 strict = true
 files = [
-    "fantas",
-]
-exclude = [
-    "fantas/_vendor",
+    "fantas/__init__.py",
+    "fantas/base/",
+    "fantas/ext/",
+    "fantas/utils/",
 ]
 warn_unused_configs = true
 
