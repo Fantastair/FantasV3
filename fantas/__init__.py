@@ -13,6 +13,8 @@ __all__ = (
     "transform",
 )
 
+__version__ = "3.0.1.dev1"
+
 # 设置 Pygame 环境变量以优化性能和兼容性
 import os
 
@@ -73,25 +75,24 @@ from fantas._vendor.pygame import (
 )
 
 # 导入 fantas 包的各个子模块
-from fantas.version import *  # 版本信息
-from fantas.fantas_typing import *  # 类型定义
-from fantas.constants import *  # 常量定义
-from fantas.misc import *  # 杂项工具
-from fantas.nodebase import *  # 节点基类
-from fantas.curve import *  # 曲线支持
-from fantas.color import *  # 颜色支持
-from fantas.font import *  # 字体支持
-from fantas.style import *  # 样式支持
-from fantas.resource import *  # 资源管理
-from fantas.window import *  # 窗口管理
-from fantas.renderer import *  # 渲染支持
-from fantas.event_handler import *  # 事件处理
-from fantas.framefunc import *  # 帧函数支持
-from fantas.ui import *  # UI 基类
-from fantas.layout import *  # 布局支持
+from fantas.base.fantas_typing import *  # 类型定义
+from fantas.base.constants import *  # 常量定义
+from fantas.utils.misc import *  # 杂项工具
+from fantas.base.nodebase import *  # 节点基类
+from fantas.utils.curve import *  # 曲线支持
+from fantas.utils.color import *  # 颜色支持
+from fantas.ext.font import *  # 字体支持
+from fantas.base.style import *  # 样式支持
+from fantas.utils.resource import *  # 资源管理
+from fantas.base.window import *  # 窗口管理
+from fantas.base.renderer import *  # 渲染支持
+from fantas.base.event_handler import *  # 事件处理
+from fantas.base.framefunc import *  # 帧函数支持
+from fantas.base.ui import *  # UI 基类
+from fantas.ext.layout import *  # 布局支持
 
-from fantas.udp import *  # UDP 通信
-from fantas.debug import *  # 调试功能
+from fantas.utils.udp import *  # UDP 通信
+from fantas.utils.debug import *  # 调试功能
 
 # 先禁用所有事件，然后再根据需要启用特定事件
 event.set_blocked(None)
