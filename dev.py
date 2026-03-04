@@ -892,5 +892,6 @@ def release(
     _, venv_py = _prep_all()
     _release(venv_py, tag, yes)
 
+
 if __name__ == "__main__":
     app()
