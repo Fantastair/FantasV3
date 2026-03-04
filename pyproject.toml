@@ -60,10 +60,8 @@ strict = true
 files = [
     "fantas",
 ]
-exclude = [
-    "fantas/_vendor",
-]
 warn_unused_configs = true
+disable_error_code = ["misc"]
 
 [[tool.mypy.overrides]]
 module = "fantas._vendor.*"
@@ -78,7 +76,7 @@ ignore = "pygame"
 
 [tool.pylint.messages_control]
 disable = [
-    "R0401", "R0902", "R0903", "R0912", "R0913", "R0914", "R0917",
+    "R0401", "R0902", "R0903", "R0912", "R0913", "R0914", "R0917", "R0801",
     "C0301", "C0302", "C0413",
     "W0123", "W0401",
     "E1136",

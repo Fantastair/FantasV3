@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Callable, cast
 import math
 
-import fantas
+from .misc import lru_cache_typed
 
 __all__ = (
     "CurveBase",
@@ -70,7 +70,7 @@ class FormulaCurve(CurveBase):
     其他数学函数需要通过 math 模块调用，例如 math.sqrt(x)。
     """
 
-    @fantas.lru_cache_typed(maxsize=65536)
+    @lru_cache_typed(maxsize=65536)
     def __call__(self, x: float) -> float:
         """
         计算曲线在给定 x 值处的 y 值。

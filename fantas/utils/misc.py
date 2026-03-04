@@ -1,41 +1,24 @@
 """
-fantas.misc 的 Docstring
+其他杂项工具。
 """
 
 import platform
 from pathlib import Path
 from typing import Callable, ParamSpec, TypeVar, cast
-from itertools import count
 
-# from importlib import resources
 from functools import lru_cache, wraps
 from dataclasses import dataclass, field
-from time import perf_counter_ns as get_time_ns
 
 import fantas
 
 __all__ = (
     "platform",
-    "get_time_ns",
-    "generate_unique_id",
     "lru_cache_typed",
     "set_cursor",
     "image_convert_hook",
     "image_convert_alpha_hook",
     "AnimationHelper",
 )
-
-# 全局唯一 ID 生成器
-id_counter = count()
-
-
-def generate_unique_id() -> int:
-    """
-    生成一个全局唯一的整数 ID。
-    Returns:
-        int: 唯一整数 ID。
-    """
-    return next(id_counter)
 
 
 P = ParamSpec("P")

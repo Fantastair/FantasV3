@@ -9,6 +9,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 import fantas
+from .misc import image_convert_hook, AnimationHelper
+from .font import Font as fantas_Font
 
 __all__ = (
     "images",
@@ -58,7 +60,7 @@ class ImageLoader(ResourceLoader[fantas.Surface]):
         self,
         path: Path | str,
         alias: str | None = None,
-        hook: Callable[[fantas.Surface], fantas.Surface] = fantas.image_convert_hook,
+        hook: Callable[[fantas.Surface], fantas.Surface] = image_convert_hook,
     ) -> None:
         """
         加载位图图像资源。
@@ -77,7 +79,7 @@ class ImageLoader(ResourceLoader[fantas.Surface]):
         path: Path | str,
         alias: str | None = None,
         size: int = 64,
-        hook: Callable[[fantas.Surface], fantas.Surface] = fantas.image_convert_hook,
+        hook: Callable[[fantas.Surface], fantas.Surface] = image_convert_hook,
     ) -> None:
         """
         加载 SVG 图像资源。
@@ -99,7 +101,7 @@ images = ImageLoader()
 
 
 @dataclass(slots=True)
-class FontLoader(ResourceLoader[fantas.Font]):
+class FontLoader(ResourceLoader[fantas_Font]):
     """字体资源加载器。"""
 
     def load(self, path: Path | str, alias: str | None = None) -> None:
@@ -160,14 +162,14 @@ class ColorLoader(ResourceLoader[fantas.Color]):
 colors = ColorLoader()
 
 
-class AnimationLoader(ResourceLoader[fantas.AnimationHelper]):
+class AnimationLoader(ResourceLoader[AnimationHelper]):
     """动画资源加载器。"""
 
     def load(
         self,
         path: Path | str,
         alias: str | None = None,
-        hook: Callable[[fantas.Surface], fantas.Surface] = fantas.image_convert_hook,
+        hook: Callable[[fantas.Surface], fantas.Surface] = image_convert_hook,
     ) -> None:
         """
         load 的 Docstring

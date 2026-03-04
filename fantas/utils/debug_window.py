@@ -13,14 +13,16 @@ from collections import deque
 from typing import ClassVar, Deque, cast
 
 import fantas
+from fantas.utils.udp import get_socket_port
 from fantas import math as fantas_math
+from fantas.utils.debug import DebugFlag, Debug
 
-debug_flags = fantas.DebugFlag(int(sys.argv[1]))
+debug_flags = DebugFlag(int(sys.argv[1]))
 
 windows_title: str
 
 # 如果没有启用任何调试标志，则退出子进程
-if debug_flags not in fantas.DebugFlag.ALL:
+if debug_flags not in DebugFlag.ALL:
     sys.exit(0)
 
 # 预加载资源
@@ -168,9 +170,7 @@ class EventLogWindow(fantas.Window):
         """
         处理窗口关闭事件。
         """
-        fantas.Debug.send_debug_data(
-            fantas.DebugFlag.EVENTLOG, prompt="CloseDebugWindow"
-        )
+        Debug.send_debug_data(DebugFlag.EVENTLOG, prompt="CloseDebugWindow")
         return False
 
 
@@ -353,9 +353,7 @@ class TimeRecordWindow(fantas.Window):
         """
         处理窗口关闭事件。
         """
-        fantas.Debug.send_debug_data(
-            fantas.DebugFlag.TIMERECORD, prompt="CloseDebugWindow"
-        )
+        Debug.send_debug_data(DebugFlag.TIMERECORD, prompt="CloseDebugWindow")
         return False
 
 
@@ -447,9 +445,7 @@ class MouseMagnifyWindow(fantas.Window):
         """
         处理窗口关闭事件。
         """
-        fantas.Debug.send_debug_data(
-            fantas.DebugFlag.MOUSEMAGNIFY, prompt="CloseDebugWindow"
-        )
+        Debug.send_debug_data(DebugFlag.MOUSEMAGNIFY, prompt="CloseDebugWindow")
         return False
 
     def handle_mousewheel_event(self, event: fantas.Event) -> bool:
@@ -465,7 +461,7 @@ class MouseMagnifyWindow(fantas.Window):
             self.ratio = max(self.ratio // 2, 4)
         if self.ratio == last_ratio:
             return False
-        fantas.Debug.send_debug_data(self.ratio, prompt="SetMouseMagnifyRatio")
+        Debug.send_debug_data(self.ratio, prompt="SetMouseMagnifyRatio")
         new_surface = fantas.Surface((256 // self.ratio, 256 // self.ratio))
         new_surface.blit(self.mouse_shot_img.surface, (0, 0))
         self.mouse_shot_img.surface = new_surface
@@ -478,8 +474,8 @@ def handle_debugreceived_event(_: fantas.Event) -> bool:
     """
     处理接收到的调试命令事件。
     """
-    while not fantas.Debug.queue.empty():
-        data = fantas.Debug.queue.get()
+    while not Debug.queue.empty():
+        data = Debug.queue.get()
         prompt = data[0]
         if prompt == "EventLog" and event_log_window is not None:
             event_log_window.log_event(data[1])
@@ -500,15 +496,15 @@ time_record_window: TimeRecordWindow | None = None
 mouse_magnify_window: MouseMagnifyWindow | None = None
 
 # 如果启用了事件日志调试标志，则创建事件日志窗口
-if fantas.DebugFlag.EVENTLOG in debug_flags:
+if DebugFlag.EVENTLOG in debug_flags:
     event_log_window = EventLogWindow()
     windows.append(event_log_window)
 # 如果启用了时间记录调试标志，则创建时间记录窗口
-if fantas.DebugFlag.TIMERECORD in debug_flags:
+if DebugFlag.TIMERECORD in debug_flags:
     time_record_window = TimeRecordWindow()
     windows.append(time_record_window)
 # 如果启用了鼠标放大调试标志，则创建鼠标放大窗口
-if fantas.DebugFlag.MOUSEMAGNIFY in debug_flags:
+if DebugFlag.MOUSEMAGNIFY in debug_flags:
     mouse_magnify_window = MouseMagnifyWindow()
     windows.append(mouse_magnify_window)
 # 注册接收调试命令事件的处理器
@@ -521,11 +517,11 @@ debug_windows = fantas.MultiWindow(*windows)
 debug_windows.auto_place_windows(10)
 
 # 设置主程序端口号
-fantas.Debug.set_sendto_port(int(sys.argv[3]))
+Debug.set_sendto_port(int(sys.argv[3]))
 # 启动读取调试命令的后台线程
-fantas.Debug.start_read_thread()
+Debug.start_read_thread()
 # 返回调试窗口的 UDP 端口号给主程序
-print(fantas.get_socket_port(fantas.Debug.udp_socket), flush=True)
+print(get_socket_port(Debug.udp_socket), flush=True)
 
 # 运行调试窗口主循环
 debug_windows.mainloops()

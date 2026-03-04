@@ -77,6 +77,7 @@ from fantas._vendor.pygame.constants import (
     SYSTEM_CURSOR_HAND,
 )
 from fantas._vendor.pygame import colordict
+from fantas._vendor.pygame.time import Clock
 
 import fantas
 
@@ -161,7 +162,10 @@ __all__ = [
     "SYSTEM_CURSOR_SIZEALL",
     "SYSTEM_CURSOR_NO",
     "SYSTEM_CURSOR_HAND",
+    "CLOCK",
 ]
+
+CLOCK = Clock()  # 全局时钟对象引用
 
 
 class Quadrant(IntEnum):

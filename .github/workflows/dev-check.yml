@@ -54,3 +54,4 @@ jobs:
         python dev.py stubs
         python dev.py lint
         python dev.py test
+        python dev.py docs

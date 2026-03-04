@@ -1,19 +1,15 @@
 """
-fantas.renderer 的 Docstring
+renderer 扩展
 """
 
-from __future__ import annotations
-from abc import ABC, abstractmethod
-from collections import deque
-from collections.abc import Callable
-from typing import cast
+from typing import Callable, cast
 from dataclasses import dataclass, field
 
 import fantas
+from fantas import RenderCommand, FillMode, AlignMode, Quadrant
+from .style import LabelStyle, TextStyle
 
 __all__ = (
-    "Renderer",
-    "RenderCommand",
     "SurfaceRenderCommand",
     "ColorFillCommand",
     "ColorBackgroundFillCommand",
@@ -22,90 +18,6 @@ __all__ = (
     "QuarterCircleRenderCommand",
     "LinearGradientRenderCommand",
 )
-
-
-@dataclass(slots=True)
-class Renderer:
-    """
-    渲染器类，管理渲染命令队列并执行渲染操作。
-    Args:
-        window: 关联的窗口对象。
-    """
-
-    window: fantas.Window  # 关联的窗口对象
-
-    queue: deque[fantas.RenderCommand] = field(
-        default_factory=deque, init=False, repr=False
-    )  # 渲染命令队列，左端入右端出
-
-    def pre_render(self, root_ui: fantas.UI) -> None:
-        """
-        预处理渲染命令，即更新渲染命令队列。
-        Args:
-            root_ui (fantas.UI): 根 UI 元素。
-        """
-        self.queue.clear()
-        for command in root_ui.create_render_commands():
-            self.queue.append(command)
-
-    def render(self, target_surface: fantas.Surface) -> None:
-        """
-        执行渲染队列中的所有渲染命令。
-        Args:
-            target_surface (fantas.Surface): 目标 Surface 对象。
-        """
-        for command in self.queue:
-            command.render(target_surface)
-
-    def add_command(self, command: fantas.RenderCommand) -> None:
-        """
-        向渲染队列中添加一个渲染命令。
-        Args:
-            command (fantas.RenderCommand): 渲染命令对象。
-        """
-        self.queue.appendleft(command)
-
-    def coordinate_hit_test(self, point: fantas.IntPoint) -> fantas.UI:
-        """
-        根据给定的坐标点进行命中测试，返回位于该点的最上层 UI 元素。
-        Args:
-            point (fantas.IntPoint): 坐标点（x, y）。
-        Returns:
-            fantas.UI: 位于该点的最上层 UI 元素，如果没有命中任何元素则返回根 UI 元素。
-        """
-        for rc in reversed(self.queue):
-            if rc.hit_test(point):
-                return rc.creator
-        return self.window.root_ui
-
-
-@dataclass(slots=True)
-class RenderCommand(ABC):
-    """
-    渲染命令基类。
-    Args:
-        creator: 创建此渲染命令的 UI 元素。
-    """
-
-    creator: fantas.UI
-
-    @abstractmethod
-    def render(self, target_surface: fantas.Surface) -> None:
-        """
-        执行渲染操作，将渲染结果绘制到目标 Surface 上。
-        Args:
-            target_surface (fantas.Surface): 目标 Surface 对象。
-        """
-
-    @abstractmethod
-    def hit_test(self, point: fantas.IntPoint) -> bool:
-        """
-        命中测试，判断给定的坐标点是否在此渲染命令的区域内。
-        Args:
-            point (fantas.IntPoint): 坐标点（x, y）。
-        Returns:
-            bool: 如果点在区域内则返回 True，否则返回 False。
-        """
 
 
 @dataclass(slots=True)
@@ -242,14 +154,14 @@ class SurfaceRenderCommand(RenderCommand):
 
 # SurfaceRenderCommand 渲染映射表
 surface_render_command_render_map: dict[
-    fantas.FillMode, Callable[[SurfaceRenderCommand, fantas.Surface], None]
+    FillMode, Callable[[SurfaceRenderCommand, fantas.Surface], None]
 ] = {
-    fantas.FillMode.IGNORE: SurfaceRenderCommand.render_ignore,
-    fantas.FillMode.SCALE: SurfaceRenderCommand.render_scale,
-    fantas.FillMode.SMOOTHSCALE: SurfaceRenderCommand.render_smoothscale,
-    fantas.FillMode.REPEAT: SurfaceRenderCommand.render_repeat,
-    fantas.FillMode.FITMIN: SurfaceRenderCommand.render_fitmin,
-    fantas.FillMode.FITMAX: SurfaceRenderCommand.render_fitmax,
+    FillMode.IGNORE: SurfaceRenderCommand.render_ignore,
+    FillMode.SCALE: SurfaceRenderCommand.render_scale,
+    FillMode.SMOOTHSCALE: SurfaceRenderCommand.render_smoothscale,
+    FillMode.REPEAT: SurfaceRenderCommand.render_repeat,
+    FillMode.FITMIN: SurfaceRenderCommand.render_fitmin,
+    FillMode.FITMAX: SurfaceRenderCommand.render_fitmax,
 }
 
 
@@ -303,7 +215,7 @@ class ColorBackgroundFillCommand(RenderCommand):
         """
         target_surface.fill(self.color)
 
-    def hit_test(self, point: fantas.IntPoint) -> bool:
+    def hit_test(self, _: fantas.IntPoint) -> bool:
         """
         命中测试。
         Args:
@@ -323,7 +235,7 @@ class LabelRenderCommand(RenderCommand):
         rect : 渲染区域。
     """
 
-    style: fantas.LabelStyle = field(init=False)
+    style: LabelStyle = field(init=False)
     rect: fantas.Rect = field(init=False)
 
     def render(self, target_surface: fantas.Surface) -> None:
@@ -399,8 +311,8 @@ class TextRenderCommand(RenderCommand):
     """
 
     text: str = field(init=False)
-    align_mode: fantas.AlignMode = field(init=False)
-    style: fantas.TextStyle = field(init=False)
+    align_mode: AlignMode = field(init=False)
+    style: TextStyle = field(init=False)
     rect: fantas.Rect = field(init=False)
     offset: fantas.IntPoint = field(init=False)
 
@@ -947,25 +859,25 @@ class TextRenderCommand(RenderCommand):
 
 # TextRenderCommand 渲染映射表
 text_render_command_render_map: dict[
-    fantas.AlignMode, Callable[[TextRenderCommand, fantas.Surface], None]
+    AlignMode, Callable[[TextRenderCommand, fantas.Surface], None]
 ] = {
-    fantas.AlignMode.TOP: TextRenderCommand.render_top,
-    fantas.AlignMode.LEFT: TextRenderCommand.render_left,
-    fantas.AlignMode.RIGHT: TextRenderCommand.render_right,
-    fantas.AlignMode.BOTTOM: TextRenderCommand.render_bottom,
-    fantas.AlignMode.CENTER: TextRenderCommand.render_center,
-    fantas.AlignMode.TOPLEFT: TextRenderCommand.render_topleft,
-    fantas.AlignMode.TOPRIGHT: TextRenderCommand.render_topright,
-    fantas.AlignMode.BOTTOMLEFT: TextRenderCommand.render_bottomleft,
-    fantas.AlignMode.BOTTOMRIGHT: TextRenderCommand.render_bottomright,
+    AlignMode.TOP: TextRenderCommand.render_top,
+    AlignMode.LEFT: TextRenderCommand.render_left,
+    AlignMode.RIGHT: TextRenderCommand.render_right,
+    AlignMode.BOTTOM: TextRenderCommand.render_bottom,
+    AlignMode.CENTER: TextRenderCommand.render_center,
+    AlignMode.TOPLEFT: TextRenderCommand.render_topleft,
+    AlignMode.TOPRIGHT: TextRenderCommand.render_topright,
+    AlignMode.BOTTOMLEFT: TextRenderCommand.render_bottomleft,
+    AlignMode.BOTTOMRIGHT: TextRenderCommand.render_bottomright,
 }
 
 # 象限映射表
-quadrant_map: dict[fantas.Quadrant, dict[str, bool]] = {
-    fantas.Quadrant.TOPRIGHT: {"draw_top_right": True},
-    fantas.Quadrant.TOPLEFT: {"draw_top_left": True},
-    fantas.Quadrant.BOTTOMLEFT: {"draw_bottom_left": True},
-    fantas.Quadrant.BOTTOMRIGHT: {"draw_bottom_right": True},
+quadrant_map: dict[Quadrant, dict[str, bool]] = {
+    Quadrant.TOPRIGHT: {"draw_top_right": True},
+    Quadrant.TOPLEFT: {"draw_top_left": True},
+    Quadrant.BOTTOMLEFT: {"draw_bottom_left": True},
+    Quadrant.BOTTOMRIGHT: {"draw_bottom_right": True},
 }
 
 
@@ -985,7 +897,7 @@ class QuarterCircleRenderCommand(RenderCommand):
     center: fantas.Point = (0, 0)
     radius: int | float = 8
     width: int = 0
-    quadrant: fantas.Quadrant = fantas.Quadrant.TOPRIGHT
+    quadrant: Quadrant = Quadrant.TOPRIGHT
 
     def render(self, target_surface: fantas.Surface) -> None:
         """
