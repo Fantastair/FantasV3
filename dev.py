@@ -90,6 +90,7 @@ def show_diff_and_help_commit(command: str) -> None:
                 "是否需要自动添加这些修改并提交一次commit？ (y/n)",
                 prompt="dev",
                 col=Colors.TIP,
+                wrap=False,
             )
 
             answer = input().strip().lower()

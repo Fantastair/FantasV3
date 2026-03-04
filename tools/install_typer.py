@@ -32,6 +32,16 @@ def ensure_typer_installed():
         match = pattern.search(requirements_content)
         version = match.group(1)
 
+        pprint(
+            f"当前解释器为：{sys.executable}，将要安装 typer({version})",
+            prompt="install_typer",
+            col=Colors.WARNING,
+        )
+        answer = input("建议使用虚拟环境安装，是否继续安装？(y/n): ").strip().lower()
+        if answer != "y":
+            pprint("安装已取消", prompt="install_typer", col=Colors.ERROR)
+            sys.exit(1)
+
         pprint(f"正在安装 typer=={version}...", prompt="install_typer")
         cmd_run([sys.executable, "-m", "pip", "install", f"typer=={version}"])
 
