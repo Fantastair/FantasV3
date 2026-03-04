@@ -58,10 +58,7 @@ line-length = 88
 [tool.mypy]
 strict = true
 files = [
-    "fantas/__init__.py",
-    "fantas/base/",
-    "fantas/ext/",
-    "fantas/utils/",
+    "fantas",
 ]
 warn_unused_configs = true
 disable_error_code = ["misc"]

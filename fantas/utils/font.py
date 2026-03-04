@@ -165,7 +165,7 @@ def SysFont(  # pylint: disable=invalid-name
     Returns:
         Font: 创建的字体实例。
     """
-    return _SysFont(name, size, constructor=constructor)
+    return _SysFont(name, size, constructor=constructor)  # type: ignore[no-untyped-call]
 
 
 def constructor(
