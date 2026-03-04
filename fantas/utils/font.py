@@ -12,6 +12,8 @@ from fantas._vendor.pygame import freetype
 from fantas._vendor.pygame.sysfont import SysFont as _SysFont
 
 import fantas
+from fantas import generate_unique_id
+from .misc import lru_cache_typed
 
 __all__ = (
     "Font",
@@ -45,7 +47,7 @@ class Font(freetype.Font):
             ucs4 (int): 是否使用 UCS4 编码，默认为 False。
         """
         super().__init__(file, size, font_index, resolution, ucs4)
-        self.font_id: int = fantas.generate_unique_id()
+        self.font_id: int = generate_unique_id()
         font_dict[self.font_id] = self
 
     def __del__(self) -> None:
@@ -58,11 +60,11 @@ class Font(freetype.Font):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Font) and self.font_id == other.font_id
 
-    get_rect: Callable[..., fantas.Rect] = fantas.lru_cache_typed(maxsize=65536)(
+    get_rect: Callable[..., fantas.Rect] = lru_cache_typed(maxsize=65536)(
         pygame.freetype.Font.get_rect
     )
 
-    @fantas.lru_cache_typed(maxsize=65536)
+    @lru_cache_typed(maxsize=65536)
     def _get_width_char_kerning(
         self, style_flag: fantas.TextStyleFlag, size: float, char_pair: str
     ) -> int:
@@ -80,7 +82,7 @@ class Font(freetype.Font):
             - self.get_rect(char_pair[0], style_flag, size=size).width
         )
 
-    @fantas.lru_cache_typed(maxsize=65536)
+    @lru_cache_typed(maxsize=65536)
     def get_widthes(
         self, style_flag: fantas.TextStyleFlag, size: float, text: str
     ) -> tuple[int, ...]:
@@ -106,7 +108,7 @@ class Font(freetype.Font):
         # 返回度量信息元组（节省缓存空间，并防篡改）
         return tuple(widthes)
 
-    @fantas.lru_cache_typed(maxsize=65536)
+    @lru_cache_typed(maxsize=65536)
     def auto_wrap(
         self, style_flag: fantas.TextStyleFlag, size: float, text: str, width: int
     ) -> tuple[tuple[str, int], ...]:

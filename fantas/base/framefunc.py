@@ -4,43 +4,17 @@ framefunc.py
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from collections.abc import Callable
 from abc import ABC, abstractmethod
-from typing import Any
 
 import fantas
+from .misc import generate_unique_id
 
 __all__ = (
-    "set_framefunc_clock",
     "run_framefuncs",
     "FrameFuncBase",
     "FramerBase",
     "TimerBase",
-    "FrameTrigger",
-    "TimeTrigger",
-    "KeyFrameBase",
-    "AttrKeyFrame",
-    "ColorKeyframe",
-    "PointKeyFrame",
 )
-
-# 简化引用
-clamp = fantas.math.clamp
-lerp = fantas.math.lerp
-
-# 时钟对象引用
-CLOCK: fantas.time.Clock | None = None
-
-
-def set_framefunc_clock(new_clock: fantas.time.Clock) -> None:
-    """
-    设置全局时钟对象。
-
-    Args:
-        new_clock (Clock): 新的时钟对象。
-    """
-    global CLOCK  # pylint: disable=global-statement
-    CLOCK = new_clock
 
 
 # 帧函数字典
@@ -63,7 +37,7 @@ class FrameFuncBase(ABC):
     """
 
     func_id: int = field(
-        default_factory=fantas.generate_unique_id, init=False
+        default_factory=generate_unique_id, init=False
     )  # 唯一标识 ID
 
     def start(self) -> None:
@@ -196,229 +170,3 @@ class TimerBase(FrameFuncBase):
             duration (int | float): 持续时间（秒）。
         """
         self.duration_ns = duration * 1_000_000_000
-
-
-@dataclass(slots=True)
-class FrameTrigger(FramerBase):
-    """
-    帧触发器类，用于在指定的帧数后触发一个函数。
-    """
-
-    func: Callable[..., Any] = field(init=False)  # 触发函数
-    args: tuple[Any, ...] = field(init=False)  # 触发函数的位置参数
-    kwargs: dict[str, Any] = field(init=False)  # 触发函数的关键字参数
-
-    def bind(self, func: Callable[..., Any], /, *args: Any, **kwargs: Any) -> None:
-        """
-        绑定触发函数及其参数。
-
-        Args:
-            func   (Callable): 触发函数。
-            args   (tuple)   : 触发函数的位置参数。
-            kwargs (dict)    : 触发函数的关键字参数。
-        """
-        self.func = func
-        self.args = args
-        self.kwargs = kwargs
-
-    def call(self) -> bool:
-        """
-        帧触发器的帧函数调用接口。
-
-        Returns:
-            bool: 如果触发器已完成则返回 True，否则返回 False。
-        """
-        if FramerBase.call(self):
-            self.func(*self.args, **self.kwargs)
-            return True
-        return False
-
-
-@dataclass(slots=True)
-class TimeTrigger(TimerBase):
-    """
-    时间触发器类，用于在指定的时间后触发一个函数。
-    """
-
-    func: Callable[..., Any] = field(init=False)  # 触发函数
-    args: tuple[Any, ...] = field(init=False)  # 触发函数的位置参数
-    kwargs: dict[str, Any] = field(init=False)  # 触发函数的关键字参数
-
-    def bind(self, func: Callable[..., Any], /, *args: Any, **kwargs: Any) -> None:
-        """
-        绑定触发函数及其参数。
-
-        Args:
-            func   (Callable): 触发函数。
-            args   (tuple)   : 触发函数的位置参数。
-            kwargs (dict)    : 触发函数的关键字参数。
-        """
-        self.func = func
-        self.args = args
-        self.kwargs = kwargs
-
-    def call(self) -> bool:
-        """
-        时间触发器的帧函数调用接口。
-
-        Returns:
-            bool: 如果触发器已完成则返回 True，否则返回 False。
-        """
-        if TimerBase.call(self):
-            self.func(*self.args, **self.kwargs)
-            return True
-        return False
-
-
-@dataclass(slots=True)
-class KeyFrameBase(TimerBase, ABC):
-    """
-    关键帧基类，用于在指定的时间内按比例调用一个函数。
-    """
-
-    def call(self) -> bool:
-        ratio = clamp((fantas.get_time_ns() - self.start_time) / self.duration_ns, 0, 1)
-        self.tick(ratio)
-        return TimerBase.call(self)
-
-    @abstractmethod
-    def tick(self, ratio: float) -> None:
-        """
-        关键帧的时间点调用接口。
-
-        Args:
-            ratio (float): 当前时间点与总时间的比例。
-        """
-
-
-@dataclass(slots=True)
-class AttrKeyFrame(KeyFrameBase):
-    """
-    属性关键帧类，用于修改对象的属性。
-    Args:
-        obj       : 目标对象。
-        attr      : 目标属性名。
-        end_value : 结束值。
-        map_curve : 映射曲线。
-    """
-
-    obj: object = field(compare=False)
-    attr: str = field(compare=False)
-    end_value: float = field(compare=False)
-    map_curve: Callable[[float], float] = field(
-        compare=False, default=fantas.CURVE_LINEAR
-    )
-
-    start_value: float = field(init=False, compare=False)  # 起始值，在启动时设置
-
-    def start(
-        self,
-        start_value: Any = None,
-        restart: bool = False,
-    ) -> None:
-        """
-        启动属性关键帧。
-
-        Args:
-            start_value (float, optional): 起始值。为 None 则使用当前属性值作为起始值。
-            restart (bool): 重复启动关键帧时是否重新获取当前属性值作为起始值。
-        """
-        KeyFrameBase.start(self)
-        if not (self.is_started() and restart):
-            if start_value is None:
-                self.start_value = getattr(self.obj, self.attr)
-            else:
-                self.start_value = start_value
-            if CLOCK is not None:
-                # 需要把 start_time 往前调整一帧的时间，否则重启后的动画会有一帧的停顿
-                fps = CLOCK.get_fps()
-                self.start_time -= round(1_000_000_000 / fps) if fps > 0 else 0
-
-    def tick(self, ratio: float) -> None:
-        """
-        在指定的时间点修改对象的属性。
-
-        Args:
-            ratio (float): 当前时间点与总时间的比例。
-        """
-        setattr(
-            self.obj,
-            self.attr,
-            lerp(self.start_value, self.end_value, self.map_curve(ratio), False),
-        )
-
-
-@dataclass(slots=True)
-class ColorKeyframe(AttrKeyFrame):
-    """
-    颜色关键帧类，用于修改对象的颜色属性。
-    """
-
-    end_value: fantas.Color = field(compare=False)  # type: ignore [assignment]
-    start_value: fantas.Color = field(
-        init=False, compare=False
-    )  # type: ignore [assignment]  # 起始值，在启动时设置
-
-    def start(
-        self, start_value: fantas.Color | None = None, restart: bool = False
-    ) -> None:
-        """
-        启动颜色关键帧。
-
-        Args:
-            start_value (Color, optional): 起始值。为 None 则使用当前属性值作为起始值。
-            restart (bool): 重复启动关键帧时是否重新获取当前属性值作为起始值。
-        """
-        AttrKeyFrame.start(self, start_value, restart)
-        if not isinstance(self.start_value, fantas.Color):
-            self.start_value = fantas.Color(self.start_value)
-
-    def tick(self, ratio: float) -> None:
-        """
-        在指定的时间点修改对象的颜色属性。
-
-        Args:
-            ratio (float): 当前时间点与总时间的比例。
-        """
-        setattr(
-            self.obj,
-            self.attr,
-            self.start_value.lerp(self.end_value, clamp(self.map_curve(ratio), 0, 1)),
-        )
-
-
-@dataclass(slots=True)
-class PointKeyFrame(AttrKeyFrame):
-    """
-    点关键帧类，用于修改对象的点属性。
-    """
-
-    end_value: fantas.Vector2 = field(compare=False)  # type: ignore [assignment]
-    start_value: fantas.Vector2 = field(
-        init=False, compare=False
-    )  # type: ignore [assignment]  # 起始值，在启动时设置
-
-    def start(self, start_value: Any = None, restart: bool = False) -> None:
-        """
-        启动点关键帧。
-
-        Args:
-            start_value (Point, optional): 起始值。为 None 则使用当前属性值作为起始值。
-            restart (bool): 重复启动关键帧时是否重新获取当前属性值作为起始值。
-        """
-        AttrKeyFrame.start(self, start_value, restart)
-        if not isinstance(self.start_value, fantas.Vector2):
-            self.start_value = fantas.Vector2(self.start_value)
-
-    def tick(self, ratio: float) -> None:
-        """
-        在指定的时间点修改对象的点属性。
-
-        Args:
-            ratio (float): 当前时间点与总时间的比例。
-        """
-        setattr(
-            self.obj,
-            self.attr,
-            self.start_value.lerp(self.end_value, clamp(self.map_curve(ratio), 0, 1)),
-        )

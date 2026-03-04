@@ -75,24 +75,31 @@ from fantas._vendor.pygame import (
 )
 
 # 导入 fantas 包的各个子模块
-from fantas.base.fantas_typing import *  # 类型定义
-from fantas.base.constants import *  # 常量定义
-from fantas.utils.misc import *  # 杂项工具
-from fantas.base.nodebase import *  # 节点基类
-from fantas.utils.curve import *  # 曲线支持
-from fantas.utils.color import *  # 颜色支持
-from fantas.ext.font import *  # 字体支持
-from fantas.base.style import *  # 样式支持
-from fantas.utils.resource import *  # 资源管理
-from fantas.base.window import *  # 窗口管理
-from fantas.base.renderer import *  # 渲染支持
-from fantas.base.event_handler import *  # 事件处理
-from fantas.base.framefunc import *  # 帧函数支持
-from fantas.base.ui import *  # UI 基类
-from fantas.ext.layout import *  # 布局支持
+from fantas.base import *  # 基础模块
+from fantas.utils import *  # 工具模块
+from fantas.ext import *  # 扩展模块
+# from fantas.base.fantas_typing import *  # 类型定义
+# from fantas.base.constants import *  # 常量定义
+# from fantas.utils.misc import *  # 杂项工具
+# from fantas.base.nodebase import *  # 节点基类
+# from fantas.utils.curve import *  # 曲线支持
+# from fantas.utils.color import *  # 颜色支持
+# from fantas.utils.font import *  # 字体支持
+# from fantas.ext.style import *  # 样式支持
+# from fantas.utils.resource import *  # 资源管理
+# from fantas.base.window import *  # 窗口管理
+# from fantas.base.renderer import *  # 渲染支持
+# from fantas.ext.renderer import *  # 渲染扩展
+# from fantas.base.event_handler import *  # 事件处理
+# from fantas.base.framefunc import *  # 帧函数
+# from fantas.ext.trigger import *  # 触发器
+# from fantas.ext.keyframe import *  # 关键帧
+# from fantas.base.ui import *  # UI 基类
+# from fantas.ext.ui import *  # UI 扩展
+# from fantas.ext.layout import *  # 布局支持
 
-from fantas.utils.udp import *  # UDP 通信
-from fantas.utils.debug import *  # 调试功能
+# from fantas.utils.udp import *  # UDP 通信
+# from fantas.utils.debug import *  # 调试功能
 
 # 先禁用所有事件，然后再根据需要启用特定事件
 event.set_blocked(None)
