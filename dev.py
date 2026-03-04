@@ -6,6 +6,7 @@
 """
 
 import os
+import re
 import sys
 import atexit
 import shutil
@@ -80,7 +81,7 @@ def show_diff_and_help_commit(command: str) -> None:
         pprint(f"运行 {command} 命令时产生了上述更改", prompt="dev", col=Colors.WARNING)
         if "CI" in os.environ:
             pprint(
-                "代码格式化检查未通过，请执行 python dev.py format 格式化代码后重新提交",
+                "代码格式化检查未通过，请执行 python dev.py format 后重新提交",
                 prompt="dev",
                 col=Colors.ERROR,
             )
@@ -262,6 +263,7 @@ def _prep_all() -> tuple[Path, Path]:
 def _format(py: Path, ignore_git: bool) -> None:
     """
     执行 format 子命令，使用 black 格式化代码
+    同时还会保持 fantas 包的版本是否和 pyproject.toml 中一致
 
     Args:
         py: Python 可执行文件的路径，用于运行 black
@@ -270,6 +272,23 @@ def _format(py: Path, ignore_git: bool) -> None:
     pprint("格式化代码中", prompt="dev")
 
     cmd_run([py, "-m", "black", "fantas", "tests", "tools", "dev.py"])
+
+    pprint("检查 fantas/__init__.py 中的版本是否与 pyproject.toml 中一致", prompt="dev")
+
+    init_py = FANTAS_SOURCE_DIR / "__init__.py"
+    init_content = init_py.read_text(encoding="utf-8")
+    pyproj_version = get_version()
+    pattern = re.compile(r'__version__\s*=\s*["\']([^"\']+)["\']')
+    fantas_version = pattern.search(init_content).group(1)
+
+    if fantas_version != pyproj_version:
+        init_content = pattern.sub(f'__version__ = "{pyproj_version}"', init_content)
+        init_py.write_text(init_content, encoding="utf-8")
+        pprint(
+            f"更新 fantas/__init__.py 中的版本为 {pyproj_version}",
+            prompt="dev",
+            col=Colors.INFO,
+        )
 
     if not ignore_git:
         show_diff_and_help_commit("format")
@@ -678,7 +697,8 @@ def _release(py: Path, tag: str | None, yes: bool = False) -> None:
         sys.exit(1)
 
     pprint(
-        f"版本 {tag} 已推送，可以前往 https://github.com/Fantastair/FantasV3/actions 检查 CI 构建状态",
+        f"版本 {tag} 已推送，可以前往 https://github.com/Fantastair/FantasV3/actions "
+        "检查 CI 构建状态",
         prompt="dev",
         col=Colors.SUCCESS,
     )
@@ -871,7 +891,6 @@ def release(
     """
     _, venv_py = _prep_all()
     _release(venv_py, tag, yes)
-
 
 if __name__ == "__main__":
     app()
