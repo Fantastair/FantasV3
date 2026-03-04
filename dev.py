@@ -77,7 +77,7 @@ def show_diff_and_help_commit(command: str) -> None:
     try:
         cmd_run(["git", "--no-pager", "status", "--porcelain"], error_on_output=True)
     except subprocess.CalledProcessError:
-        pprint(f"运行 {command} 命令时产生了上述更改", prompt="dev", col=Colors.WARNING, wrap=False)
+        pprint(f"运行 {command} 命令时产生了上述更改", prompt="dev", col=Colors.WARNING)
         if "CI" in os.environ:
             pprint(
                 "代码格式化检查未通过，请执行 python dev.py format 格式化代码后重新提交",
@@ -90,6 +90,7 @@ def show_diff_and_help_commit(command: str) -> None:
                 "是否需要自动添加这些修改并提交一次commit？ (y/n)",
                 prompt="dev",
                 col=Colors.TIP,
+                wrap=False,
             )
 
             answer = input().strip().lower()
