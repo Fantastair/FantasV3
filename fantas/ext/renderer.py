@@ -215,7 +215,7 @@ class ColorBackgroundFillCommand(RenderCommand):
         """
         target_surface.fill(self.color)
 
-    def hit_test(self, point: fantas.IntPoint) -> bool:
+    def hit_test(self, _: fantas.IntPoint) -> bool:
         """
         命中测试。
         Args:

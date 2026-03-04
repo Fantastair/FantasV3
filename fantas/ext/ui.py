@@ -44,7 +44,7 @@ class ColorBackground(UI):
         self.command = ColorBackgroundFillCommand(creator=self)
 
     def create_render_commands(
-        self, offset: fantas.Point = (0, 0)
+        self, _: fantas.Point = (0, 0)
     ) -> Iterator[RenderCommand]:
         """
         创建渲染命令列表

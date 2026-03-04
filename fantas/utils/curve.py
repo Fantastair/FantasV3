@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from typing import Callable, cast
 import math
 
-import fantas
 from .misc import lru_cache_typed
 
 __all__ = (

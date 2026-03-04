@@ -4,14 +4,12 @@ fantas.window 的 Docstring
 
 from __future__ import annotations
 from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import cast
+from dataclasses import dataclass
 
 from fantas._vendor.pygame.window import Window as PygameWindow
 from fantas._vendor.pygame.constants import WINDOWPOS_UNDEFINED
 
 import fantas
-from .misc import get_time_ns
 
 __all__ = (
     "WindowConfig",
