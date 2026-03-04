@@ -285,7 +285,7 @@ def _format(py: Path, ignore_git: bool) -> None:
         init_content = pattern.sub(f'__version__ = "{pyproj_version}"', init_content)
         init_py.write_text(init_content, encoding="utf-8")
         pprint(
-            f"更新 fantas/__init__.py 中的版本为 {pyproj_version}",
+            f"更新 fantas/__init__.py 版本 {fantas_version} -> {pyproj_version}",
             prompt="dev",
             col=Colors.INFO,
         )
