@@ -242,7 +242,6 @@ class MultiWindow:
             # 处理事件
             for event in get():
                 # 如果事件关联到特定窗口，则只传递给该窗口，否则传递给所有窗口
-                # print(event, flush=True)
                 if hasattr(event, "window"):
                     window = event.window
                 else:

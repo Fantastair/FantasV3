@@ -59,7 +59,7 @@ if not getattr(pygame, "IS_FANTAS", False):
 
 from fantas._vendor.pygame import freetype
 
-pygame.init()
+pygame.init()  # pylint: disable=no-member
 freetype.init(cache_size=1024)
 
 # 导入 Pygame 的子模块以简化调用链
