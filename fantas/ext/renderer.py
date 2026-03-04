@@ -19,6 +19,7 @@ __all__ = (
     "LinearGradientRenderCommand",
 )
 
+
 @dataclass(slots=True)
 class SurfaceRenderCommand(RenderCommand):
     """

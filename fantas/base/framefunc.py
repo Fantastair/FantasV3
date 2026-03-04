@@ -36,9 +36,7 @@ class FrameFuncBase(ABC):
     帧函数基类，用于定义帧函数接口。
     """
 
-    func_id: int = field(
-        default_factory=generate_unique_id, init=False
-    )  # 唯一标识 ID
+    func_id: int = field(default_factory=generate_unique_id, init=False)  # 唯一标识 ID
 
     def start(self) -> None:
         """

@@ -21,7 +21,6 @@ __all__ = (
 )
 
 
-
 P = ParamSpec("P")
 R = TypeVar("R")
 

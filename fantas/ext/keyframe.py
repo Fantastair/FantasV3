@@ -21,6 +21,7 @@ __all__ = (
 clamp = fantas.math.clamp
 lerp = fantas.math.lerp
 
+
 @dataclass(slots=True)
 class KeyFrameBase(TimerBase, ABC):
     """

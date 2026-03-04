@@ -62,6 +62,7 @@ class Window(PygameWindow):
     """
     窗口类，每一个实例就是一个窗口。
     """
+
     # 窗口的调试计时器
 
     def __init__(self, window_config: WindowConfig) -> None:

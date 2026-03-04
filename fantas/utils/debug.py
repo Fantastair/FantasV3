@@ -191,7 +191,6 @@ class Debug:
 atexit.register(Debug.close_debug)
 
 
-
 @dataclass(slots=True)
 class DebugTimer:
     """
@@ -256,13 +255,19 @@ def window_mainloop_debug(window: fantas.Window) -> None:
     # === 调试 ===
     # 监听调试输出事件
     window.add_event_listener(
-        fantas.DEBUGRECEIVED, root_ui, True, create_window_debug_listener(window, handle_debug_received_event)
+        fantas.DEBUGRECEIVED,
+        root_ui,
+        True,
+        create_window_debug_listener(window, handle_debug_received_event),
     )
     # 监听鼠标移动事件
     if DebugFlag.MOUSEMAGNIFY in Debug.debug_flag:
         window.mouse_magnify_ratio = 8
         window.add_event_listener(
-            fantas.MOUSEMOTION, root_ui, True, create_window_debug_listener(window, debug_send_mouse_surface)
+            fantas.MOUSEMOTION,
+            root_ui,
+            True,
+            create_window_debug_listener(window, debug_send_mouse_surface),
         )
     # 创建调试计时器
     window.debug_timer = debug_timer = DebugTimer()  # type: ignore[attr-defined]
@@ -353,7 +358,10 @@ def multiwindow_mainloop_debug(multiwindow: fantas.MultiWindow) -> None:
         window.root_ui.build_pass_path_cache()
         # 注册关闭事件监听器
         window.add_event_listener(
-            fantas.WINDOWCLOSE, window.root_ui, True, multiwindow.handle_window_close_event
+            fantas.WINDOWCLOSE,
+            window.root_ui,
+            True,
+            multiwindow.handle_window_close_event,
         )
 
         # === 调试 ===
@@ -449,14 +457,19 @@ def multiwindow_mainloop_debug(multiwindow: fantas.MultiWindow) -> None:
         # === 调试 ===
 
 
-
-def create_window_debug_listener(window: fantas.Window, listener: Callable[[fantas.Window, fantas.Event], bool | None]) -> fantas.ListenerFunc:
+def create_window_debug_listener(
+    window: fantas.Window,
+    listener: Callable[[fantas.Window, fantas.Event], bool | None],
+) -> fantas.ListenerFunc:
     """
     从函数创建特定于窗口的事件监听器。
     """
+
     def debug_listener(event: fantas.Event) -> bool | None:
         return listener(window, event)
+
     return debug_listener
+
 
 def handle_debug_received_event(window: fantas.Window, _: fantas.Event) -> None:
     """
@@ -491,9 +504,7 @@ def debug_send_mouse_surface(window: fantas.Window, event: fantas.Event) -> None
     pos = list(event.pos)
     pos[0] = fantas.math.clamp(pos[0], 0, window.size[0] - 1)
     pos[1] = fantas.math.clamp(pos[1], 0, window.size[1] - 1)
-    rect = fantas.Rect(
-        event.pos[0] - size // 2, event.pos[1] - size // 2, size, size
-    )
+    rect = fantas.Rect(event.pos[0] - size // 2, event.pos[1] - size // 2, size, size)
     rect.left = max(rect.left, 0)
     rect.top = max(rect.top, 0)
     rect.right = min(rect.right, window.size[0])
@@ -506,4 +517,3 @@ def debug_send_mouse_surface(window: fantas.Window, event: fantas.Event) -> None
         prompt="MouseMagnify",
     )
     debug_timer.record("Debug")
-

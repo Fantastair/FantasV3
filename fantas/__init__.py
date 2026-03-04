@@ -78,6 +78,7 @@ from fantas._vendor.pygame import (
 from fantas.base import *  # 基础模块
 from fantas.utils import *  # 工具模块
 from fantas.ext import *  # 扩展模块
+
 # from fantas.base.fantas_typing import *  # 类型定义
 # from fantas.base.constants import *  # 常量定义
 # from fantas.utils.misc import *  # 杂项工具

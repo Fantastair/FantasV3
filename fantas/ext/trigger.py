@@ -12,6 +12,7 @@ __all__ = (
     "TimeTrigger",
 )
 
+
 @dataclass(slots=True)
 class FrameTrigger(FramerBase):
     """

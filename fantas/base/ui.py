@@ -75,4 +75,3 @@ class WindowRoot(UI):
     def update_rect(self) -> None:
         """更新窗口矩形区域。"""
         self.rect.size = self.window.size
-

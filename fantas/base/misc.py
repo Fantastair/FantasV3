@@ -14,6 +14,7 @@ __all__ = (
 # 全局唯一 ID 生成器
 id_counter = count()
 
+
 def generate_unique_id() -> int:
     """
     生成一个全局唯一的整数 ID。

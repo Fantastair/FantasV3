@@ -8,7 +8,13 @@ from dataclasses import dataclass, field
 import fantas
 from fantas import UI, RenderCommand
 from .style import DEFAULTLABELSTYLE, DEFAULTTEXTSTYLE, LabelStyle, TextStyle
-from .renderer import LabelRenderCommand, TextRenderCommand, LinearGradientRenderCommand, SurfaceRenderCommand, ColorBackgroundFillCommand
+from .renderer import (
+    LabelRenderCommand,
+    TextRenderCommand,
+    LinearGradientRenderCommand,
+    SurfaceRenderCommand,
+    ColorBackgroundFillCommand,
+)
 
 __all__ = (
     "ColorBackground",
@@ -20,6 +26,7 @@ __all__ = (
     "Animation",
 )
 
+
 @dataclass(slots=True)
 class ColorBackground(UI):
     """
@@ -30,9 +37,7 @@ class ColorBackground(UI):
 
     bgcolor: fantas.ColorLike = "black"
 
-    command: ColorBackgroundFillCommand = field(
-        init=False, repr=False
-    )  # 颜色填充命令
+    command: ColorBackgroundFillCommand = field(init=False, repr=False)  # 颜色填充命令
 
     def __post_init__(self) -> None:
         """初始化 ColorBackground 实例"""
@@ -67,9 +72,7 @@ class Label(UI):
     """
 
     rect: fantas.Rect | fantas.FRect
-    label_style: LabelStyle = field(
-        default_factory=DEFAULTLABELSTYLE.copy
-    )
+    label_style: LabelStyle = field(default_factory=DEFAULTLABELSTYLE.copy)
     box_mode: fantas.BoxMode = fantas.BoxMode.INSIDE
 
     command: LabelRenderCommand = field(init=False, repr=False)
@@ -248,19 +251,13 @@ class TextLabel(UI):
 
     text: str = "text"
     text_style: TextStyle = field(default_factory=DEFAULTTEXTSTYLE.copy)
-    label_style: LabelStyle = field(
-        default_factory=DEFAULTLABELSTYLE.copy
-    )
+    label_style: LabelStyle = field(default_factory=DEFAULTLABELSTYLE.copy)
     align_mode: fantas.AlignMode = fantas.AlignMode.LEFT
     box_mode: fantas.BoxMode = fantas.BoxMode.INSIDE
     offset: fantas.IntPoint = field(default_factory=lambda: [0, 0])
 
-    label_command: LabelRenderCommand = field(
-        init=False, repr=False
-    )  # 标签渲染命令
-    text_command: TextRenderCommand = field(
-        init=False, repr=False
-    )  # 文本渲染命令
+    label_command: LabelRenderCommand = field(init=False, repr=False)  # 标签渲染命令
+    text_command: TextRenderCommand = field(init=False, repr=False)  # 文本渲染命令
 
     def __post_init__(self) -> None:
         """初始化 TextLabel 实例"""
@@ -329,9 +326,7 @@ class LinearGradientLabel(UI):
     start_pos: fantas.Point
     end_pos: fantas.Point
 
-    command: LinearGradientRenderCommand = field(
-        init=False, repr=False
-    )  # 渲染命令对象
+    command: LinearGradientRenderCommand = field(init=False, repr=False)  # 渲染命令对象
 
     def __post_init__(self) -> None:
         """初始化 LinearGradientLabel 实例"""

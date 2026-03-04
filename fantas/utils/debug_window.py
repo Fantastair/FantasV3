@@ -170,9 +170,7 @@ class EventLogWindow(fantas.Window):
         """
         处理窗口关闭事件。
         """
-        Debug.send_debug_data(
-            DebugFlag.EVENTLOG, prompt="CloseDebugWindow"
-        )
+        Debug.send_debug_data(DebugFlag.EVENTLOG, prompt="CloseDebugWindow")
         return False
 
 
@@ -355,9 +353,7 @@ class TimeRecordWindow(fantas.Window):
         """
         处理窗口关闭事件。
         """
-        Debug.send_debug_data(
-            DebugFlag.TIMERECORD, prompt="CloseDebugWindow"
-        )
+        Debug.send_debug_data(DebugFlag.TIMERECORD, prompt="CloseDebugWindow")
         return False
 
 
@@ -449,9 +445,7 @@ class MouseMagnifyWindow(fantas.Window):
         """
         处理窗口关闭事件。
         """
-        Debug.send_debug_data(
-            DebugFlag.MOUSEMAGNIFY, prompt="CloseDebugWindow"
-        )
+        Debug.send_debug_data(DebugFlag.MOUSEMAGNIFY, prompt="CloseDebugWindow")
         return False
 
     def handle_mousewheel_event(self, event: fantas.Event) -> bool:
