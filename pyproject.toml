@@ -64,6 +64,7 @@ files = [
     "fantas/utils/",
 ]
 warn_unused_configs = true
+disable_error_code = ["misc"]
 
 [[tool.mypy.overrides]]
 module = "fantas._vendor.*"

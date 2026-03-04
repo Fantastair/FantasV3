@@ -151,7 +151,7 @@ class Font(freetype.Font):
         return tuple(results)
 
 
-pygame.freetype.Font = Font  # type: ignore[assignment, misc]
+pygame.freetype.Font = Font  # type: ignore[assignment, misc, unused-ignore]
 
 
 def SysFont(  # pylint: disable=invalid-name
