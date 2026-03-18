@@ -52,7 +52,7 @@ def ensure_typer_installed():
 
         pprint(
             f"正在安装 typing-extensions=={typing_extensions_version}...",
-            prompt="install_typer"
+            prompt="install_typer",
         )
         cmd_run(
             [
@@ -60,7 +60,7 @@ def ensure_typer_installed():
                 "-m",
                 "pip",
                 "install",
-                f"typing-extensions=={typing_extensions_version}"
+                f"typing-extensions=={typing_extensions_version}",
             ]
         )
 
