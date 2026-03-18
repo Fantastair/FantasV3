@@ -28,12 +28,17 @@ def ensure_typer_installed():
         requirements_path = CWD / "requirements.txt"
         requirements_content = requirements_path.read_text()
 
-        pattern = re.compile(r"typer\s*==\s*([\d\.]+)")
-        match = pattern.search(requirements_content)
-        version = match.group(1)
+        typer_pattern = re.compile(r"typer\s*==\s*([\d\.]+)")
+        match = typer_pattern.search(requirements_content)
+        typer_version = match.group(1)
+
+        typing_extensions_pattern = re.compile(r"typing_extensions\s*==\s*([\d\.]+)")
+        match = typing_extensions_pattern.search(requirements_content)
+        typing_extensions_version = match.group(1)
 
         pprint(
-            f"当前解释器为：{sys.executable}，将要安装 typer({version})",
+            f"当前解释器为：{sys.executable}，将要安装 typer({typer_version}) 和 "
+            f"typing-extensions({typing_extensions_version})",
             prompt="install_typer",
             col=Colors.WARNING,
         )
@@ -42,8 +47,22 @@ def ensure_typer_installed():
             pprint("安装已取消", prompt="install_typer", col=Colors.ERROR)
             sys.exit(1)
 
-        pprint(f"正在安装 typer=={version}...", prompt="install_typer")
-        cmd_run([sys.executable, "-m", "pip", "install", f"typer=={version}"])
+        pprint(f"正在安装 typer=={typer_version}...", prompt="install_typer")
+        cmd_run([sys.executable, "-m", "pip", "install", f"typer=={typer_version}"])
+
+        pprint(
+            f"正在安装 typing-extensions=={typing_extensions_version}...",
+            prompt="install_typer",
+        )
+        cmd_run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                f"typing-extensions=={typing_extensions_version}",
+            ]
+        )
 
         importlib.import_module("typer")
         importlib.import_module("typing_extensions")
