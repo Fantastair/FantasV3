@@ -54,7 +54,7 @@ format
 
     python dev.py format [--ignore-git / -i]
 
-格式化代码。
+格式化代码。同时也会检测版本号是否有变动，确保所有版本号都和 :code:`pyproject.toml` 同步。
 
 .. hint::
 
