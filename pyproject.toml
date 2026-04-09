@@ -90,4 +90,4 @@ testpaths = ["tests"]
 pythonpath = ["."]
 
 [tool.pygame.metadata]
-version = "2.5.7.dev1"
+version = "2.5.8.dev1"
