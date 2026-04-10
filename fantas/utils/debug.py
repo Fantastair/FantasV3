@@ -82,7 +82,7 @@ class Debug:
         cmd = [
             sys.executable,
             "-m",
-            "fantas.debug_window",
+            "fantas.utils.debug_window",
             str(flag.value),
             windows_title,
             str(get_socket_port(Debug.udp_socket)),
@@ -95,7 +95,6 @@ class Debug:
                 stdout=subprocess.PIPE,  # 接收信息通信管道
                 text=True,  # 文本模式，自动编码/解码
                 bufsize=1,  # 行缓冲
-                # env=env,  # 子进程环境变量
             ) as process:
                 Debug.process = process
                 # 子进程运行后会返回端口号
