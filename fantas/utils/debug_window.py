@@ -5,9 +5,6 @@
 
 from __future__ import annotations
 
-if __name__ == "__main__":
-    raise RuntimeError("这个模块不能直接运行。")
-
 import sys
 from collections import deque
 from typing import ClassVar, Deque, cast
@@ -18,8 +15,6 @@ from fantas import math as fantas_math
 from fantas.utils.debug import DebugFlag, Debug
 
 debug_flags = DebugFlag(int(sys.argv[1]))
-
-windows_title: str
 
 # 如果没有启用任何调试标志，则退出子进程
 if debug_flags not in DebugFlag.ALL:
@@ -489,7 +484,7 @@ def handle_debugreceived_event(_: fantas.Event) -> bool:
 # 存储所有调试窗口的列表
 windows: list[fantas.Window] = []
 # 调试窗口标题
-windows_title = sys.argv[2]
+windows_title: str = sys.argv[2]
 
 event_log_window: EventLogWindow | None = None
 time_record_window: TimeRecordWindow | None = None
