@@ -124,7 +124,7 @@ class FontLoader(ResourceLoader[fantas_Font]):
         """获取默认系统字体。"""
         if self._default_sysfont is None:
             self._default_sysfont = fantas.SysFont(
-                ("Noto Sans CJK SC", "PingFang SC", "Simhei", "Microsoft YaHei"), 16
+                ("Microsoft YaHei", "Noto Sans CJK SC", "sfpro", "Simhei", "stheitimedium"), 16
             )
             self._default_sysfont.origin = True
             self._default_sysfont.kerning = True
